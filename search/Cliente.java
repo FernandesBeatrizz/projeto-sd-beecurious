@@ -3,6 +3,11 @@ package search;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-public interface cliente extends Remote {
+public interface Cliente extends Remote {
    void printOnClient() throws RemoteException;
 }
+
+
+
+
+//forma de comunicaçao entre o servidor e o cliente
