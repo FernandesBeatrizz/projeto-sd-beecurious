@@ -6,11 +6,11 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.List;  
 
-public class Gateway extends UnicastRemoteObject implements Index {
-    private ArrayList<String> listaParaFazerCrawl = new ArrayList();
-    private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap();
+public class Gateway extends UnicastRemoteObject implements search.Index {
+    private ArrayList<String> listaParaFazerCrawl = new ArrayList<>();
+    private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
     private Cliente cliente;
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis();
@@ -68,7 +68,7 @@ public class Gateway extends UnicastRemoteObject implements Index {
                 this.indiceParaPesquisas.get(word).add(url);
             }
         } else {
-            ArrayList<String> novaLista = new ArrayList();
+            ArrayList<String> novaLista = new ArrayList<>();
             novaLista.add(url);
             this.indiceParaPesquisas.put(word, novaLista);
         }
@@ -91,16 +91,13 @@ public class Gateway extends UnicastRemoteObject implements Index {
         System.out.println("URL indexado: " + url);
     }
     public List<String> pesquisar(String palavra) throws RemoteException {
-        //ver dps
+        return new ArrayList<>();
     }
     public List<String> next_page() throws RemoteException{
-
+        return new ArrayList<>();
     }
     public List<String> previous_page() throws RemoteException{
-        
-    }
-    public List<String> links_para_url() throws RemoteException{
-
+        return new ArrayList<>();
     }
 
     @Override

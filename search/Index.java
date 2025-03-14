@@ -12,9 +12,9 @@ public interface Index extends Remote {
     List<String> links_para_url(String url) throws RemoteException;
     void addToIndex(String word, String url) throws RemoteException;
     //void addLinksToURL(String url, List<String> links) throws RemoteException;
-    //String takeNext() throws RemoteException;
+    String takeNext() throws RemoteException;
     //void putNew(String var1) throws RemoteException;
-    //boolean registerClient(cliente var1) throws RemoteException;
+    boolean registerClient(Cliente c) throws RemoteException;
 }
 
 

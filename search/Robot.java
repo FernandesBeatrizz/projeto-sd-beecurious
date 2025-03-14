@@ -6,7 +6,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
-public class Robot extends UnicastRemoteObject implements cliente, Serializable {
+public class Robot extends UnicastRemoteObject implements Cliente, Serializable {
     Index index;
 
    public Robot() throws RemoteException {
