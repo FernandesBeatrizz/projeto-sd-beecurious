@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;  
 
-public class Gateway extends UnicastRemoteObject implements search.Index {
+public class Gateway extends UnicastRemoteObject implements Index {
     private ArrayList<String> listaParaFazerCrawl = new ArrayList<>();
     private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
     private Cliente cliente;
@@ -42,7 +42,6 @@ public class Gateway extends UnicastRemoteObject implements search.Index {
             try {
                 this.cliente.printOnClient();
             } catch (RemoteException var2) {
-                var2.printStackTrace();
             }
         }
     }
