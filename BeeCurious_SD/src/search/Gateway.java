@@ -8,10 +8,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;  
 
-public class Gateway extends UnicastRemoteObject implements Index {
+//mete a funçao registerBarrel   e syncBarrels
+
+
+
+
+
+public class Gateway extends UnicastRemoteObject implements GatewayINTER {
+     //vamos ter d meter aqui o nome d barrel p identificar o barrel p dps haver conexao
+    //vamos ter d conectar com os barrels
     private ArrayList<String> listaParaFazerCrawl = new ArrayList<>();
     private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
     private Cliente cliente;
+    private ArrayList<Barrels> barrels;
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis();
 
@@ -75,8 +84,10 @@ public class Gateway extends UnicastRemoteObject implements Index {
 
     public synchronized List<String> searchWord(String word) throws RemoteException {
         if (indiceParaPesquisas.containsKey(word)){
+            System.out.println("Palavra encontrada: "+word);
             return indiceParaPesquisas.get(word);
         }else{
+            System.out.println("Palavra não encontrada"+ word);
             return new ArrayList<>();
         }
       //return (List)(this.indiceParaPesquisas.containsKey(word) ? (List)this.indiceParaPesquisas.get(word) : new ArrayList());
@@ -104,4 +115,9 @@ public class Gateway extends UnicastRemoteObject implements Index {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    public void registerBarrel(Barrels barrels) {
+    }
+
+    public void syncBarrels(Barrels barrels) {
+    }
 }

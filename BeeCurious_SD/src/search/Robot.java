@@ -7,14 +7,14 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class Robot extends UnicastRemoteObject implements Cliente, Serializable {
-    Index index;
+    GatewayINTER index;
 
    public Robot() throws RemoteException {
    }
 
    public void executar() {
       try {
-         this.index = (Index)LocateRegistry.getRegistry(8183).lookup("index");
+         this.index = (GatewayINTER)LocateRegistry.getRegistry(8183).lookup("index");
          this.index.registerClient(this);
 
          while(true) {
