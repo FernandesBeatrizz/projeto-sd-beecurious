@@ -74,5 +74,14 @@ public class Downloader extends UnicastRemoteObject{
     public void printOnClient() throws RemoteException {
         System.out.println("Print on client");
     }
+
+    public String get_url() throws RemoteException {
+        return index.get_url();
+    }
+
+    public void put_url(String url) throws RemoteException {
+        put_url();
+    }
+
 }
 
