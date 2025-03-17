@@ -1,5 +1,4 @@
 package search;
-import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
 
