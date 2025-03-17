@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface GatewayINTER extends Remote {
 
-    // Método de busca que o Gateway chama para recuperar os resultados de pesquisa
+    // Méodo de busca que o Gateway chama para recuperar os resultados de pesquisa
     List<String> pesquisar(String var1) throws RemoteException;
 
     List<String> next_page() throws RemoteException;
@@ -23,7 +23,7 @@ public interface GatewayINTER extends Remote {
 
     public List<String> searchWord(String word) throws RemoteException;
 
-    //método que retorna a próxima URL a ser processada pelo Downloader
+    //méodo que retorna a próxima URL a ser processada pelo Downloader
     String takeNext() throws RemoteException;
 
     void putNew(String var1) throws RemoteException;

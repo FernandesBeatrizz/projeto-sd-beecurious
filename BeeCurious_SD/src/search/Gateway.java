@@ -10,7 +10,8 @@ import java.util.List;
 
 //mete a funçao registerBarrel   e syncBarrels
 
-
+//vamos ter d meter aqui o nome d barrel p identificar o barrel p dps haver conexao
+//vamos ter d conectar com os barrels
 
 
 
