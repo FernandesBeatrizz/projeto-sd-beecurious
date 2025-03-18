@@ -25,7 +25,7 @@ public interface GatewayINTER extends Remote {
 
     void registerBarrel(Barrels barrel) throws RemoteException;
 
-    void syncBarrels() throws RemoteException;
+    void syncBarrels(Barrels barrel) throws RemoteException;
 
 
     //downloaders
@@ -42,4 +42,8 @@ public interface GatewayINTER extends Remote {
     void cacheSearchResults(String word, List<String> results) throws RemoteException;
 
     List<String> getCachedResults(String word) throws RemoteException;
+
+    List<String> guardaResultado(String palavra) throws RemoteException;
+
+    void registerClient(ClienteINTER cliente) throws RemoteException;
 }

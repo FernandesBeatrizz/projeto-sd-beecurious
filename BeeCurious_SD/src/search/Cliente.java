@@ -28,11 +28,11 @@ public class Cliente implements ClienteINTER {
         System.out.println("URL enviado: " + url);
     }
 
-    public static void(String[] args) {
+    public static void main(String[] args) {
         try{
             Cliente cliente = new Cliente();  // Cria uma instância do Cliente
-            cliente.solicitarURL();  // Chama o método para o usuário inserir um URL
-        } catch (RemoteException e) {
+            cliente.solicitarURL();  // Chama o metodo para o usuário inserir um URL
+        } catch (RemoteException| NotBoundException e) {
             e.printStackTrace();
         }
     }

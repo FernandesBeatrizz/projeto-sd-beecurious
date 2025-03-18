@@ -62,6 +62,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER {
             e.printStackTrace();
         }
     }
+
     public static void main(String[] args) {
         Downloader d;
         try {

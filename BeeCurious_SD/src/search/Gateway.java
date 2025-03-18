@@ -14,11 +14,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private ArrayList<String> listaParaFazerCrawl = new ArrayList<>();
     private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
     private ArrayList<Barrels> lista_barrels;
+    private String url;
+    private ClienteINTER cliente;
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
 
     public Gateway() throws RemoteException {
     super();   //nao sei s é preciso
+        this.cliente=null;
     }
 
     public static void main(String[] args) {
@@ -60,7 +63,10 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         return new ArrayList<>();
     }
 
-    List<String> links_para_url(String url) throws RemoteException;
+    public List<String> links_para_url(String url) throws RemoteException{
+        this.url = url;
+        return new ArrayList<>(); //nao percebo s é isto
+    }
 
 
     public void printOnClient() {
@@ -68,8 +74,9 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             try {
                 this.cliente.printOnClient();
             } catch (RemoteException var2) {
+                var2.printStackTrace();
             }
-        }
+        }//acho que devemos meter um else, ou nao
     }
 
     //BARRELS - - - - - - - - - - - - - - - - - - - - - - -
@@ -91,8 +98,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     @Override
-    public void syncBarrels() throws RemoteException {
-
+    public void syncBarrels(Barrels barrel) throws RemoteException {
+        System.out.println("Barrel sincronizado"+ barrel); //nao sei s é preciso
     }
 
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -
@@ -140,10 +147,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     //RANDOM - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    @Override
-    public List<String> links_para_url(String url) throws RemoteException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
 
     @Override
     public List<String> guardaResultado(String palavra) throws RemoteException {
@@ -152,6 +156,11 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         } else {
             return new ArrayList<>();
         }
+    }
+
+    @Override
+    public void registerClient(ClienteINTER cliente) throws RemoteException {
+
     }
 
 }
