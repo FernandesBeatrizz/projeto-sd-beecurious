@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface GatewayINTER extends Remote {
 
-    // Méodo de busca que o Gateway chama para recuperar os resultados de pesquisa
-    List<String> pesquisar(String var1) throws RemoteException;
+    //cliente
+    public List<String> searchWord(String word) throws RemoteException;
 
     List<String> next_page() throws RemoteException;
 
@@ -15,24 +15,31 @@ public interface GatewayINTER extends Remote {
 
     List<String> links_para_url(String url) throws RemoteException;
 
-    void indexarURL(String url) throws RemoteException;
+    public void printOnClient() throws RemoteException;
 
-    void addToIndex(String word, String url) throws RemoteException;
+
+    //barrels
+    void indexarURL(String url) throws RemoteException;
 
     void addLinksToURL(String url, List<String> links) throws RemoteException;
 
-    public List<String> searchWord(String word) throws RemoteException;
+    void registerBarrel(Barrels barrel) throws RemoteException;
 
-    //méodo que retorna a próxima URL a ser processada pelo Downloader
+    void syncBarrels() throws RemoteException;
+
+
+    //downloaders
     String takeNext() throws RemoteException;
 
     void putNew(String var1) throws RemoteException;
 
-    public boolean registerClient(Cliente c) throws RemoteException;
+    void addToIndex(String word, String url) throws RemoteException;
 
     String get_url() throws RemoteException;
+
+
+    //caching
+    void cacheSearchResults(String word, List<String> results) throws RemoteException;
+
+    List<String> getCachedResults(String word) throws RemoteException;
 }
-
-
-
-//metodos que o motor de busca deve implementar, todos têm que ser remotos por causa das operaçoes RMI

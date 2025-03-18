@@ -27,7 +27,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER {
             Registry registry = LocateRegistry.getRegistry(8183);
             gateway = (GatewayINTER) registry.lookup("gateway");  // Certifique-se de que "gateway" é o nome correto
             //gateway = (GatewayINTER) LocateRegistry.getRegistry(8183).lookup("index");   //ver o locateRegistry
-            gateway.registerClient((Cliente) this);  //ver isto tbm
+            gateway.registerClient((ClienteINTER) this);  //ver isto tbm
             while (true) {
                 String url = gateway.takeNext();
                 System.out.println(url);
@@ -90,6 +90,5 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER {
     public void save_words(String word, String url) throws java.rmi.RemoteException {
         gateway.addToIndex(word, url);
     }
-
 }
 

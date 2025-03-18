@@ -6,6 +6,9 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 
+//melhorias q o chat deu: usar fila dinamina e tentar com o LinkedBlockingQueue
+
+
 
 public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     final private int max;  // tamanho maximo

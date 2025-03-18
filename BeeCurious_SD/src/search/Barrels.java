@@ -9,6 +9,9 @@ import java.util.List;
 public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
     private Gateway gateway;
+    private int ip;
+    private String nome;
+    private int porta;
 
 
     public Barrels() throws RemoteException {
