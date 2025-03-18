@@ -29,6 +29,8 @@ public interface GatewayINTER extends Remote {
     void putNew(String var1) throws RemoteException;
 
     public boolean registerClient(Cliente c) throws RemoteException;
+
+    String get_url() throws RemoteException;
 }
 
 

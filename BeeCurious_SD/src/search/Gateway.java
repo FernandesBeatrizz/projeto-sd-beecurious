@@ -83,6 +83,11 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
+    @Override
+    public void addLinksToURL(String url, List<String> links) throws RemoteException {
+
+    }
+
     public synchronized List<String> searchWord(String word) throws RemoteException {
         if (indiceParaPesquisas.containsKey(word)){
             System.out.println("Palavra encontrada: "+word);
@@ -98,6 +103,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         this.cliente = c;
         return true;
     }
+
+    @Override
+    public String get_url() throws RemoteException {
+        return "";
+    }
+
     public void indexarURL(String url) throws RemoteException {
         System.out.println("URL indexado: " + url);
     }

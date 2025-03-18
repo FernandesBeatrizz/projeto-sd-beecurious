@@ -4,10 +4,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-public class Downloader extends UnicastRemoteObject{
+public class Downloader extends UnicastRemoteObject implements DownloaderINTER {
     //indexar_resultados() e novos_url() vao ser funçoes que temos d ter
 
     //takeNext()
@@ -15,17 +17,19 @@ public class Downloader extends UnicastRemoteObject{
     //funcionam em paralelo
     //mantem fila d URL
 
-    //Index index;
+    GatewayINTER gateway;
 
     protected Downloader() throws RemoteException {
     }
 
     public void executar(){
         try {
-            index = (Index) LocateRegistry.getRegistry(8183).lookup("index");
-            index.registerClient(this);
+            Registry registry = LocateRegistry.getRegistry(8183);
+            gateway = (GatewayINTER) registry.lookup("gateway");  // Certifique-se de que "gateway" é o nome correto
+            //gateway = (GatewayINTER) LocateRegistry.getRegistry(8183).lookup("index");   //ver o locateRegistry
+            gateway.registerClient((Cliente) this);  //ver isto tbm
             while (true) {
-                String url = index.takeNext();
+                String url = gateway.takeNext();
                 System.out.println(url);
                 if(url == null){
                     break;
@@ -37,7 +41,7 @@ public class Downloader extends UnicastRemoteObject{
                 for (Element anchor : anchors) {
                     String href = anchor.attr("href");
                     //System.out.println(href);
-                    index.putNew(href);
+                    gateway.putNew(href);
                 }
 
                 String[] textWithLines = Jsoup.parse(doc.html()).wholeText().split(" ");
@@ -45,7 +49,7 @@ public class Downloader extends UnicastRemoteObject{
                     palavra = palavra.trim();
                     if(palavra.length()>3){
                         //System.out.println(palavra + " -> " + url);
-                        index.addToIndex(palavra, url);
+                        gateway.addToIndex(palavra, url);
                     }
                 }
 
@@ -59,10 +63,10 @@ public class Downloader extends UnicastRemoteObject{
         }
     }
     public static void main(String[] args) {
-        Robot r;
+        Downloader d;
         try {
-            r = new Robot();
-            r.executar();
+            d = new Downloader();
+            d.executar();
         } catch (RemoteException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -76,11 +80,15 @@ public class Downloader extends UnicastRemoteObject{
     }
 
     public String get_url() throws RemoteException {
-        return index.get_url();
+        return gateway.get_url();
     }
 
     public void put_url(String url) throws RemoteException {
-        put_url();
+        gateway.putNew(url);
+    }
+
+    public void save_words(String word, String url) throws java.rmi.RemoteException {
+        gateway.addToIndex(word, url);
     }
 
 }
