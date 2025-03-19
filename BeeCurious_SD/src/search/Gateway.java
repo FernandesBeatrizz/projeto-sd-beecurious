@@ -4,9 +4,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     //vamos ter d meter aqui o nome d barrel p identificar o barrel p dps haver conexao
@@ -16,6 +14,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private ArrayList<Barrels> lista_barrels;
     private String url;
     private ClienteINTER cliente;
+    private Set<String> urlsIndexados= new HashSet<>();
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
 
@@ -114,8 +113,13 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     public synchronized void putNew(String url) throws RemoteException {
-        this.listaParaFazerCrawl.add(url);
-        System.out.println("URL adicionado: "+url);
+        if (!urlsIndexados.contains(url)) {
+            listaParaFazerCrawl.add(url);
+            urlsIndexados.add(url);
+            System.out.println("URL adicionado: "+url);
+        }else{
+            System.out.println("URL já adicionado"+ url);
+        }
     }
 
     public synchronized void addToIndex(String word, String url) throws RemoteException {
