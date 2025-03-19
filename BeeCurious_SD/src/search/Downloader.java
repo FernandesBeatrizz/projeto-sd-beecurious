@@ -5,6 +5,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Set;
@@ -14,13 +16,8 @@ import java.rmi.registry.Registry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-public class Downloader extends UnicastRemoteObject implements DownloaderINTER, Runnable {
-    //indexar_resultados() e novos_url() vao ser funçoes que temos d ter
+public class Downloader extends UnicastRemoteObject implements DownloaderINTER, Runnable, ClienteINTER {
 
-    //takeNext()
-    //responsavel por baixar as paginas e extrair palavras, links
-    //funcionam em paralelo
-    //mantem fila d URL
     private static final int timeout = 5000;
     GatewayINTER gateway;
     private static final Set<String> urlsProcessados= new HashSet<>();
@@ -30,19 +27,22 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
 
     public void executar(){
         try {
-            Registry registry = LocateRegistry.getRegistry(8183);
+            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
             gateway = (GatewayINTER) registry.lookup("gateway");  // Certifique-se de que "gateway" é o nome correto
-            gateway.registerClient((ClienteINTER) this);  //ver isto tbm
+            //gateway.registerClient((ClienteINTER) this);  //ver isto tbm
             while (true) {
                 String url = gateway.takeNext();
                 System.out.println(url);
                 if(url == null){
                     break;
                 }
-
-                System.out.println(url);
-                urlsProcessados.add(url);
-                processarPagina(url);
+                if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    url = transformarUrlAbsoluta("http://" + new URI(url).getHost(), url); // Use uma baseUrl apropriada
+                }
+                if (!urlsProcessados.contains(url)) {
+                    urlsProcessados.add(url);
+                    processarPagina(url);
+                }
                 Thread.sleep(1000);
 
                 //String[] textWithLines = Jsoup.parse(doc.html()).wholeText().split(" ");
@@ -70,16 +70,58 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
             extrairLinks(doc);
             extrairpalavras(doc,url);
         }catch(IOException e){
-            System.out.println("Erro");
+            System.out.println("Erro"+ e.getMessage());
         }
     }
 
     public void extrairLinks(Document doc) throws RemoteException {
         Elements anchors = doc.select("a");
-        for(Element anchor : anchors) {
+        String baseUrl = doc.baseUri(); // A URL original do cliente
+
+        if (baseUrl.isEmpty()) {
+            System.err.println("Erro: baseUri() não foi definido corretamente!");
+            return;
+        }
+        for (Element anchor : anchors) {
             String href = anchor.attr("href");
-            System.out.println(href);
-            gateway.putNew(href);
+            if (href.isEmpty() || href.startsWith("#")) {
+                continue;
+            }
+            String absoluteUrl=transformarUrlAbsoluta(baseUrl, href);
+            if (absoluteUrl != null) {
+                gateway.putNew(absoluteUrl);
+                System.out.println("Link extraído: " + absoluteUrl);
+            }
+            //if (href.startsWith("/")) {
+                //absoluteUrl = baseUrl.replaceAll("(https?://[^/]+).*", "$1") + href;
+            //} else if (href.startsWith("http://") || href.startsWith("https://")) {
+                //absoluteUrl = href;
+            //} else {
+                //String dominioBase = baseUrl.split("/")[0] + "//" + baseUrl.split("/")[2];
+                //String caminhoAtual = baseUrl.substring(0, baseUrl.lastIndexOf("/") + 1);
+                //absoluteUrl = caminhoAtual + href;
+            //}
+            //gateway.putNew(absoluteUrl);
+            //System.out.println("Link extraído: " + absoluteUrl);
+        }
+
+    }
+
+    private String transformarUrlAbsoluta(String baseUrl, String href){
+        try {
+            URI baseUri = new URI(baseUrl);
+
+            if (href.startsWith("http://") || href.startsWith("https://")) { //se ja for normal ele retorna so
+                return href;
+            } else if (href.startsWith("/")) { //se começar por isto ele vai construir
+                return baseUri.getScheme() + "://" + baseUri.getHost() + href;
+            } else {
+                String caminhoAtual = baseUrl.substring(0, baseUrl.lastIndexOf("/") + 1);
+                return caminhoAtual + href;
+            }
+        } catch (URISyntaxException e) {
+            System.err.println("Erro ao processar URL: " + href);
+            return null;
         }
     }
 

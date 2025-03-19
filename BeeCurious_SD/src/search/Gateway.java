@@ -29,10 +29,10 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         Registry registry = LocateRegistry.createRegistry(8183);
         registry.rebind("gateway", gateway);
         System.out.println("gateway ready. Waiting for input...");
-        gateway.putNew("https://pt.wikipedia.org/wiki/Wikip%C3%A9dia:P%C3%A1gina_principal");
-        gateway.putNew("https://www.uc.pt");
-        gateway.putNew("https://www.dn.pt");
-        gateway.putNew("https://www.dn.pt");
+        //gateway.putNew("https://pt.wikipedia.org/wiki/Wikip%C3%A9dia:P%C3%A1gina_principal");
+        //gateway.putNew("https://www.uc.pt");
+        //gateway.putNew("https://www.dn.pt");
+        //gateway.putNew("https://www.dn.pt");
          //Thread.sleep(4000L);
          //server.printOnClient();
         System.out.println("printed");

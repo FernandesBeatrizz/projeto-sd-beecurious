@@ -11,7 +11,7 @@ public class Cliente implements ClienteINTER {
     
     private GatewayINTER gateway;
     public Cliente() throws NotBoundException, RemoteException {
-        Registry registry = LocateRegistry.getRegistry(8183); // Use o mesmo número de porta do Gateway
+        Registry registry = LocateRegistry.getRegistry("localhost", 8183); // Use o mesmo número de porta do Gateway
         this.gateway = (GatewayINTER) registry.lookup("gateway");  // O nome do serviço no RMI Registry
     }
 
