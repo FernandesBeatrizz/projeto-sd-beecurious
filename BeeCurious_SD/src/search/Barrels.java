@@ -1,6 +1,9 @@
 package search;
 
+import java.lang.reflect.Array;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,16 +11,38 @@ import java.util.List;
 
 public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
-    private Gateway gateway;
-    private int ip;
-    private String nome;
-    private int porta;
+    private GatewayINTER gateway;
+    //private int ip; host??
+    private String name;
+    private int port;
 
-
-    public Barrels() throws RemoteException {
+    public Barrels( String name, int port) throws RemoteException {
         super();
         this.indiceParaPesquisas= new HashMap<>();
-        this.gateway.registerBarrel(this);
+        this.gateway = new Gateway();
+        //this.ip = ip;
+        this.name=name;
+        this.port=port;
+    }
+
+    public static void main(String[] args) {
+        try{
+            String rmiName = "Gateway";
+            String rmiHost = "localHost";    //fazer com o ficheiro das propriedades ou vars de ambiente
+            int rmiPort = 8183;
+
+            Barrels barrel_1 = new Barrels("divo", 1000);
+
+            Registry registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
+            barrel_1.gateway = (GatewayINTER) registry.lookup(rmiName);
+
+            registry.rebind("Barrel", barrel_1);
+            System.out.println("O primeiro barrel ta registado no rmi");
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -28,14 +53,27 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         }
     }
 
+
     @Override
     public synchronized List<String> searchWord(String word) throws RemoteException {
-        return indiceParaPesquisas.getOrDefault(word, new ArrayList<>());
+/*
+        String words = word.toLowerCase();
+        ArrayList<String> urls = new ArrayList<>();
+        //ArrayList<String>> sortedURLS = new ArrayList<>();
+
+        for (String query : words.split(" ")) {
+            if (indiceParaPesquisas.containsKey(word)) {
+                urls.addAll(indiceParaPesquisas.get(query));
+            }
+            //verificar a "pontuação" para ordenar os resultados que vao aparecer
+        }
+        return sortedURLS;*/
+        return List.of();
     }
 
     @Override
     public void syncWithReplica() throws RemoteException {
-        gateway.syncBarrels(this);
+        gateway.syncBarrels();
     }
 
     public void updateIndex(HashMap<String, ArrayList<String>> newIndex) throws RemoteException {

@@ -23,9 +23,9 @@ public interface GatewayINTER extends Remote {
 
     void addLinksToURL(String url, List<String> links) throws RemoteException;
 
-    void registerBarrel(Barrels barrel) throws RemoteException;
+    void registerBarrel(BarrelsINTER barrel) throws RemoteException;
 
-    void syncBarrels(Barrels barrel) throws RemoteException;
+    void syncBarrels() throws RemoteException;
 
 
     //downloaders

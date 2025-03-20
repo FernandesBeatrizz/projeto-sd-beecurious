@@ -10,24 +10,43 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     //vamos ter d meter aqui o nome d barrel p identificar o barrel p dps haver conexao
     //vamos ter d conectar com os barrels
     private ArrayList<String> listaParaFazerCrawl = new ArrayList<>();
+
     private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
-    private ArrayList<Barrels> lista_barrels;
+
+    private ArrayList<BarrelsINTER> barrels;
+
+    private ArrayList<DownloaderINTER> downloaders;
+
+    private QueueInterface queue;
+
     private String url;
+
     private ClienteINTER cliente;
+
     private Set<String> urlsIndexados= new HashSet<>();
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
 
     public Gateway() throws RemoteException {
-    super();   //nao sei s é preciso
+        super();
         this.cliente=null;
+        barrels = new ArrayList<>();
+        downloaders = new ArrayList<>();
+        queue = null;
     }
 
     public static void main(String[] args) {
       try {
         Gateway gateway = new Gateway();
-        Registry registry = LocateRegistry.createRegistry(8183);
-        registry.rebind("gateway", gateway);
+        String rmiName = "Gateway";
+        String rmiHost = " localHost";
+        int rmiPort = 8183;
+
+        System.setProperty("java.rmi.server.hostname", rmiHost);
+
+        Registry registry = LocateRegistry.createRegistry(rmiPort);
+        registry.rebind(rmiName, gateway);
+
         System.out.println("gateway ready. Waiting for input...");
         //gateway.putNew("https://pt.wikipedia.org/wiki/Wikip%C3%A9dia:P%C3%A1gina_principal");
         //gateway.putNew("https://www.uc.pt");
@@ -35,7 +54,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         //gateway.putNew("https://www.dn.pt");
          //Thread.sleep(4000L);
          //server.printOnClient();
-        System.out.println("printed");
+
+          System.out.println("printed");
         } catch (Exception var3) {
             var3.printStackTrace();
         }
@@ -44,14 +64,15 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     //CLIENTS  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     public synchronized List<String> searchWord(String word) throws RemoteException {
-        if (indiceParaPesquisas.containsKey(word)){
-            System.out.println("Palavra encontrada: "+word);
-            return indiceParaPesquisas.get(word);
-        }else{
-            System.out.println("Palavra não encontrada"+ word);
-            return new ArrayList<>();
-        }
-        //return (List)(this.indiceParaPesquisas.containsKey(word) ? (List)this.indiceParaPesquisas.get(word) : new ArrayList());
+        /*ArrayList<String> urls = new ArrayList<>(String);
+        for (BarrelsINTER barrel : barrels) {
+            try {
+                urls.putAll(barrel.searchWord(word);
+                return urls;
+            } catch (RemoteException error) {
+                //barrel morreu;
+            }*/
+        return List.of();
     }
 
     public List<String> next_page() throws RemoteException{
@@ -88,17 +109,18 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     }
 
-    public void registerBarrel(Barrels barrels) {
-        if (this.lista_barrels == null) {
-            this.lista_barrels = new ArrayList<>();
+    @Override
+    public void registerBarrel(BarrelsINTER barrel) throws RemoteException {
+        if (this.barrels == null) {
+            this.barrels = new ArrayList<>();
         }
-        lista_barrels.add(barrels);
-        System.out.println("Barrel registrado "); //nao sei s é preciso esta mensagem
+        this.barrels.add(barrel);
+        System.out.println("Barrel registado "); //nao sei s é preciso esta mensagem
     }
 
     @Override
-    public void syncBarrels(Barrels barrel) throws RemoteException {
-        System.out.println("Barrel sincronizado"+ barrel); //nao sei s é preciso
+    public void syncBarrels() throws RemoteException {
+
     }
 
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -
