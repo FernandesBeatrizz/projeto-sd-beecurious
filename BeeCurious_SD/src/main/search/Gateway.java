@@ -9,7 +9,7 @@ import java.util.*;
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     //vamos ter d meter aqui o nome d barrel p identificar o barrel p dps haver conexao
     //vamos ter d conectar com os barrels
-    private ArrayList<String> listaParaFazerCrawl = new ArrayList<>();
+    private LinkedList<String> listaParaFazerCrawl = new LinkedList<>();
     private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
     private ArrayList<DownloaderINTER> downloaders;
@@ -118,18 +118,19 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -
     public synchronized String takeNext() throws RemoteException {
-        if (!this.listaParaFazerCrawl.isEmpty()) {
-            String s = (String)this.listaParaFazerCrawl.get(0);
-            this.listaParaFazerCrawl.remove(0);
-            return s;
-        } else {
-            return null;
-        }
+        //if (!this.listaParaFazerCrawl.isEmpty()) {
+            //String s = (String)this.listaParaFazerCrawl.get(0);
+            //this.listaParaFazerCrawl.remove(0);
+            //return s;
+       // } else {
+            //return null;
+        //}
+        return listaParaFazerCrawl.poll();
     }
 
     public synchronized void putNew(String url) throws RemoteException {
         if (!urlsIndexados.contains(url)) {
-            listaParaFazerCrawl.add(url);
+            listaParaFazerCrawl.offer(url); //evitar exceçoes
             urlsIndexados.add(url);
             System.out.println("URL adicionado: "+url);
         }else{

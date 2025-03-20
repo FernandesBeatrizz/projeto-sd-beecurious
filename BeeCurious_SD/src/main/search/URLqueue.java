@@ -1,12 +1,12 @@
 package main.search;
 
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.Properties;
 import java.util.logging.Logger;
-import java.util.logging.Level;
-import java.io.IOException;
+
 
 
 //usar o properties para o maximo da queue(ver o projeto d diogo)
@@ -15,12 +15,12 @@ import java.io.IOException;
 public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     private LinkedBlockingQueue<String> urls;
     private final int max_size;
-    final private static String QUEUE_CONFIG = "queue.properties";
+    //final private static String QUEUE_CONFIG = "queue.properties";
     private static final Logger LOGGER = Logger.getLogger(URLqueue.class.getName());
 
 
     public URLqueue(int maximo) throws RemoteException{
-        this.max_size=maximo;
+        this.max_size=10000;
         this.urls= new LinkedBlockingQueue<>(this.max_size);
     }
 
@@ -44,23 +44,31 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
                 wait();
             } catch (InterruptedException ex) {
                 System.out.println("interrompida"+ ex);
-                Thread.currentThread().interrupt();
+                //Thread.currentThread().interrupt();
             }
         }
         String url = urls.poll();
         LOGGER.info("URL removida da fila: " + url);
         return url;
     }
-
     public static void main(String[] args) {
-        try{
-            Properties properties = new Properties();
-            LOGGER.info(String.format("Loading \"%s\" file to acquire queue properties.", QUEUE_CONFIG));
-            properties.load(Thread.currentThread().getContextClassLoader()
-                    .getResourceAsStream(QUEUE_CONFIG));
-            int maximo = Integer.parseInt(properties.getProperty("max_size"));
-        }catch(Exception e){
-            System.out.println(e);
+        try {
+            // Cria uma instância da URLqueue com tamanho máximo de 10000
+            URLqueue urlQueue = new URLqueue(10000);
+
+            // Cria ou obtém o RMI Registry na porta padrão (1099)
+            Registry registry = LocateRegistry.createRegistry(1099);
+
+            // Registra o objeto URLqueue no RMI Registry com o nome "URLqueue"
+            registry.bind("URLqueue", urlQueue);
+
+            System.out.println("URLqueue registrado no RMI Registry e pronto para uso.");
+        } catch (RemoteException e) {
+            System.err.println("Erro de comunicação remota: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Erro inesperado: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

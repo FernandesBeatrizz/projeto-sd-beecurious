@@ -43,8 +43,8 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
                     url = transformarUrlAbsoluta("http://" + new URI(url).getHost(), url); // Use uma baseUrl apropriada
                 }
-                if (!urlsProcessados.contains(url)) {
-                    urlsProcessados.add(url);
+                if (!urlsProcessados.contains(url.trim().toLowerCase())) {
+                    urlsProcessados.add(url.trim().toLowerCase());
                     processarPagina(url);
                 }
                 Thread.sleep(1000);
