@@ -10,19 +10,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     //vamos ter d meter aqui o nome d barrel p identificar o barrel p dps haver conexao
     //vamos ter d conectar com os barrels
     private ArrayList<String> listaParaFazerCrawl = new ArrayList<>();
-
     private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
-
     private ArrayList<BarrelsINTER> barrels;
-
     private ArrayList<DownloaderINTER> downloaders;
-
     private QueueInterface queue;
-
     private String url;
-
     private ClienteINTER cliente;
-
     private Set<String> urlsIndexados= new HashSet<>();
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
