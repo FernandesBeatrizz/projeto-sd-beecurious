@@ -2,40 +2,58 @@ package search;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Properties;
+import java.io.IOException;
 
 
-//melhorias q o chat deu: usar fila dinamina e tentar com o LinkedBlockingQueue
-
+//usar o properties para o maximo da queue(ver o projeto d diogo)
 
 
 public class URLqueue extends UnicastRemoteObject implements QueueInterface {
-    final private int max;  // tamanho maximo
-    private Queue<String> queue; //ou ent usar LinkedBlockingQueue
+    private LinkedBlockingQueue<String> urls;
+    private final int max_size;
+    final private static String QUEUE_CONFIG = "queue.properties";
+    
 
-    public URLqueue() throws RemoteException{
-        this.max=10; //dps alterar o valor provavelmente
-        this.queue= new LinkedList<>(); //ou entao usar LinkedBlockingQueue
+    public URLqueue(int maximo) throws RemoteException{
+        this.max_size=maximo;
+        this.urls= new LinkedBlockingQueue<>(this.max_size);
     }
 
     public synchronized void putURL(String url) throws RemoteException{
-        //dps ver s é maior que o maximo
-        if (queue.size()>= max){
-            System.out.println("Queue is full");
+        if (urls.size() < max_size) {
+            try {
+                urls.add(url);
+            } catch (Exception e) {
+                Thread.currentThread().interrupt();
+                System.out.println("Erro ao adicionar URL: " + e);
+            }
+        } else {
+            System.out.println("A queue está cheia");
         }
-        queue.add(url);
-        notify();
     }
     public synchronized String getURL() throws RemoteException{
         //verificar se a queue está vazia
-        while(queue.isEmpty()){
+        while(urls.isEmpty()){
             try {
                 wait();
             } catch (InterruptedException ex) {
-                System.out.println("interrompida");
+                System.out.println("interrompida"+ ex);
             }
         }
-        return queue.poll();
+        return urls.poll();
+    }
+
+    public static void main(String[] args) {
+        try{
+            Properties properties = new Properties();
+            LOGGER.info("Loading \"{}\" file to acquire queue properties.", QUEUE_CONFIG);
+            properties.load(Thread.currentThread().getContextClassLoader()
+                    .getResourceAsStream(QUEUE_CONFIG));
+            int maximo = Integer.parseInt(properties.getProperty("max_size"));
+        }catch(Exception e){
+            System.out.println(e);
+        }
     }
 }
