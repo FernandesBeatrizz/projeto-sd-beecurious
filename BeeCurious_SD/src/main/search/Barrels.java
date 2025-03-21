@@ -43,6 +43,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             registry.rebind("Barrel2", barrel_2);
             barrel_2.gateway = (GatewayINTER) registry.lookup(rmiName);
 
+            //nao sei s é preciso chamar os 2 barrels com o syncWithReplica
             System.out.println("- - barrels check");
 
         }
@@ -76,17 +77,22 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             if (indiceInvertido.containsKey(words[i])) {
                 resultadourls.retainAll(indiceInvertido.get(words[i])); //addAll ou retainAll
             }else{
-                resultadourls.clear(); //ver bem este else
-                break;
+                //resultadourls.clear(); //ver bem este else
+                //break;
+                return new ArrayList<>();
             }
-            //verificar a "pontuação" para ordenar os resultados que vao aparecer
         }
         return resultadourls;
     }
 
     @Override
     public void syncWithReplica() throws RemoteException {
-        gateway.syncBarrels();
+        if (!verificarbarrel(this)) {
+            System.out.println("Necessário criar outro barrel e sincronizar ");
+            criarbarrel(this);
+        }else{
+            gateway.syncBarrels();
+        }
     }
 
     public void updateIndex(HashMap<String, ArrayList<String>> newIndex) throws RemoteException {
@@ -96,19 +102,45 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     public LinkedHashMap<String, Integer> top10() throws RemoteException{
         //meter dps um aviso a dizer que vai buscar os 10
-        List<Map.Entry<String,Integer>> ordenardecrescente = new ArrayList<>();
-        ordenardecrescente.sort((entry1, entry2) -> entry2.getValue() - entry1.getValue());     //o chat diz q é a soluçao mais simples, o diogo tbm fez assim
+        List<Map.Entry<String,ArrayList<String>>> ordenardecrescente = new ArrayList<>(indiceInvertido.entrySet());
+        ordenardecrescente.sort((entry1, entry2) -> entry2.getValue().size() - entry1.getValue().size());     //o chat diz q é a soluçao mais simples, o diogo tbm fez assim
 
         LinkedHashMap<String, Integer> top10 = new LinkedHashMap<>();
-        for (int i=0; i<10; i++){
-            top10.put(ordenardecrescente.get(i).getKey(), ordenardecrescente.get(i).getValue());
+        for (int i=0; i<Math.min(10, ordenardecrescente.size()); i++){
+            String p=ordenardecrescente.get(i).getKey();
+            int count= ordenardecrescente.get(i).getValue().size();
+            top10.put(p, count);
         }
         return top10;
     }
 
-    //indexar
-    //fazer a pesquisa
-    //nao sei s é necessario guardar o que ja temos
+
+    public boolean verificarbarrel(Barrels barrel){
+        try{
+            barrel.syncWithReplica();
+            return true;
+        }catch(RemoteException e){
+            System.out.println("Barrel não esta so a dormir: "+ barrel.name);
+            return false;
+        }
+    }
+
+
+    public void criarbarrel(Barrels barrel){
+        try{
+            Barrels novo = new Barrels(barrel.name, barrel.port);
+            Registry registry= LocateRegistry.getRegistry("localhost", barrel.port);
+            novo.gateway=(GatewayINTER) registry.lookup("gateway");
+            barrel.gateway.syncBarrels();
+            novo.updateIndex(barrel.indiceInvertido);
+            registry.rebind("Barrel3", novo);
+            System.out.println("Barrel criado e sincronizado com sucesso");
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
     //nos barels temos de ver quando eles s deligam e dps fazer a conexao de novo com a gateway e ver se a informaçao é a mesma
 }
 
