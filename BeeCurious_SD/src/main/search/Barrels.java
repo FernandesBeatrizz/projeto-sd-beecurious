@@ -18,6 +18,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     //private int ip; host??
     private String name;
     private int port;
+    private HashMap<String, HashSet<String>> ponteiros= new HashMap<>();
 
     public Barrels( String name, int port) throws RemoteException {
         super();
@@ -25,6 +26,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         this.gateway = new Gateway();
         this.name=name;
         this.port=port;
+        this.ponteiros=new HashMap<>();
     }
 
     public static void main(String[] args) {
