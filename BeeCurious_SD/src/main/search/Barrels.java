@@ -27,8 +27,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     public static void main(String[] args) {
         try{
-            String rmiName = "Gateway";
-            String rmiHost = "localHost";    //fazer com o ficheiro das propriedades ou vars de ambiente
+            String rmiName = "gateway";
+            String rmiHost = "localhost";    //fazer com o ficheiro das propriedades ou vars de ambiente
             int rmiPort = 8183;
 
             Barrels barrel_1 = new Barrels("divo", 1000);

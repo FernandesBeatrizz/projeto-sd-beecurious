@@ -26,8 +26,8 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
 
     public void executar(){
         try {
-            String rmiName = "Gateway";
-            String rmiHost = "localHost";
+            String rmiName = "gateway";
+            String rmiHost = "localhost";
             int rmiPort = 8183;
 
             Registry registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
