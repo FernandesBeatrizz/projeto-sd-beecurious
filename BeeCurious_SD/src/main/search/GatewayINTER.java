@@ -29,7 +29,7 @@ public interface GatewayINTER extends Remote {
 
 
     //downloaders
-    String takeNext() throws RemoteException;
+    String takeNext() throws RemoteException, InterruptedException;
 
     void putNew(String var1) throws RemoteException;
 

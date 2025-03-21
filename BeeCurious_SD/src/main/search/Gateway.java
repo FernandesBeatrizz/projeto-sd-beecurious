@@ -1,5 +1,6 @@
 package main.search;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -9,7 +10,7 @@ import java.util.*;
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     //vamos ter d meter aqui o nome d barrel p identificar o barrel p dps haver conexao
     //vamos ter d conectar com os barrels
-    private LinkedList<String> listaParaFazerCrawl = new LinkedList<>();
+    private LinkedList<String> listaParaFazerCrawl = new LinkedList<>();// mudei p queue
     private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
     private ArrayList<DownloaderINTER> downloaders;
@@ -17,12 +18,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private String url;
     private ClienteINTER cliente;
     private Set<String> urlsIndexados= new HashSet<>();
+    private URLqueue urlQueue;
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
 
     public Gateway() throws RemoteException {
         super();
         this.cliente=null;
+        this.urlQueue=new URLqueue(100);
         barrels = new ArrayList<>();
         downloaders = new ArrayList<>();
         queue = null;
@@ -32,7 +35,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
       try {
         Gateway gateway = new Gateway();
         String rmiName = "gateway";
-        String rmiHost = " localhost";
+        String rmiHost = "localhost";
         int rmiPort = 8183;
 
         System.setProperty("java.rmi.server.hostname", rmiHost);
@@ -41,10 +44,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         registry.rebind(rmiName, gateway);
 
         System.out.println("gateway ready. Waiting for input...");
-        //gateway.putNew("https://pt.wikipedia.org/wiki/Wikip%C3%A9dia:P%C3%A1gina_principal");
-        //gateway.putNew("https://www.uc.pt");
-        //gateway.putNew("https://www.dn.pt");
-        //gateway.putNew("https://www.dn.pt");
          //Thread.sleep(4000L);
          //server.printOnClient();
 
@@ -65,7 +64,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             } catch (RemoteException error) {
                 //barrel morreu;
             }*/
-        return List.of();
+        //return List.of();
+        if(barrels.isEmpty()){
+            return List.of();
+        }
+        BarrelsINTER barrel = barrels.get(new Random().nextInt(barrels.size())); //escolher um barrel aleatorio
+        return barrel.searchWord(word);
     }
 
     public List<String> next_page() throws RemoteException{
@@ -113,28 +117,41 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     @Override
     public void syncBarrels() throws RemoteException {
-
+        for (BarrelsINTER barrel : barrels) {
+            barrel.updateIndex(indiceParaPesquisas);
+        }
     }
 
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -
-    public synchronized String takeNext() throws RemoteException {
-        //if (!this.listaParaFazerCrawl.isEmpty()) {
-            //String s = (String)this.listaParaFazerCrawl.get(0);
-            //this.listaParaFazerCrawl.remove(0);
-            //return s;
-       // } else {
-            //return null;
-        //}
-        return listaParaFazerCrawl.poll();
+    public synchronized String takeNext() throws RemoteException, InterruptedException {
+        //return listaParaFazerCrawl.poll();
+        return urlQueue.getURL();
     }
 
     public synchronized void putNew(String url) throws RemoteException {
+        /*if (urlQueue.getQueueSize() >= urlQueue.getMaxSize()) {
+            System.out.println("A fila está cheia! O URL não será adicionado: " + url);
+            return;
+        }
         if (!urlsIndexados.contains(url)) {
-            listaParaFazerCrawl.offer(url); //evitar exceçoes
+            urlQueue.putURL(url); //adiciona a fila
             urlsIndexados.add(url);
             System.out.println("URL adicionado: "+url);
         }else{
             System.out.println("URL já adicionado"+ url);
+        }*/
+        try {
+            if (!urlsIndexados.contains(url)) {  // Não precisamos dessa verificação se a fila já está controlando isso
+                // Adiciona o URL à fila
+                urlQueue.putURL(url);  // Coloca o URL na fila
+                urlsIndexados.add(url); // Marca a URL como indexada
+                System.out.println("URL adicionado: " + url); // Log para verificação
+            } else {
+                System.out.println("URL já adicionado: " + url); // A URL já foi registrada antes
+            }
+        } catch (RemoteException e) {
+            Thread.currentThread().interrupt(); // Restaura o estado de interrupção
+            System.out.println("Erro ao adicionar URL à fila: " + e.getMessage());
         }
     }
 
@@ -181,6 +198,10 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     @Override
     public void registerClient(ClienteINTER cliente) throws RemoteException {
 
+    }
+
+    public URLqueue getUrlQueue() {
+        return this.urlQueue;
     }
 
 }

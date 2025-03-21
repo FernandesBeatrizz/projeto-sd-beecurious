@@ -1,6 +1,8 @@
 package main.search;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public interface BarrelsINTER extends Remote {
@@ -14,5 +16,6 @@ public interface BarrelsINTER extends Remote {
     // Sincronização entre réplicas (replica deve enviar o seu estado para outro Storage Barrel)
     void syncWithReplica() throws RemoteException;
 
+    void updateIndex(HashMap<String, ArrayList<String>> indiceParaPesquisas) throws RemoteException;
 }
 

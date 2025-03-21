@@ -20,8 +20,12 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     private static final int timeout = 5000;
     GatewayINTER gateway;
     private static final Set<String> urlsProcessados= new HashSet<>();
+    URLqueue urlQueue;
 
-    protected Downloader() throws RemoteException {
+
+    public Downloader(URLqueue urlQueue) throws RemoteException {
+        super();
+        this.urlQueue = urlQueue;
     }
 
     public void executar(){
@@ -34,12 +38,23 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
             gateway = (GatewayINTER) registry.lookup(rmiName);
             //gateway.registerClient((ClienteINTER) this);  //ver isto tbm
 
+            int tentativas=0;
             while (true) {
-                String url = gateway.takeNext();
+                //String url = gateway.takeNext();
+                String url= urlQueue.getURL();
                 System.out.println(url);
                 if(url == null){
-                    break;
+                    //break;
+                    System.out.println("fila vazia");
+                    /*tentativas+=1;
+                    if (tentativas > urlQueue.getMaxSize()) {  // Melhor usar a variável
+                        System.out.println("Fila vazia por muito tempo. Encerrando processo.");
+                        break;
+                    }
+                    Thread.sleep(1000);*/
+                    continue;
                 }
+                tentativas=0;
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
                     url = transformarUrlAbsoluta("http://" + new URI(url).getHost(), url); // Use uma baseUrl apropriada
                 }
@@ -48,20 +63,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                     processarPagina(url);
                 }
                 Thread.sleep(1000);
-
-                //String[] textWithLines = Jsoup.parse(doc.html()).wholeText().split(" ");
-                //for (String palavra : textWithLines) {
-                    //palavra = palavra.trim();
-                    //if(palavra.length()>3){
-                        //System.out.println(palavra + " -> " + url);
-                      //  gateway.addToIndex(palavra, url);
-                    //}
-                //}
-
-                //System.out.println(doc);
-                //Todo: Read JSOUP documentation and parse the html to index the keywords.
-                //Then send back to server via index.addToIndex(...)
-                //Thread.sleep(1000);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -70,6 +71,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
 
     public void processarPagina(String url) {
         try{
+            System.out.println("processar o url: "+  url);
             Document doc = Jsoup.connect(url).timeout(timeout).get();
             extrairLinks(doc);
             extrairpalavras(doc,url);
@@ -96,17 +98,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                 gateway.putNew(absoluteUrl);
                 System.out.println("Link extraído: " + absoluteUrl);
             }
-            //if (href.startsWith("/")) {
-                //absoluteUrl = baseUrl.replaceAll("(https?://[^/]+).*", "$1") + href;
-            //} else if (href.startsWith("http://") || href.startsWith("https://")) {
-                //absoluteUrl = href;
-            //} else {
-                //String dominioBase = baseUrl.split("/")[0] + "//" + baseUrl.split("/")[2];
-                //String caminhoAtual = baseUrl.substring(0, baseUrl.lastIndexOf("/") + 1);
-                //absoluteUrl = caminhoAtual + href;
-            //}
-            //gateway.putNew(absoluteUrl);
-            //System.out.println("Link extraído: " + absoluteUrl);
         }
 
     }
@@ -148,9 +139,14 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     public static void main(String[] args) {
         try {
             int numDownloaders=3;
+            //URLqueue urlQueue= new URLqueue(100);
+            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
+            GatewayINTER gateway = (GatewayINTER) registry.lookup("gateway");
+            URLqueue urlQueue = ((Gateway) gateway).getUrlQueue();
+
             Thread[] threads = new Thread[numDownloaders];
             for (int i = 0; i < numDownloaders; i++) {
-                Downloader d= new Downloader();
+                Downloader d= new Downloader(urlQueue);
                 threads[i]= new Thread(d);
                 threads[i].start();
             }
