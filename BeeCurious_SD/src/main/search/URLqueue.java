@@ -89,4 +89,6 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     public int getMaxSize() throws RemoteException {
         return max_size;
     }
+
+
 }

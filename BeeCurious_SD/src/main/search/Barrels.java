@@ -7,10 +7,13 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
-    private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
+    private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private GatewayINTER gateway;
     //private int ip; host??
     private String name;
@@ -18,9 +21,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     public Barrels( String name, int port) throws RemoteException {
         super();
-        this.indiceParaPesquisas= new HashMap<>();
+        this.indiceInvertido=new HashMap<>();
         this.gateway = new Gateway();
-        //this.ip = ip;
         this.name=name;
         this.port=port;
     }
@@ -31,13 +33,17 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             String rmiHost = "localhost";    //fazer com o ficheiro das propriedades ou vars de ambiente
             int rmiPort = 8183;
 
-            Barrels barrel_1 = new Barrels("divo", 1000);
-
             Registry registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
+
+            Barrels barrel_1 = new Barrels("divo", 1000);
+            registry.rebind("Barrel", barrel_1);
             barrel_1.gateway = (GatewayINTER) registry.lookup(rmiName);
 
-            registry.rebind("Barrel", barrel_1);
-            System.out.println("O primeiro barrel ta registado no rmi");
+            Barrels barrel_2 = new Barrels(rmiName, rmiPort);
+            registry.rebind("Barrel2", barrel_2);
+            barrel_2.gateway = (GatewayINTER) registry.lookup(rmiName);
+
+            System.out.println("- - barrels check");
 
         }
         catch (Exception e) {
@@ -47,28 +53,35 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     @Override
     public void addToIndex(String word, String url) throws RemoteException {
-        indiceParaPesquisas.putIfAbsent(word, new ArrayList<>());
-        if (!indiceParaPesquisas.get(word).contains(url)) {
-            indiceParaPesquisas.get(word).add(url);
+        indiceInvertido.putIfAbsent(word, new ArrayList<>());
+        if (!indiceInvertido.get(word).contains(url)) {
+            indiceInvertido.get(word).add(url);
         }
     }
 
 
     @Override
     public synchronized List<String> searchWord(String word) throws RemoteException {
-/*
-        String words = word.toLowerCase();
-        ArrayList<String> urls = new ArrayList<>();
+        String[] words = word.toLowerCase().split(" ");
+        ArrayList<String> resultadourls = new ArrayList<>();
         //ArrayList<String>> sortedURLS = new ArrayList<>();
 
-        for (String query : words.split(" ")) {
-            if (indiceParaPesquisas.containsKey(word)) {
-                urls.addAll(indiceParaPesquisas.get(query));
+        if (indiceInvertido.containsKey(words[0])) {
+            resultadourls.addAll(indiceInvertido.get(words[0])); // Adiciona os URLs que contêm o primeiro termo
+        } else {
+            return resultadourls; // Se o primeiro termo não existe no índice, retorna lista vazia
+        }
+
+        for (int i =1; i<words.length; i++) {
+            if (indiceInvertido.containsKey(words[i])) {
+                resultadourls.retainAll(indiceInvertido.get(words[i])); //addAll ou retainAll
+            }else{
+                resultadourls.clear(); //ver bem este else
+                break;
             }
             //verificar a "pontuação" para ordenar os resultados que vao aparecer
         }
-        return sortedURLS;*/
-        return List.of();
+        return resultadourls;
     }
 
     @Override
@@ -77,8 +90,20 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     }
 
     public void updateIndex(HashMap<String, ArrayList<String>> newIndex) throws RemoteException {
-        this.indiceParaPesquisas.clear();
-        this.indiceParaPesquisas.putAll(newIndex);
+        this.indiceInvertido.clear();
+        this.indiceInvertido.putAll(newIndex);
+    }
+
+    public LinkedHashMap<String, Integer> top10() throws RemoteException{
+        //meter dps um aviso a dizer que vai buscar os 10
+        List<Map.Entry<String,Integer>> ordenardecrescente = new ArrayList<>();
+        ordenardecrescente.sort((entry1, entry2) -> entry2.getValue() - entry1.getValue());     //o chat diz q é a soluçao mais simples, o diogo tbm fez assim
+
+        LinkedHashMap<String, Integer> top10 = new LinkedHashMap<>();
+        for (int i=0; i<10; i++){
+            top10.put(ordenardecrescente.get(i).getKey(), ordenardecrescente.get(i).getValue());
+        }
+        return top10;
     }
 
     //indexar

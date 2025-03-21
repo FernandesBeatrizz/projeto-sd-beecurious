@@ -6,6 +6,7 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.rmi.NotBoundException;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Set;
@@ -157,6 +158,8 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
             // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (NotBoundException e) {
             throw new RuntimeException(e);
         }
 

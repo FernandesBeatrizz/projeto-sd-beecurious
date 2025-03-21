@@ -1,6 +1,5 @@
 package main.search;
 
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -11,7 +10,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     //vamos ter d meter aqui o nome d barrel p identificar o barrel p dps haver conexao
     //vamos ter d conectar com os barrels
     private LinkedList<String> listaParaFazerCrawl = new LinkedList<>();// mudei p queue
-    private HashMap<String, ArrayList<String>> indiceParaPesquisas = new HashMap<>();
+    private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
     private ArrayList<DownloaderINTER> downloaders;
     private QueueInterface queue;
@@ -118,7 +117,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     @Override
     public void syncBarrels() throws RemoteException {
         for (BarrelsINTER barrel : barrels) {
-            barrel.updateIndex(indiceParaPesquisas);
+            barrel.updateIndex(indiceInvertido);
         }
     }
 
@@ -156,14 +155,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     public synchronized void addToIndex(String word, String url) throws RemoteException {
-        if (this.indiceParaPesquisas.containsKey(word)) {
-            if (!((ArrayList)this.indiceParaPesquisas.get(word)).contains(url)) {
-                this.indiceParaPesquisas.get(word).add(url);
+        if (this.indiceInvertido.containsKey(word)) {
+            if (!((ArrayList)this.indiceInvertido.get(word)).contains(url)) {
+                this.indiceInvertido.get(word).add(url);
             }
         } else {
             ArrayList<String> novaLista = new ArrayList<>();
             novaLista.add(url);
-            this.indiceParaPesquisas.put(word, novaLista);
+            this.indiceInvertido.put(word, novaLista);
         }
     }
 
@@ -188,8 +187,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     @Override
     public List<String> guardaResultado(String palavra) throws RemoteException {
-        if (this.indiceParaPesquisas.containsKey(palavra)) {
-            return this.indiceParaPesquisas.get(palavra);
+        if (this.indiceInvertido.containsKey(palavra)) {
+            return this.indiceInvertido.get(palavra);
         } else {
             return new ArrayList<>();
         }
