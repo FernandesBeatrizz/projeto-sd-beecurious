@@ -13,7 +13,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private GatewayINTER gateway;
     private String name;
-    private String host;
     private int port;
     private HashMap<String, HashSet<String>> ponteiros= new HashMap<>();
     private static final String ficheiroURLbarrels= "barrels.data";
@@ -21,10 +20,10 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     public Barrels( String name, int port) throws RemoteException {
         super(port);
         this.indiceInvertido=new HashMap<>();
-        this.name=name;
-        this.port=port;
-        this.host="localhost";
-        this.ponteiros=new HashMap<>();
+        this.gateway = new Gateway();
+        this.name = name;
+        this.port = port;
+        this.ponteiros = new HashMap<>();
 
     }
 
@@ -105,6 +104,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         Registry registry = LocateRegistry.getRegistry("localhost", this.port);
         try {
             registry.unbind(this.name);
+            this.gateway.unregisterBarrel(this);
             System.out.println("Barrel " + this.name + " removido do RMI Registry.");
             String nome = this.name;
             criarbarrel( nome, this.port, 8183);
@@ -164,7 +164,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             novo.gateway = (GatewayINTER) registry.lookup("Gateway");
             novo.gateway.registerBarrel(novo);
 
-            System.out.println("Barrel criado e sincronizado com sucesso");
             return novo;
         }catch(Exception e){
             e.printStackTrace();

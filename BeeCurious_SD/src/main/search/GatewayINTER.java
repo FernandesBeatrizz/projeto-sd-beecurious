@@ -29,6 +29,8 @@ public interface GatewayINTER extends Remote {
 
     QueueInterface getUrlQueue() throws RemoteException;
 
+    void unregisterBarrel(BarrelsINTER barrel) throws RemoteException;
+
     //downloaders
     String takeNext() throws RemoteException, InterruptedException;
 

@@ -45,7 +45,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     public static void main(String[] args) {
       try {
         Gateway gateway = new Gateway();
-        String gatewayName = "gateway";
+        String gatewayName = "Gateway";
         String gatewayHost = "localhost";
         int gatewayPort = 8183;
 
@@ -57,11 +57,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         System.out.println("gateway ready. Waiting for input...");
          //Thread.sleep(4000L);
          //server.printOnClient();
-
-        //conectar aos barrels
-        connectToBarrel("localhost", 1000, "Barrel1");
-        connectToBarrel("localhost", 2000, "Barrel2");
-        connectToBarrel("localhost", 3000, "Barrel3");
 
 
           System.out.println("printed");
@@ -125,6 +120,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }*/
 
+    //RELACIONADO A URLS
     public void indexarURL(String url) throws RemoteException {
         System.out.println("URL recebido para indexação: " + url);
         try{
@@ -152,6 +148,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         System.out.println("");
     }
 
+    //REGISTAR E SINCRONIZAR BARRELS
     @Override
     public void registerBarrel(BarrelsINTER barrel) throws RemoteException {
         if (this.barrels == null) {
@@ -161,14 +158,13 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         System.out.println("Barrel registado "); //nao sei s é preciso esta mensagem
     }
 
-    private static void connectToBarrel(String barrelHost, int barrelPort, String barrelName) throws RemoteException{
-        try{
-            Registry registry = LocateRegistry.getRegistry(barrelHost, barrelPort);
-            BarrelsINTER barrel = (BarrelsINTER) registry.lookup(barrelName);
-
-            System.out.println("Conectada ao Barrel " + barrelName + " no host " + barrelHost + " e porta " + barrelPort);
-        } catch (Exception e) {
-            System.out.print("Erro a conectar barrel" + barrelName+ "à gateway");
+    @Override
+    public void unregisterBarrel(BarrelsINTER barrel) throws RemoteException{
+        if (barrels.contains(barrel)) {
+            barrels.remove(barrel);
+            System.out.println("Barrel removido");
+        } else {
+            System.out.println("Erro a remover barrel");
         }
     }
 
