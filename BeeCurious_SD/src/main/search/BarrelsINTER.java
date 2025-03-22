@@ -21,5 +21,8 @@ public interface BarrelsINTER extends Remote {
     void indexarURL(String url) throws RemoteException;
 
     //void linksURLaddToIndex(String word, String url, String titulo, String citacao, List<String>links)  throws RemoteException;
+
+    public boolean containsURL(String url);
 }
+
 

@@ -20,14 +20,12 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     GatewayINTER gateway;
     private static final Set<String> urlsProcessados= new HashSet<>();
     QueueInterface urlQueue;
-    List<Barrels> barrel;
-
 
     public Downloader(QueueInterface urlQueue) throws RemoteException, InterruptedException {
         super();
         this.urlQueue = urlQueue;
     }
-/*
+
     public void executar(){
         try {
             String rmiName = "gateway";
@@ -46,13 +44,13 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                 if(url == null){
                     //break;
                     System.out.println("fila vazia");
-                    /*tentativas+=1;
+                    tentativas+=1;
                     if (tentativas > urlQueue.getMaxSize()) {  // Melhor usar a variável
                         System.out.println("Fila vazia por muito tempo. Encerrando processo.");
                         break;
                     }
-                    Thread.sleep(1000);*/
-                    /*continue;
+                    Thread.sleep(1000);
+                    continue;
                 }
                 tentativas=0;
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -69,7 +67,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         }
     }
 
-    public void processarPagina(String url) {
+    /*public void processarPagina(String url) {
         try{
             System.out.println("processar o url: "+  url);
             Document doc = Jsoup.connect(url).timeout(timeout).get();
@@ -103,9 +101,9 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     }*/
 
 
-/*
-    public void processarPagina(String url){
-        Barrels barrel= this.barrel.get(0);
+
+    public void processarPagina(String url) throws RemoteException {
+        BarrelsINTER barrel= gateway.getBarrel();  //aqui tenho d meter um numero qql p identificar o barrel, meti 0 p ser logo o primeiro
         if (!barrel.containsURL(url)){
             try{
                 Document doc= Jsoup.connect(url).get();
@@ -157,14 +155,20 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                 //extrair palavras
                 HashMap<String, HashSet<String>> index = new HashMap<>(); // Índice invertido local
                 String[] palavras = doc.text().toLowerCase().replaceAll("[^a-zA-Z ]", "").split("\\s+");
+                Set<String> palavrasExtraidas = new HashSet<>();
                 for (String palavra : palavras) {
                     if (palavra.length() > 3) { // Evita palavras curtas
                         index.computeIfAbsent(palavra, k -> new HashSet<>()).add(url);
                         gateway.addToIndex(palavra, url);
+
+                        palavrasExtraidas.add(palavra);
                     }
                 }
-                for (Barrels b:this.barrel){
-                    b.addToIndex( palavra, url, titulo, citacao, listaLinks);
+
+                if(!barrel.containsURL(url)) {
+                    for (String palavra : palavrasExtraidas) {
+                        barrel.addToIndex(palavra, url, titulo, citacao, listaLinks);
+                    }
                 }
             }catch (IOException e){
                 System.out.println("Erro"+ e.getMessage());
@@ -173,7 +177,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     }
 
 
-*/
+
     private String transformarUrlAbsoluta(String baseUrl, String href){
         try {
             URI baseUri = new URI(baseUrl);
@@ -205,7 +209,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
 
 @Override
     public void run() {
-        //executar();
+        executar();
     }
 
     public static void main(String[] args) {
@@ -239,6 +243,11 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     @Override
     public void printOnClient() throws RemoteException {
         System.out.println("Print on client");
+    }
+
+    @Override
+    public List<String> searchWord(String word) throws RemoteException {
+        return List.of();
     }
 
     public String get_url() throws RemoteException {

@@ -31,6 +31,8 @@ public interface GatewayINTER extends Remote {
 
     void unregisterBarrel(BarrelsINTER barrel) throws RemoteException;
 
+    BarrelsINTER getBarrel() throws RemoteException;
+
     //downloaders
     String takeNext() throws RemoteException, InterruptedException;
 

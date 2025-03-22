@@ -13,7 +13,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private LinkedList<String> listaParaFazerCrawl = new LinkedList<>();// mudei p queue
     private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
-    private ArrayList<DownloaderINTER> downloaders;
+    private int currentBarrelIndex = 0;
     private String url;
     private ClienteINTER cliente;
     private Set<String> urlsIndexados= new HashSet<>();
@@ -38,7 +38,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             e.printStackTrace();
         }*/
         barrels = new ArrayList<>();
-        downloaders = new ArrayList<>();
         //queue = null;
     }
 
@@ -173,6 +172,17 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         for (BarrelsINTER barrel : barrels) {
             barrel.updateIndex(indiceInvertido);
         }
+    }
+
+    public BarrelsINTER getBarrel() throws RemoteException{
+        try{
+            BarrelsINTER barrel = barrels.get(currentBarrelIndex);
+            currentBarrelIndex = (currentBarrelIndex + 1) % barrels.size();
+        return barrel;
+        }catch (Exception e){
+            System.out.print("Erro"+ e.getMessage());
+        }
+        return null;
     }
 
 

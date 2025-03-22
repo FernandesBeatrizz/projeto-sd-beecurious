@@ -1,18 +1,19 @@
 package main.search;
 
 import java.rmi.NotBoundException;
-import java.rmi.Remote;
+import java.util.*;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.List;
 import java.util.Scanner;
 
 public class Cliente implements ClienteINTER {
     
     private GatewayINTER gateway;
     public Cliente() throws NotBoundException, RemoteException {
-        Registry registry = LocateRegistry.getRegistry("localhost", 8183); // Use o mesmo número de porta do Gateway
-        this.gateway = (GatewayINTER) registry.lookup("gateway");  // O nome do serviço no RMI Registry
+        Registry registry = LocateRegistry.getRegistry("localhost", 8183);
+        this.gateway = (GatewayINTER) registry.lookup("Gateway");
     }
 
     @Override
@@ -26,6 +27,17 @@ public class Cliente implements ClienteINTER {
         String url = sc.nextLine();
         gateway.putNew(url);
         System.out.println("URL enviado: " + url);
+    }
+
+    @Override
+    public synchronized List<String> searchWord(String word) throws RemoteException{
+        try {
+            List<String> resultados = gateway.searchWord(word);
+            return resultados;
+        } catch (Exception e) {
+            System.out.println("falha na pesquisa");
+            return new ArrayList<>();
+        }
     }
 
     public static void main(String[] args) {

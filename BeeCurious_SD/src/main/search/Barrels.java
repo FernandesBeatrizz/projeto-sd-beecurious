@@ -10,7 +10,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
 public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
-    private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
+    private HashMap<String, ArrayList<String[]>> indiceInvertido = new HashMap<>();
     private GatewayINTER gateway;
     private String name;
     private int port;
@@ -46,15 +46,24 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     @Override
     public void addToIndex(String word, String url, String titulo, String citacao, List<String>links) throws RemoteException {
-        indiceInvertido.putIfAbsent(word, new ArrayList<>());
+        /*indiceInvertido.putIfAbsent(word, new ArrayList<>());
         boolean urlexiste= false;
 
         if (!indiceInvertido.get(word).contains(url)) {
             indiceInvertido.get(word).add(url);
+        }*/
+        boolean urlExiste = false;
+        for (String[] pagina : indiceInvertido.get(word)) {
+            if (pagina[0].equals(url)) {
+                urlExiste = true;
+                break;
+            }
         }
 
-        //verificar se o url ja esta associado a palavra
-        // s nao estiver, adicionar
+        if (!urlExiste) {
+            // Armazena a URL, título, citação e links como um array
+            indiceInvertido.get(word).add(new String[]{url, titulo, citacao, String.join(",", links)});
+        }
     }
 
 
@@ -65,7 +74,9 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         //ArrayList<String>> sortedURLS = new ArrayList<>();
 
         if (indiceInvertido.containsKey(words[0])) {
-            resultadourls.addAll(indiceInvertido.get(words[0])); // Adiciona os URLs que contêm o primeiro termo
+            for(String[] pagina : indiceInvertido.get(words[0])) {
+                resultadourls.add(pagina[0]);
+            }
         } else {
             return resultadourls; // Se o primeiro termo não existe no índice, retorna lista vazia
         }
@@ -100,6 +111,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         }
     }
 
+    @Override
+    public void updateIndex(HashMap<String, ArrayList<String>> indiceParaPesquisas) throws RemoteException {
+        
+    }
+
     public void reviverBarrel() throws RemoteException {
         Registry registry = LocateRegistry.getRegistry("localhost", this.port);
         try {
@@ -114,11 +130,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         }
 
     }
-
-    public void updateIndex(HashMap<String, ArrayList<String>> newIndex) throws RemoteException {
+/*
+    public void updateIndex(HashMap<String, ArrayList<String[]>> newIndex) throws RemoteException {
         this.indiceInvertido.clear();
         this.indiceInvertido.putAll(newIndex);
-    }
+    }*/
 
     @Override
     public void indexarURL(String url) throws RemoteException {
@@ -131,7 +147,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     public LinkedHashMap<String, Integer> top10() throws RemoteException{
         //meter dps um aviso a dizer que vai buscar os 10
-        List<Map.Entry<String,ArrayList<String>>> ordenardecrescente = new ArrayList<>(indiceInvertido.entrySet());
+        List<Map.Entry<String,ArrayList<String[]>>> ordenardecrescente = new ArrayList<>(indiceInvertido.entrySet());
         ordenardecrescente.sort((entry1, entry2) -> entry2.getValue().size() - entry1.getValue().size());     //o chat diz q é a soluçao mais simples, o diogo tbm fez assim
 
         LinkedHashMap<String, Integer> top10 = new LinkedHashMap<>();
@@ -186,9 +202,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
 
     public boolean containsURL(String url){
-        for (ArrayList<String> urls : indiceInvertido.values()) {
-            if (urls.contains(url)) {
-                return true;
+        for (ArrayList<String[]> paginas : indiceInvertido.values()) {
+            for(String[] pagina: paginas){
+                if (pagina[0].equals(url)) {
+                    return true;
+                }
             }
         }
         return false;
