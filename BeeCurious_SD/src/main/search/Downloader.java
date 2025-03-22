@@ -21,10 +21,10 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     private static final int timeout = 5000;
     GatewayINTER gateway;
     private static final Set<String> urlsProcessados= new HashSet<>();
-    URLqueue urlQueue;
+    QueueInterface urlQueue;
 
 
-    public Downloader(URLqueue urlQueue) throws RemoteException {
+    public Downloader(QueueInterface urlQueue) throws RemoteException, InterruptedException {
         super();
         this.urlQueue = urlQueue;
     }
@@ -143,7 +143,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
             //URLqueue urlQueue= new URLqueue(100);
             Registry registry = LocateRegistry.getRegistry("localhost", 8183);
             GatewayINTER gateway = (GatewayINTER) registry.lookup("gateway");
-            URLqueue urlQueue = ((Gateway) gateway).getUrlQueue();
+            QueueInterface urlQueue = gateway.getUrlQueue();
 
             Thread[] threads = new Thread[numDownloaders];
             for (int i = 0; i < numDownloaders; i++) {

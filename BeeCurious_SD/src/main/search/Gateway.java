@@ -13,11 +13,13 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
     private ArrayList<DownloaderINTER> downloaders;
-    private QueueInterface queue;
+    //private QueueInterface queue;
     private String url;
     private ClienteINTER cliente;
     private Set<String> urlsIndexados= new HashSet<>();
-    private URLqueue urlQueue;
+    private QueueInterface urlQueue;
+
+
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
 
@@ -27,7 +29,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         this.urlQueue=new URLqueue(100);
         barrels = new ArrayList<>();
         downloaders = new ArrayList<>();
-        queue = null;
+        //queue = null;
     }
 
     public static void main(String[] args) {
@@ -121,6 +123,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
+
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -
     public synchronized String takeNext() throws RemoteException, InterruptedException {
         //return listaParaFazerCrawl.poll();
@@ -199,7 +202,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     }
 
-    public URLqueue getUrlQueue() {
+    public QueueInterface getUrlQueue() throws RemoteException {
         return this.urlQueue;
     }
 

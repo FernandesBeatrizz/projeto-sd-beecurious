@@ -61,6 +61,12 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
         LOGGER.info("URL removida da fila: " + url); // Log para depuração
         return url;
     }
+
+    @Override
+    public String getUrlQueue() throws RemoteException, InterruptedException {
+        return this.toString();
+    }
+
     public static void main(String[] args) {
         try {
             // Cria uma instância da URLqueue com tamanho máximo de 10000
