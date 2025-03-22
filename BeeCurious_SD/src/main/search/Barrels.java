@@ -153,11 +153,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     public static Barrels criarbarrel(String nome, int port){
         try{
             Barrels novo = new Barrels(nome, port);
-            Registry registry= LocateRegistry.getRegistry("localhost", novo.port);
-            novo.gateway=(GatewayINTER) registry.lookup("gateway");
-            novo.gateway.syncBarrels();
-            novo.updateIndex(novo.indiceInvertido);
+            Registry registry = LocateRegistry.getRegistry("localhost",port);
             registry.rebind(nome, novo);
+
+            Registry gatewayRegistry = LocateRegistry.getRegistry("localhost", 8183);
+            novo.gateway = (GatewayINTER) gatewayRegistry.lookup("Gateway");
+            novo.gateway.registerBarrel(novo);
+
             System.out.println("Barrel criado e sincronizado com sucesso");
             return novo;
         }catch(Exception e){
