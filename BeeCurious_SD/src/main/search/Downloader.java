@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.NotBoundException;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -22,6 +20,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     GatewayINTER gateway;
     private static final Set<String> urlsProcessados= new HashSet<>();
     QueueInterface urlQueue;
+    List<Barrels> barrel;
 
 
     public Downloader(QueueInterface urlQueue) throws RemoteException, InterruptedException {
@@ -70,7 +69,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         }
     }
 
-    public void processarPagina(String url) {
+    /*public void processarPagina(String url) {
         try{
             System.out.println("processar o url: "+  url);
             Document doc = Jsoup.connect(url).timeout(timeout).get();
@@ -79,9 +78,9 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         }catch(IOException e){
             System.out.println("Erro"+ e.getMessage());
         }
-    }
+    }*/
 
-    public void extrairLinks(Document doc) throws RemoteException {
+    /*public void extrairLinks(Document doc) throws RemoteException {
         Elements anchors = doc.select("a");
         String baseUrl = doc.baseUri(); // A URL original do cliente
 
@@ -101,7 +100,79 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
             }
         }
 
+    }*/
+
+
+
+    public void processarPagina(String url){
+        Barrels barrel= this.barrel.get(0);
+        if (!barrel.containsURL(url)){
+            try{
+                Document doc= Jsoup.connect(url).get();
+
+                //titulo
+                String titulo = doc.title();
+                System.out.println(titulo);
+
+
+                //citação
+                String citacao= "";
+                Element primeiroparagrafo= doc.select("p").first();
+                if (primeiroparagrafo != null) {
+                    citacao = primeiroparagrafo.text();
+                }else{
+                    citacao = doc.select("meta[property=og:description]").attr("content");
+                    if (citacao.isEmpty()) {
+                        citacao = doc.select("meta[name=description]").attr("content");
+                    }
+                    if (citacao.isEmpty()) {
+                        citacao = "Nenhuma citação encontrada.";
+                    }
+                }
+                System.out.println("Citação: " + citacao);
+
+
+                //Extrair link
+                Elements anchors = doc.select("a");
+                String baseUrl = doc.baseUri(); // A URL original do cliente
+                List<String> listaLinks = new ArrayList<>();
+
+                if (baseUrl.isEmpty()) {
+                    System.err.println("Erro: baseUri() não foi definido corretamente!");
+                    return;
+                }
+                for (Element anchor : anchors) {
+                    String href = anchor.attr("href");
+                    if (href.isEmpty() || href.startsWith("#")) {
+                        continue;
+                    }
+                    String absoluteUrl=transformarUrlAbsoluta(baseUrl, href);
+                    if (absoluteUrl != null) {
+                        gateway.putNew(absoluteUrl);
+                        System.out.println("Link extraído: " + absoluteUrl);
+                    }
+                }
+
+
+                //extrair palavras
+                HashMap<String, HashSet<String>> index = new HashMap<>(); // Índice invertido local
+                String[] palavras = doc.text().toLowerCase().replaceAll("[^a-zA-Z ]", "").split("\\s+");
+                for (String palavra : palavras) {
+                    if (palavra.length() > 3) { // Evita palavras curtas
+                        index.computeIfAbsent(palavra, k -> new HashSet<>()).add(url);
+                        gateway.addToIndex(palavra, url);
+                    }
+                }
+                for (Barrels b:this.barrel){
+                    b.addToIndex( palavra, url, titulo, citacao, listaLinks);
+                }
+            }catch (IOException e){
+                System.out.println("Erro"+ e.getMessage());
+            }
+        }
     }
+
+
 
     private String transformarUrlAbsoluta(String baseUrl, String href){
         try {
@@ -121,7 +192,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         }
     }
 
-    public void extrairpalavras(Document doc, String url) throws RemoteException {
+    /*public void extrairpalavras(Document doc, String url) throws RemoteException {
         HashMap<String, HashSet<String>> index = new HashMap<>(); // Índice invertido local
         String[] palavras = doc.text().toLowerCase().replaceAll("[^a-zA-Z ]", "").split("\\s+");
         for (String palavra : palavras) {
@@ -130,7 +201,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                 gateway.addToIndex(palavra, url);
             }
         }
-    }
+    }*/
 
 @Override
     public void run() {

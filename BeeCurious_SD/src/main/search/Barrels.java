@@ -13,29 +13,30 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private GatewayINTER gateway;
     private String name;
+    private String host;
     private int port;
     private HashMap<String, HashSet<String>> ponteiros= new HashMap<>();
     private static final String ficheiroURLbarrels= "barrels.data";
 
     public Barrels( String name, int port) throws RemoteException {
-        super();
+        super(port);
         this.indiceInvertido=new HashMap<>();
-        this.gateway = new Gateway();
         this.name=name;
         this.port=port;
+        this.host="localhost";
         this.ponteiros=new HashMap<>();
 
     }
 
     public static void main(String[] args) {
         try{
-            String rmiName = "gateway";
-            String rmiHost = "localhost";
-            int rmiPort = 8183;
+            String gatewayName = "gateway";
+            String gatewayHost = "localhost";
+            int gatewayPort = 8183;
 
-            Barrels barrel1 = criarbarrel("Barrel1",rmiPort);
-            Barrels barrel2 = criarbarrel("Barrel2", rmiPort);
-            Barrels barrel3 = criarbarrel("Barrel3", rmiPort);
+            Barrels barrel1 = criarbarrel("Barrel1", 1000, gatewayPort );
+            Barrels barrel2 = criarbarrel("Barrel2", 2000, gatewayPort );
+            Barrels barrel3 = criarbarrel("Barrel3", 3000, gatewayPort);
 
             System.out.println("- - barrels check");
         }
@@ -45,11 +46,16 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     }
 
     @Override
-    public void addToIndex(String word, String url) throws RemoteException {
+    public void addToIndex(String word, String url, String titulo, String citacao, List<String>links) throws RemoteException {
         indiceInvertido.putIfAbsent(word, new ArrayList<>());
+        boolean urlexiste= false;
+
         if (!indiceInvertido.get(word).contains(url)) {
             indiceInvertido.get(word).add(url);
         }
+
+        //verificar se o url ja esta associado a palavra
+        // s nao estiver, adicionar
     }
 
 
@@ -83,7 +89,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     @Override
     public void syncWithReplica() throws RemoteException {
         if (!verificarbarrel(this)) {
-            System.out.println("Necessário revivr barrel ");
+            System.out.println("Necessário reviver barrel ");
             try {
                 this.reviverBarrel();
 
@@ -101,7 +107,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             registry.unbind(this.name);
             System.out.println("Barrel " + this.name + " removido do RMI Registry.");
             String nome = this.name;
-            criarbarrel( nome, this.port);
+            criarbarrel( nome, this.port, 8183);
         }
         catch (Exception e){
             System.out.println (" erro a reviver barrel");
@@ -119,10 +125,9 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     }
 
-    @Override
-    public void linksURL(String url, List<String> links) throws RemoteException {
+    /*public void linksURL(String url, List<String> links) throws RemoteException {
 
-    }
+    }*/
 
     public LinkedHashMap<String, Integer> top10() throws RemoteException{
         //meter dps um aviso a dizer que vai buscar os 10
@@ -150,14 +155,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     }
 
 
-    public static Barrels criarbarrel(String nome, int port){
+    public static Barrels criarbarrel(String barrel_nome, int barrel_port, int gateway_port){
         try{
-            Barrels novo = new Barrels(nome, port);
-            Registry registry = LocateRegistry.getRegistry("localhost",port);
-            registry.rebind(nome, novo);
+            Barrels novo = new Barrels(barrel_nome, barrel_port);
+            Registry registry = LocateRegistry.getRegistry("localhost", gateway_port);
+            registry.rebind(barrel_nome, novo);
 
-            Registry gatewayRegistry = LocateRegistry.getRegistry("localhost", 8183);
-            novo.gateway = (GatewayINTER) gatewayRegistry.lookup("Gateway");
+            novo.gateway = (GatewayINTER) registry.lookup("Gateway");
             novo.gateway.registerBarrel(novo);
 
             System.out.println("Barrel criado e sincronizado com sucesso");
@@ -168,7 +172,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         }
     }
 
-
+//era o metodo de guardar as coisas que estao na queue, ainda nao acabei
     private void salvar(){
         synchronized (this) {
             try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream("barrel_index.dat"))) {
@@ -179,6 +183,18 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             }
         }
     }
+
+
+
+    public boolean containsURL(String url){
+        for (ArrayList<String> urls : indiceInvertido.values()) {
+            if (urls.contains(url)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     //nos barels temos de ver quando eles s deligam e dps fazer a conexao de novo com a gateway e ver se a informaçao é a mesma
 }

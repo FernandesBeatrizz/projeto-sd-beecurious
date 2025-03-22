@@ -45,18 +45,24 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     public static void main(String[] args) {
       try {
         Gateway gateway = new Gateway();
-        String rmiName = "gateway";
-        String rmiHost = "localhost";
-        int rmiPort = 8183;
+        String gatewayName = "gateway";
+        String gatewayHost = "localhost";
+        int gatewayPort = 8183;
 
-        System.setProperty("java.rmi.server.hostname", rmiHost);
+        System.setProperty("java.rmi.server.hostname", gatewayHost);
 
-        Registry registry = LocateRegistry.createRegistry(rmiPort);
-        registry.rebind(rmiName, gateway);
+        Registry registry = LocateRegistry.createRegistry(gatewayPort);
+        registry.rebind(gatewayName, gateway);
 
         System.out.println("gateway ready. Waiting for input...");
          //Thread.sleep(4000L);
          //server.printOnClient();
+
+        //conectar aos barrels
+        connectToBarrel("localhost", 1000, "Barrel1");
+        connectToBarrel("localhost", 2000, "Barrel2");
+        connectToBarrel("localhost", 3000, "Barrel3");
+
 
           System.out.println("printed");
         } catch (Exception var3) {
@@ -153,6 +159,17 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
         this.barrels.add(barrel);
         System.out.println("Barrel registado "); //nao sei s é preciso esta mensagem
+    }
+
+    private static void connectToBarrel(String barrelHost, int barrelPort, String barrelName) throws RemoteException{
+        try{
+            Registry registry = LocateRegistry.getRegistry(barrelHost, barrelPort);
+            BarrelsINTER barrel = (BarrelsINTER) registry.lookup(barrelName);
+
+            System.out.println("Conectada ao Barrel " + barrelName + " no host " + barrelHost + " e porta " + barrelPort);
+        } catch (Exception e) {
+            System.out.print("Erro a conectar barrel" + barrelName+ "à gateway");
+        }
     }
 
     @Override
