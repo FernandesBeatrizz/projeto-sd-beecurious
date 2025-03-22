@@ -1,5 +1,7 @@
 package main.search;
 
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,7 +19,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     private final int max_size;
     //final private static String QUEUE_CONFIG = "queue.properties";
     private static final Logger LOGGER = Logger.getLogger(URLqueue.class.getName());
-
+    private static final String caminhoficheiro = " urls.dat"; //meter dps o caminho
 
     public URLqueue(int max_size) throws RemoteException{
         this.max_size=max_size;
@@ -32,39 +34,50 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
                 notifyAll();
             } catch (Exception e) {
                 Thread.currentThread().interrupt();
-                System.out.println("Erro ao adicionar URL: " + e);
+                LOGGER.severe("Erro ao adicionar URL{} " + url);
             }
         } else {
-            System.out.println("A queue está cheia, logo o URL não pode ser adicionado"+ url);
+            LOGGER.warning("A queue está cheia, logo o URL não pode ser adicionado");
         }
     }
+
+
     public synchronized String getURL() throws RemoteException, InterruptedException {
-        /*try {
-            String url = urls.take(); // Retira o próximo URL da fila
-            LOGGER.info("URL removido da fila: " + url); // Log para depuração
-            return url;
-        } catch (InterruptedException e) {
-            LOGGER.warning("Thread interrompida ao pegar URL: " + e.getMessage());
-            Thread.currentThread().interrupt(); // Restaura o status de interrupção
-            throw new RemoteException("Erro ao pegar URL da fila", e);
-        }*/
-        /*if (urls.isEmpty()) {
-            System.out.println("Fila está vazia! Nenhum URL para processar.");
-            return null;  // Em vez de bloquear, retorna null
-        }*/
-        //return urls.take();
+        LOGGER.info("Solicitar um URL");
         while (urls.isEmpty()) {
-            System.out.println("Fila vazia, a espera de novos URLs...");
-            wait(); // Bloqueia até que a fila tenha um elemento
+            try{
+                System.out.println("Fila vazia, a espera de novos URLs...");
+                wait(); // Bloqueia até que a fila tenha um elemento
+            }catch (InterruptedException e){
+                LOGGER.warning("Erro "+ e.getMessage());
+                throw e;
+            }
         }
+
         String url = urls.take(); // Retira a próxima URL da fila
         LOGGER.info("URL removida da fila: " + url); // Log para depuração
+        //esta parte vai ser para salvar o URL
+        try{
+            ObjectOutputStream out= new ObjectOutputStream(new FileOutputStream(caminhoficheiro));
+            out.writeObject(url);
+            LOGGER.info("URL foi guardada ");
+        } catch (Exception e) {
+            LOGGER.warning("Erro ao guardar URL"+ e.getMessage());
+        }
         return url;
     }
 
     @Override
     public String getUrlQueue() throws RemoteException, InterruptedException {
         return this.toString();
+    }
+
+    public int getQueueSize() throws RemoteException {
+        return urls.size();
+    }
+
+    public int getMaxSize() throws RemoteException {
+        return max_size;
     }
 
     public static void main(String[] args) {
@@ -87,14 +100,4 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
             e.printStackTrace();
         }
     }
-
-    public int getQueueSize() throws RemoteException {
-        return urls.size();
-    }
-
-    public int getMaxSize() throws RemoteException {
-        return max_size;
-    }
-
-
 }
