@@ -1,20 +1,21 @@
 package main.search;
 
-import java.lang.reflect.Array;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.Map.Entry;
 
 public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private GatewayINTER gateway;
-    //private int ip; host??
     private String name;
     private int port;
     private HashMap<String, HashSet<String>> ponteiros= new HashMap<>();
+    private static final String ficheiroURLbarrels= "barrels.data";
 
     public Barrels( String name, int port) throws RemoteException {
         super();
@@ -23,27 +24,20 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         this.name=name;
         this.port=port;
         this.ponteiros=new HashMap<>();
+
     }
 
     public static void main(String[] args) {
         try{
             String rmiName = "gateway";
-            String rmiHost = "localhost";    //fazer com o ficheiro das propriedades ou vars de ambiente
+            String rmiHost = "localhost";
             int rmiPort = 8183;
 
-            Registry registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
+            Barrels barrel1 = criarbarrel("Barrel1",rmiPort);
+            Barrels barrel2 = criarbarrel("Barrel2", rmiPort);
+            Barrels barrel3 = criarbarrel("Barrel3", rmiPort);
 
-            Barrels barrel_1 = new Barrels("divo", 1000);
-            registry.rebind("Barrel", barrel_1);
-            barrel_1.gateway = (GatewayINTER) registry.lookup(rmiName);
-
-            Barrels barrel_2 = new Barrels(rmiName, rmiPort);
-            registry.rebind("Barrel2", barrel_2);
-            barrel_2.gateway = (GatewayINTER) registry.lookup(rmiName);
-
-            //nao sei s é preciso chamar os 2 barrels com o syncWithReplica
             System.out.println("- - barrels check");
-
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -83,19 +77,51 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         return resultadourls;
     }
 
+    public void ping() throws RemoteException {
+    }
+
     @Override
     public void syncWithReplica() throws RemoteException {
         if (!verificarbarrel(this)) {
-            System.out.println("Necessário criar outro barrel e sincronizar ");
-            criarbarrel(this);
+            System.out.println("Necessário revivr barrel ");
+            try {
+                this.reviverBarrel();
+
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
         }else{
             gateway.syncBarrels();
         }
     }
 
+    public void reviverBarrel() throws RemoteException {
+        Registry registry = LocateRegistry.getRegistry("localhost", this.port);
+        try {
+            registry.unbind(this.name);
+            System.out.println("Barrel " + this.name + " removido do RMI Registry.");
+            String nome = this.name;
+            criarbarrel( nome, this.port);
+        }
+        catch (Exception e){
+            System.out.println (" erro a reviver barrel");
+        }
+
+    }
+
     public void updateIndex(HashMap<String, ArrayList<String>> newIndex) throws RemoteException {
         this.indiceInvertido.clear();
         this.indiceInvertido.putAll(newIndex);
+    }
+
+    @Override
+    public void indexarURL(String url) throws RemoteException {
+
+    }
+
+    @Override
+    public void linksURL(String url, List<String> links) throws RemoteException {
+
     }
 
     public LinkedHashMap<String, Integer> top10() throws RemoteException{
@@ -113,30 +139,43 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     }
 
 
-    public boolean verificarbarrel(Barrels barrel){
+    public boolean verificarbarrel(Barrels barrels){
         try{
-            barrel.syncWithReplica();
+            this.ping();
             return true;
         }catch(RemoteException e){
-            System.out.println("Barrel não esta so a dormir: "+ barrel.name);
+            System.out.println("Barrel inativo: "+ this.name);
             return false;
         }
     }
 
 
-    public void criarbarrel(Barrels barrel){
+    public static Barrels criarbarrel(String nome, int port){
         try{
-            Barrels novo = new Barrels(barrel.name, barrel.port);
-            Registry registry= LocateRegistry.getRegistry("localhost", barrel.port);
+            Barrels novo = new Barrels(nome, port);
+            Registry registry= LocateRegistry.getRegistry("localhost", novo.port);
             novo.gateway=(GatewayINTER) registry.lookup("gateway");
-            barrel.gateway.syncBarrels();
-            novo.updateIndex(barrel.indiceInvertido);
-            registry.rebind("Barrel3", novo);
+            novo.gateway.syncBarrels();
+            novo.updateIndex(novo.indiceInvertido);
+            registry.rebind(nome, novo);
             System.out.println("Barrel criado e sincronizado com sucesso");
+            return novo;
         }catch(Exception e){
             e.printStackTrace();
+            return null;
         }
+    }
 
+
+    private void salvar(){
+        synchronized (this) {
+            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream("barrel_index.dat"))) {
+                output.writeObject(indiceInvertido);
+                System.out.println("Índice salvo com sucesso.");
+            } catch (IOException e) {
+                System.err.println("Erro ao salvar o índice: " + e.getMessage());
+            }
+        }
     }
 
     //nos barels temos de ver quando eles s deligam e dps fazer a conexao de novo com a gateway e ver se a informaçao é a mesma

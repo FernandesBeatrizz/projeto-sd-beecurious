@@ -17,5 +17,9 @@ public interface BarrelsINTER extends Remote {
     void syncWithReplica() throws RemoteException;
 
     void updateIndex(HashMap<String, ArrayList<String>> indiceParaPesquisas) throws RemoteException;
+
+    void indexarURL(String url) throws RemoteException;
+
+    void linksURL(String url, List<String>links) throws RemoteException;
 }
 

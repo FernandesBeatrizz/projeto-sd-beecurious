@@ -1,5 +1,6 @@
 package main.search;
 
+import javax.swing.tree.ExpandVetoException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,6 +18,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private ClienteINTER cliente;
     private Set<String> urlsIndexados= new HashSet<>();
     private QueueInterface urlQueue;
+    //private Timer syncTimer;
 
 
     //private long counter = 0L;
@@ -25,7 +27,16 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     public Gateway() throws RemoteException {
         super();
         this.cliente=null;
-        this.urlQueue=new URLqueue(100);
+        this.urlQueue=new URLqueue(1000);
+        //this.syncTimer = new Timer();
+        //this.syncTimer.scheduleAtFixedRate(new SyncTask(), 0, 300000);
+        /*try {
+            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
+            this.urlQueue = (QueueInterface) registry.lookup("URLqueue");  // Aqui busca a fila remota registrada
+        } catch (Exception e) {
+            System.err.println("Erro ao conectar à fila remota: " + e.getMessage());
+            e.printStackTrace();
+        }*/
         barrels = new ArrayList<>();
         downloaders = new ArrayList<>();
         //queue = null;
@@ -97,13 +108,42 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     //BARRELS - - - - - - - - - - - - - - - - - - - - - - -
+    /*private class BarrelsSyn extends TimerTask {
+        @Override
+        public void run() {
+            try {
+                syncBarrels();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+    }*/
+
     public void indexarURL(String url) throws RemoteException {
-        System.out.println("URL indexado: " + url);
+        System.out.println("URL recebido para indexação: " + url);
+        try{
+            urlQueue.putURL(url);
+            System.out.println("URL adicionado a fila d gateway");
+        }catch (Exception e){
+            System.out.print("Erro"+ e.getMessage());
+            return;
+        }
+
+        if (barrels != null){
+            for(BarrelsINTER barrel : barrels){
+                try{
+                    barrel.indexarURL(url);
+                    System.out.println("URL enviado p o barrel");
+                }catch(RemoteException e){
+                    System.out.print("Erro"+ e.getMessage());
+                }
+            }
+        }
     }
 
     @Override
     public void addLinksToURL(String url, List<String> links) throws RemoteException {
-
+        System.out.println("");
     }
 
     @Override
@@ -130,17 +170,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     public synchronized void putNew(String url) throws RemoteException {
-        /*if (urlQueue.getQueueSize() >= urlQueue.getMaxSize()) {
-            System.out.println("A fila está cheia! O URL não será adicionado: " + url);
-            return;
-        }
-        if (!urlsIndexados.contains(url)) {
-            urlQueue.putURL(url); //adiciona a fila
-            urlsIndexados.add(url);
-            System.out.println("URL adicionado: "+url);
-        }else{
-            System.out.println("URL já adicionado"+ url);
-        }*/
         try {
             System.out.println("Verificar se o URL já foi indexado");
             if (!urlsIndexados.contains(url)) {  // Não precisamos dessa verificação se a fila já está controlando isso
@@ -151,6 +180,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
                     System.out.println("URL adicionado: " + url); // Log para verificação
                 }else{
                     System.out.println("Queue cheia");
+                    wait();
                 }
             } else {
                 System.out.println("URL já adicionado: " + url); // A URL já foi registrada antes
@@ -171,6 +201,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             novaLista.add(url);
             this.indiceInvertido.put(word, novaLista);
         }
+        syncBarrels();
     }
 
     @Override

@@ -1,7 +1,6 @@
 package main.search;
 
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -19,7 +18,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     private final int max_size;
     //final private static String QUEUE_CONFIG = "queue.properties";
     private static final Logger LOGGER = Logger.getLogger(URLqueue.class.getName());
-    private static final String caminhoficheiro = " urls.dat"; //meter dps o caminho
+    private static final String caminhoficheiro = " url.data"; //meter dps o caminho
 
     public URLqueue(int max_size) throws RemoteException{
         this.max_size=max_size;
@@ -58,11 +57,27 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
         String url = urls.take(); // Retira a próxima URL da fila
         LOGGER.info("URL removida da fila: " + url); // Log para depuração
         //esta parte vai ser para salvar o URL
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(caminhoficheiro, true))){
-            out.writeObject(url);
-            LOGGER.info("URL foi guardada ");
+        try {
+            // 1. Carrega a fila existente do ficheiro (se existir)
+            LinkedBlockingQueue<String> filaExistente = new LinkedBlockingQueue<>();
+            if (new File(caminhoficheiro).exists()) {
+                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(caminhoficheiro))) {
+                    filaExistente = (LinkedBlockingQueue<String>) in.readObject();
+                } catch (Exception e) {
+                    LOGGER.warning("Erro ao carregar fila existente: " + e.getMessage());
+                }
+            }
+
+            // 2. Adiciona o URL removido à fila carregada
+            filaExistente.add(url);
+
+            // 3. Guarda a fila atualizada no ficheiro
+            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(caminhoficheiro))) {
+                out.writeObject(filaExistente);
+                LOGGER.info("Fila de URLs guardada com sucesso.");
+            }
         } catch (Exception e) {
-            LOGGER.warning("Erro ao guardar URL"+ e.getMessage());
+            LOGGER.warning("Erro ao guardar a fila de URLs: " + e.getMessage());
         }
         return url;
     }
@@ -85,16 +100,23 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
             String rmiName = "gateway";
             String rmiHost = "localhost";
             int rmiPort = 8183;
-
+/*
             // Cria uma instância da URLqueue com tamanho máximo de 10000
             URLqueue urlQueue = new URLqueue(100);
 
             // Cria ou obtém o RMI Registry na porta padrão (1099)
             Registry registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
 
+
             registry.rebind("URLqueue", urlQueue);
+*/
+            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
+            GatewayINTER gateway = (GatewayINTER) registry.lookup("gateway");
 
             System.out.println("URLqueue registrado no RMI Registry e pronto para uso.");
+            while (true) {
+                Thread.sleep(1000);
+            }
         } catch (RemoteException e) {
             System.err.println("Erro de comunicação remota: " + e.getMessage());
             e.printStackTrace();
