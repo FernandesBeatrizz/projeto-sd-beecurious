@@ -13,7 +13,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
     private ArrayList<DownloaderINTER> downloaders;
-    //private QueueInterface queue;
     private String url;
     private ClienteINTER cliente;
     private Set<String> urlsIndexados= new HashSet<>();
@@ -143,15 +142,20 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             System.out.println("URL já adicionado"+ url);
         }*/
         try {
+            System.out.println("Verificar se o URL já foi indexado");
             if (!urlsIndexados.contains(url)) {  // Não precisamos dessa verificação se a fila já está controlando isso
-                // Adiciona o URL à fila
-                urlQueue.putURL(url);  // Coloca o URL na fila
-                urlsIndexados.add(url); // Marca a URL como indexada
-                System.out.println("URL adicionado: " + url); // Log para verificação
+                if (urlQueue.getQueueSize() < urlQueue.getMaxSize()) {
+                    System.out.println("Adicionar o URL a fila");
+                    urlQueue.putURL(url);  // Coloca o URL na fila
+                    urlsIndexados.add(url); // Marca a URL como indexada
+                    System.out.println("URL adicionado: " + url); // Log para verificação
+                }else{
+                    System.out.println("Queue cheia");
+                }
             } else {
                 System.out.println("URL já adicionado: " + url); // A URL já foi registrada antes
             }
-        } catch (RemoteException e) {
+        } catch (RemoteException | InterruptedException e) {
             Thread.currentThread().interrupt(); // Restaura o estado de interrupção
             System.out.println("Erro ao adicionar URL à fila: " + e.getMessage());
         }

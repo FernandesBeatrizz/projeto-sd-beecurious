@@ -27,6 +27,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     }
 
     public synchronized void putURL(String url) throws RemoteException{
+        System.out.println("Tentar adicionar URL");
         if (urls.size() < max_size) {
             try {
                 urls.put(url);
@@ -57,8 +58,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
         String url = urls.take(); // Retira a próxima URL da fila
         LOGGER.info("URL removida da fila: " + url); // Log para depuração
         //esta parte vai ser para salvar o URL
-        try{
-            ObjectOutputStream out= new ObjectOutputStream(new FileOutputStream(caminhoficheiro));
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(caminhoficheiro, true))){
             out.writeObject(url);
             LOGGER.info("URL foi guardada ");
         } catch (Exception e) {
@@ -82,14 +82,17 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
 
     public static void main(String[] args) {
         try {
+            String rmiName = "gateway";
+            String rmiHost = "localhost";
+            int rmiPort = 8183;
+
             // Cria uma instância da URLqueue com tamanho máximo de 10000
-            URLqueue urlQueue = new URLqueue(10);
+            URLqueue urlQueue = new URLqueue(100);
 
             // Cria ou obtém o RMI Registry na porta padrão (1099)
-            Registry registry = LocateRegistry.createRegistry(1099);
+            Registry registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
 
-            // Registra o objeto URLqueue no RMI Registry com o nome "URLqueue"
-            registry.bind("URLqueue", urlQueue);
+            registry.rebind("URLqueue", urlQueue);
 
             System.out.println("URLqueue registrado no RMI Registry e pronto para uso.");
         } catch (RemoteException e) {
