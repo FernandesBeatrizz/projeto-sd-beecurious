@@ -37,6 +37,23 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             Barrels barrel3 = criarbarrel("Barrel3", 3000, gatewayPort);
 
             System.out.println("- - barrels check");
+
+            //p ver s a FUNCIONALIDADE 3 esta a dar
+            /*barrel1.addToIndex("borba", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
+            barrel1.addToIndex("mármore", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
+            barrel1.addToIndex("portugal", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
+*/
+            for (int i = 1; i <= 15; i++) {
+                String termo = "borba";
+                String url = "https://exemplo.com/borba" + i;  // URL única para cada entrada
+                String titulo = "Cidade de Borba " + i;
+                String citacao = "Borba é uma cidade em Portugal conhecida pelo seu mármore. Entrada " + i;
+                barrel1.addToIndex(termo, url, titulo, citacao, new ArrayList<>());
+            }
+
+            //estas 2 de baixo era p testar a funcionalidade 3. ela esta a dar mas o output p borba é palavra nao encontrada
+            String termos="borba";
+            barrel1.top10(termos);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -151,6 +168,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
 
     //ver estas 2 funçoes melhor!!!
+    private int pagina=1;
     public List<String[]> top10(String termos) throws RemoteException{
         String[] palavras = termos.toLowerCase().split(" ");
         List<String[]> resultados = new ArrayList<>();
@@ -158,27 +176,39 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         //vou ver s os termos existem no indiceinvertido
         for(String palavra : palavras) {
             if(!indiceInvertido.containsKey(palavra)){
+                System.out.println("palavra não encontrada");
                 return resultados; //s nao encontrar nd retorna lista vazia
             }
         }
-        /*resultados.addAll(indiceInvertido.get(palavras[0])); //todas as paginas q contêm o primeiro termo
+        resultados.addAll(indiceInvertido.get(palavras[0])); //todas as paginas q contêm o primeiro termo
 
         // Filtra os resultados para páginas que contêm todos os termos
         for (int i = 1; i < palavras.length; i++) {
-            if (indiceInvertido.containsKey(palavras[i])) {
-                resultados.retainAll(indiceInvertido.get(palavras[i]));
-            } else {
-                return new ArrayList<>(); // Retorna lista vazia se algum termo não for encontrado
-            }
-        }*/
+            List<String[]> tempResultados = new ArrayList<>();
+            Set<String> urlsExistentes = new HashSet<>();
 
+            // Armazena as URLs atuais
+            for (String[] pagina : resultados) {
+                urlsExistentes.add(pagina[0]);
+            }
+
+            // Adiciona páginas que contenham o termo atual e estejam nas URLs anteriores
+            for (String[] pagina : indiceInvertido.get(palavras[i])) {
+                if (urlsExistentes.contains(pagina[0])) {
+                    tempResultados.add(pagina);
+                }
+            }
+            resultados = tempResultados;
+        }
+
+/*isto era oq tinha antes-----------------------------------------
         String maisrestrito= palavras[0]; //pq é oq aparece em menos paginas p restringir os resultados
         int menortamanho= indiceInvertido.get(maisrestrito).size();
         for(String palavra : palavras) {
             if(!palavra.equals(maisrestrito)){
                 resultados.retainAll(indiceInvertido.get(palavra));
             }
-        }
+        }*/
 
         //ordena pela quantidade d termos
         /*resultados.sort((pagina1, pagina2) -> {
@@ -186,6 +216,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             int count2 = contarTermosNaPagina(pagina2, palavras);
             return Integer.compare(count2, count1); // Ordena em ordem decrescente
         });*/
+
+        //ordeno os resultados pela quantidade de termos encontrados
         resultados.sort(new Comparator<String[]>() {
             public int compare(String[] pag1, String[] pag2) {
                 int count1= contarTermosNaPagina(pag1, palavras);
@@ -194,7 +226,49 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             }
         });
 
-        return resultados.subList(0, Math.min(10, resultados.size()));//aqui como pode existir menos d 10, temos d ver qual é o mais pequeno
+        int resultadospag=10;
+        /*
+        int inicio=(pagina-1)*resultadospag;
+        int fim=Math.min(inicio + resultadospag, resultados.size());
+
+        List<String[]> topResultados = resultados.subList(inicio,fim);//aqui como pode existir menos d 10, temos d ver qual é o mais pequeno
+
+        if (topResultados.isEmpty()) {
+            System.out.println("Nenhum resultado encontrado para: " + termos);
+        } else {
+            System.out.println("\nResultados da pesquisa para: " + termos+ " -página " + pagina);
+            for (String[] resultado : topResultados) {
+                System.out.println("Título: " + resultado[1]);
+                System.out.println("URL: " + resultado[0]);
+                System.out.println("Citação: " + resultado[2]);
+                System.out.println("---------------------------");
+            }
+        }
+        pagina++;*/
+        int totalPaginas = (int) Math.ceil((double) resultados.size() / resultadospag);
+
+        if (pagina <= totalPaginas) {
+            int inicio = (pagina - 1) * resultadospag; // Página começa a contar de 1
+            int fim = Math.min(inicio + resultadospag, resultados.size());
+
+            // Exibe os resultados da página atual
+            List<String[]> resultadosDaPagina = resultados.subList(inicio, fim);
+
+            System.out.println("\nResultados da pesquisa para: " + termos + " - Página " + pagina);
+            for (String[] resultado : resultadosDaPagina) {
+                System.out.println("Título: " + resultado[1]);
+                System.out.println("URL: " + resultado[0]);
+                System.out.println("Citação: " + resultado[2]);
+                System.out.println("---------------------------");
+            }
+
+            // Aumenta a página para a próxima chamada
+            pagina++;
+        } else {
+            System.out.println("Fim dos resultados.");
+        }
+
+        return resultados;
     }
 
 
