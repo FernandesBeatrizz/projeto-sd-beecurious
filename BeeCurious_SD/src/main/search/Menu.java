@@ -1,4 +1,4 @@
-/*package main.search;
+package main.search;
 import java.util.Scanner;
 
 public class Menu {
@@ -8,10 +8,10 @@ public class Menu {
         this.cliente = cliente;
     }
 
-    public void menu() {
+    public static void main (String[] args) {
         Scanner sc = new Scanner(System.in);
         int opçao;
-/*
+
         do{
             System.out.println("\nEscolha uma opção");
             System.out.println("1 - indexar URLs");
@@ -28,8 +28,32 @@ public class Menu {
 
             switch (opçao){
                 case 1:
-
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    pesquisarportermos(sc);
+                    break;
+                case 4:
+                    break;
+                case 5:
+                    break;
+                case 6:
+                    break;
+                case 0:
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Opção inválida");
             }
-        }
+        }while(opçao!=0);
+            sc.close();
     }
-}*/
+
+
+    private void pesquisarportermos(Scanner sc) {
+        System.out.print();
+        String termos=sc.nextLine();
+        cliente.pesquisarconjtermos(sc);
+    }
+}

@@ -46,8 +46,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     @Override
     public void addToIndex(String word, String url, String titulo, String citacao, List<String>links) throws RemoteException {
-        /*indiceInvertido.putIfAbsent(word, new ArrayList<>());
-        boolean urlexiste= false;
+        indiceInvertido.putIfAbsent(word, new ArrayList<>());
+        /*boolean urlexiste= false;
 
         if (!indiceInvertido.get(word).contains(url)) {
             indiceInvertido.get(word).add(url);
@@ -70,6 +70,10 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     @Override
     public synchronized List<String> searchWord(String word) throws RemoteException {
         String[] words = word.toLowerCase().split(" ");
+
+        if (words.length == 0)
+            return new ArrayList<>();
+
         ArrayList<String> resultadourls = new ArrayList<>();
         //ArrayList<String>> sortedURLS = new ArrayList<>();
 
@@ -145,9 +149,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     }*/
 
-    public LinkedHashMap<String, Integer> top10() throws RemoteException{
+
+    //ver estas 2 funçoes melhor!!!
+    public List<String[]> top10(String termos) throws RemoteException{
         //meter dps um aviso a dizer que vai buscar os 10
-        List<Map.Entry<String,ArrayList<String[]>>> ordenardecrescente = new ArrayList<>(indiceInvertido.entrySet());
+        /*List<Map.Entry<String,ArrayList<String[]>>> ordenardecrescente = new ArrayList<>(indiceInvertido.entrySet());
         ordenardecrescente.sort((entry1, entry2) -> entry2.getValue().size() - entry1.getValue().size());     //o chat diz q é a soluçao mais simples, o diogo tbm fez assim
 
         LinkedHashMap<String, Integer> top10 = new LinkedHashMap<>();
@@ -156,7 +162,49 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             int count= ordenardecrescente.get(i).getValue().size();
             top10.put(p, count);
         }
-        return top10;
+        return top10;*/
+
+        String[] palavras = termos.toLowerCase().split(" ");
+        List<String[]> resultados = new ArrayList<>();
+
+        // Verifica se o primeiro termo existe no índice
+        if (indiceInvertido.containsKey(palavras[0])) {
+            for (String[] pagina : indiceInvertido.get(palavras[0])) {
+                resultados.add(pagina); // Adiciona a página (URL, título, citação, links)
+            }
+        } else {
+            return resultados; // Retorna lista vazia se o primeiro termo não for encontrado
+        }
+
+        // Filtra os resultados para páginas que contêm todos os termos
+        for (int i = 1; i < palavras.length; i++) {
+            if (indiceInvertido.containsKey(palavras[i])) {
+                resultados.retainAll(indiceInvertido.get(palavras[i]));
+            } else {
+                return new ArrayList<>(); // Retorna lista vazia se algum termo não for encontrado
+            }
+        }
+        resultados.sort((pagina1, pagina2) -> {
+            int count1 = contarTermosNaPagina(pagina1, palavras);
+            int count2 = contarTermosNaPagina(pagina2, palavras);
+            return Integer.compare(count2, count1); // Ordena em ordem decrescente
+        });
+
+        return resultados.subList(0, Math.min(10, resultados.size()));
+    }
+
+
+    private int contarTermosNaPagina(String[] pagina, String[] termos) {
+        int count = 0;
+        String conteudo = pagina[1] + " " + pagina[2]; // Título + citação
+
+        for (String termo : termos) {
+            if (conteudo.toLowerCase().contains(termo)) {
+                count++;
+            }
+        }
+
+        return count;
     }
 
 

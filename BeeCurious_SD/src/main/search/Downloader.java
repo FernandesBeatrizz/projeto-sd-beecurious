@@ -28,7 +28,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
 
     public void executar(){
         try {
-            String rmiName = "gateway";
+            String rmiName = "Gateway";
             String rmiHost = "localhost";
             int rmiPort = 8183;
 
@@ -103,7 +103,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
 
 
     public void processarPagina(String url) throws RemoteException {
-        BarrelsINTER barrel= gateway.getBarrel();  //aqui tenho d meter um numero qql p identificar o barrel, meti 0 p ser logo o primeiro
+        BarrelsINTER barrel= gateway.getBarrel();
         if (!barrel.containsURL(url)){
             try{
                 Document doc= Jsoup.connect(url).get();
@@ -217,7 +217,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
             int numDownloaders=3;
             //URLqueue urlQueue= new URLqueue(100);
             Registry registry = LocateRegistry.getRegistry("localhost", 8183);
-            GatewayINTER gateway = (GatewayINTER) registry.lookup("gateway");
+            GatewayINTER gateway = (GatewayINTER) registry.lookup("Gateway");
             QueueInterface urlQueue = gateway.getUrlQueue();
 
             Thread[] threads = new Thread[numDownloaders];

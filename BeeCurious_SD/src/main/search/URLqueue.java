@@ -97,7 +97,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
 
     public static void main(String[] args) {
         try {
-            String rmiName = "gateway";
+            String rmiName = "Gateway";
             String rmiHost = "localhost";
             int rmiPort = 8183;
 /*
@@ -111,7 +111,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
             registry.rebind("URLqueue", urlQueue);
 */
             Registry registry = LocateRegistry.getRegistry("localhost", 8183);
-            GatewayINTER gateway = (GatewayINTER) registry.lookup("gateway");
+            GatewayINTER gateway = (GatewayINTER) registry.lookup("Gateway");
 
             System.out.println("URLqueue registrado no RMI Registry e pronto para uso.");
             while (true) {

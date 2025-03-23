@@ -79,7 +79,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         if(barrels.isEmpty()){
             return List.of();
         }
-        BarrelsINTER barrel = barrels.get(new Random().nextInt(barrels.size())); //escolher um barrel aleatorio
+        BarrelsINTER barrel = getBarrel();
         return barrel.searchWord(word);
     }
 
@@ -108,6 +108,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     //BARRELS - - - - - - - - - - - - - - - - - - - - - - -
+
+    public List<String[]> top10(String termos) throws RemoteException{
+        if(barrels.isEmpty()){
+            throw new RemoteException("Nenhum barrel");
+        }
+        return barrels.get(0).top10(termos);
+    }
+
     /*private class BarrelsSyn extends TimerTask {
         @Override
         public void run() {
