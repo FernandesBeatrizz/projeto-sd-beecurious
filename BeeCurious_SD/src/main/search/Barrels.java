@@ -37,12 +37,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             Barrels barrel3 = criarbarrel("Barrel3", 3000, gatewayPort);
 
             System.out.println("- - barrels check");
-
-            //p ver s a FUNCIONALIDADE 3 esta a dar
-            /*barrel1.addToIndex("borba", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
+            /*
+            //p ver s a FUNCIONALIDADE 3 esta a dar--------------------------
+            barrel1.addToIndex("borba", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
             barrel1.addToIndex("mármore", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
             barrel1.addToIndex("portugal", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
-*/
+            // este for é p ver como ele lidava com mais d 10
             for (int i = 1; i <= 15; i++) {
                 String termo = "borba";
                 String url = "https://exemplo.com/borba" + i;  // URL única para cada entrada
@@ -53,7 +53,25 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
             //estas 2 de baixo era p testar a funcionalidade 3. ela esta a dar mas o output p borba é palavra nao encontrada
             String termos="borba";
-            barrel1.top10(termos);
+            barrel1.top10(termos);*/
+
+
+
+            /*
+            //Para testar a funcionalidade 5-----------------------
+            barrel1.addToIndex("cidade", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade conhecida...", Arrays.asList("https://outroexemplo.com"));
+            barrel1.addToIndex("mármore", "https://exemplo.com/borba", "Cidade de Borba", "Borba é conhecida pelo seu mármore...", Arrays.asList("https://outroexemplo.com"));
+
+            // Consultando quais páginas apontam para "https://outroexemplo.com"
+            List<String> paginasQueApontam = barrel1.obterpaginaurlponteiros("https://outroexemplo.com");
+
+            // Exibindo os resultados
+            System.out.println("Páginas que apontam para https://outroexemplo.com:");
+            for (String pagina : paginasQueApontam) {
+                System.out.println(pagina);
+            }*/
+
+
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -63,11 +81,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     @Override
     public void addToIndex(String word, String url, String titulo, String citacao, List<String>links) throws RemoteException {
         indiceInvertido.putIfAbsent(word, new ArrayList<>());
-        /*boolean urlexiste= false;
 
-        if (!indiceInvertido.get(word).contains(url)) {
-            indiceInvertido.get(word).add(url);
-        }*/
+
         boolean urlExiste = false;
         for (String[] pagina : indiceInvertido.get(word)) {
             if (pagina[0].equals(url)) {
@@ -80,7 +95,22 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             // Armazena a URL, título, citação e links como um array
             indiceInvertido.get(word).add(new String[]{url, titulo, citacao, String.join(",", links)});
         }
+        //p ver quem aponta
+        for (String link : links) {
+            ponteiros.putIfAbsent(link, new HashSet<>());
+            ponteiros.get(link).add(url); // A URL atual aponta para a página 'link'
+        }
         salvar();
+    }
+
+    public List<String> obterpaginaurlponteiros(String url){
+        //primeiro verificamos se a url existe
+        if (ponteiros.containsKey(url)) {
+            return new ArrayList<>(ponteiros.get(url));
+        }else {
+            System.out.println("Nenhuma pagina encontrada para este url");
+            return new ArrayList<>();
+        }
     }
 
 
@@ -151,20 +181,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         }
 
     }
-/*
-    public void updateIndex(HashMap<String, ArrayList<String[]>> newIndex) throws RemoteException {
-        this.indiceInvertido.clear();
-        this.indiceInvertido.putAll(newIndex);
-    }*/
 
     @Override
     public void indexarURL(String url) throws RemoteException {
 
     }
 
-    /*public void linksURL(String url, List<String> links) throws RemoteException {
 
-    }*/
 
 
     //ver estas 2 funçoes melhor!!!
@@ -201,22 +224,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             resultados = tempResultados;
         }
 
-/*isto era oq tinha antes-----------------------------------------
-        String maisrestrito= palavras[0]; //pq é oq aparece em menos paginas p restringir os resultados
-        int menortamanho= indiceInvertido.get(maisrestrito).size();
-        for(String palavra : palavras) {
-            if(!palavra.equals(maisrestrito)){
-                resultados.retainAll(indiceInvertido.get(palavra));
-            }
-        }*/
-
-        //ordena pela quantidade d termos
-        /*resultados.sort((pagina1, pagina2) -> {
-            int count1 = contarTermosNaPagina(pagina1, palavras);
-            int count2 = contarTermosNaPagina(pagina2, palavras);
-            return Integer.compare(count2, count1); // Ordena em ordem decrescente
-        });*/
-
         //ordeno os resultados pela quantidade de termos encontrados
         resultados.sort(new Comparator<String[]>() {
             public int compare(String[] pag1, String[] pag2) {
@@ -227,24 +234,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         });
 
         int resultadospag=10;
-        /*
-        int inicio=(pagina-1)*resultadospag;
-        int fim=Math.min(inicio + resultadospag, resultados.size());
-
-        List<String[]> topResultados = resultados.subList(inicio,fim);//aqui como pode existir menos d 10, temos d ver qual é o mais pequeno
-
-        if (topResultados.isEmpty()) {
-            System.out.println("Nenhum resultado encontrado para: " + termos);
-        } else {
-            System.out.println("\nResultados da pesquisa para: " + termos+ " -página " + pagina);
-            for (String[] resultado : topResultados) {
-                System.out.println("Título: " + resultado[1]);
-                System.out.println("URL: " + resultado[0]);
-                System.out.println("Citação: " + resultado[2]);
-                System.out.println("---------------------------");
-            }
-        }
-        pagina++;*/
         int totalPaginas = (int) Math.ceil((double) resultados.size() / resultadospag);
 
         if (pagina <= totalPaginas) {

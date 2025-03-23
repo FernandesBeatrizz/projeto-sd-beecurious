@@ -68,38 +68,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         }
     }
 
-    /*public void processarPagina(String url) {
-        try{
-            System.out.println("processar o url: "+  url);
-            Document doc = Jsoup.connect(url).timeout(timeout).get();
-            extrairLinks(doc);
-            extrairpalavras(doc,url);
-        }catch(IOException e){
-            System.out.println("Erro"+ e.getMessage());
-        }
-    }*/
-
-    /*public void extrairLinks(Document doc) throws RemoteException {
-        Elements anchors = doc.select("a");
-        String baseUrl = doc.baseUri(); // A URL original do cliente
-
-        if (baseUrl.isEmpty()) {
-            System.err.println("Erro: baseUri() não foi definido corretamente!");
-            return;
-        }
-        for (Element anchor : anchors) {
-            String href = anchor.attr("href");
-            if (href.isEmpty() || href.startsWith("#")) {
-                continue;
-            }
-            String absoluteUrl=transformarUrlAbsoluta(baseUrl, href);
-            if (absoluteUrl != null) {
-                gateway.putNew(absoluteUrl);
-                System.out.println("Link extraído: " + absoluteUrl);
-            }
-        }
-
-    }*/
 
 
 
@@ -195,16 +163,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         }
     }
 
-    /*public void extrairpalavras(Document doc, String url) throws RemoteException {
-        HashMap<String, HashSet<String>> index = new HashMap<>(); // Índice invertido local
-        String[] palavras = doc.text().toLowerCase().replaceAll("[^a-zA-Z ]", "").split("\\s+");
-        for (String palavra : palavras) {
-            if (palavra.length() > 3) { // Evita palavras curtas
-                index.computeIfAbsent(palavra, k -> new HashSet<>()).add(url);
-                gateway.addToIndex(palavra, url);
-            }
-        }
-    }*/
+
 
 @Override
     public void run() {
