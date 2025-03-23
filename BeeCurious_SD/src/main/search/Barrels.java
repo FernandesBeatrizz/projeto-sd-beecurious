@@ -113,6 +113,20 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         }
     }
 
+    /*
+    //ACHO QUE ISTO PODE SER UM EXEMPLO DE COMO O MENU SERIA P ESTA FUNCIONALIDADE, NAO TENHO A CERTEZA! eu testei com as coisas que estao no main desta classe
+    // Exemplo de como chamar a função e exibir o resultado
+List<String> paginasQueApontam = obterpaginaurlponteiros("https://outroexemplo.com");   //AQUI MUDAVAMOS PQ ERA A PESSOA NO MENU QUE ESCREVIA O URL
+
+if (paginasQueApontam.isEmpty()) {
+    System.out.println("Nenhuma página encontrada que aponte para https://outroexemplo.com");
+} else {
+    System.out.println("Páginas que apontam para https://outroexemplo.com:");
+    for (String url : paginasQueApontam) {
+        System.out.println(url);
+    }
+}
+*/
 
     @Override
     public synchronized List<String> searchWord(String word) throws RemoteException {
