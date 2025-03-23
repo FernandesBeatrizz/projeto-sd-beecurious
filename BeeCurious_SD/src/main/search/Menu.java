@@ -1,4 +1,4 @@
-package main.search;
+/*package main.search;
 import java.util.Scanner;
 
 public class Menu {
@@ -6,6 +6,13 @@ public class Menu {
 
     public Menu(Cliente cliente) {
         this.cliente = cliente;
+    }
+
+
+    private void pesquisarportermos(Scanner sc) {
+        System.out.print("Digite os termos de pesquisa");
+        String termos=sc.nextLine();
+        cliente.pesquisarconjtermos(sc);
     }
 
     public static void main(String[] args) {
@@ -31,9 +38,9 @@ public class Menu {
                     break;
                 case 2:
                     break;
-                //case 3:
-                    //pesquisarportermos(sc);
-                    //break;
+                case 3:
+                    pesquisarportermos(sc);
+                    break;
                 case 4:
                     break;
                 case 5:
@@ -49,12 +56,9 @@ public class Menu {
         } while (opçao != 0);
         sc.close();
     }
-}
 
-/*
-    private void pesquisarportermos(Scanner sc) {
-        System.out.print();
-        String termos=sc.nextLine();
-        cliente.pesquisarconjtermos(sc);
-    }
+
+
 }*/
+
+

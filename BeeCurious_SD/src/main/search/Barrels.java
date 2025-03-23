@@ -152,29 +152,16 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
     //ver estas 2 funçoes melhor!!!
     public List<String[]> top10(String termos) throws RemoteException{
-        //meter dps um aviso a dizer que vai buscar os 10
-        /*List<Map.Entry<String,ArrayList<String[]>>> ordenardecrescente = new ArrayList<>(indiceInvertido.entrySet());
-        ordenardecrescente.sort((entry1, entry2) -> entry2.getValue().size() - entry1.getValue().size());     //o chat diz q é a soluçao mais simples, o diogo tbm fez assim
-
-        LinkedHashMap<String, Integer> top10 = new LinkedHashMap<>();
-        for (int i=0; i<Math.min(10, ordenardecrescente.size()); i++){
-            String p=ordenardecrescente.get(i).getKey();
-            int count= ordenardecrescente.get(i).getValue().size();
-            top10.put(p, count);
-        }
-        return top10;*/
-
         String[] palavras = termos.toLowerCase().split(" ");
         List<String[]> resultados = new ArrayList<>();
 
-        // Verifica se o primeiro termo existe no índice
-        if (indiceInvertido.containsKey(palavras[0])) {
-            for (String[] pagina : indiceInvertido.get(palavras[0])) {
-                resultados.add(pagina); // Adiciona a página (URL, título, citação, links)
+        //vou ver s os termos existem no indiceinvertido
+        for(String palavra : palavras) {
+            if(!indiceInvertido.containsKey(palavra)){
+                return resultados; //s nao encontrar nd retorna lista vazia
             }
-        } else {
-            return resultados; // Retorna lista vazia se o primeiro termo não for encontrado
         }
+        /*resultados.addAll(indiceInvertido.get(palavras[0])); //todas as paginas q contêm o primeiro termo
 
         // Filtra os resultados para páginas que contêm todos os termos
         for (int i = 1; i < palavras.length; i++) {
@@ -183,14 +170,31 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             } else {
                 return new ArrayList<>(); // Retorna lista vazia se algum termo não for encontrado
             }
+        }*/
+
+        String maisrestrito= palavras[0]; //pq é oq aparece em menos paginas p restringir os resultados
+        int menortamanho= indiceInvertido.get(maisrestrito).size();
+        for(String palavra : palavras) {
+            if(!palavra.equals(maisrestrito)){
+                resultados.retainAll(indiceInvertido.get(palavra));
+            }
         }
-        resultados.sort((pagina1, pagina2) -> {
+
+        //ordena pela quantidade d termos
+        /*resultados.sort((pagina1, pagina2) -> {
             int count1 = contarTermosNaPagina(pagina1, palavras);
             int count2 = contarTermosNaPagina(pagina2, palavras);
             return Integer.compare(count2, count1); // Ordena em ordem decrescente
+        });*/
+        resultados.sort(new Comparator<String[]>() {
+            public int compare(String[] pag1, String[] pag2) {
+                int count1= contarTermosNaPagina(pag1, palavras);
+                int count2= contarTermosNaPagina(pag2, palavras);
+                return Integer.compare(count2, count1);
+            }
         });
 
-        return resultados.subList(0, Math.min(10, resultados.size()));
+        return resultados.subList(0, Math.min(10, resultados.size()));//aqui como pode existir menos d 10, temos d ver qual é o mais pequeno
     }
 
 

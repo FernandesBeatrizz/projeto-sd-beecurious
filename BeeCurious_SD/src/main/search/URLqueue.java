@@ -30,6 +30,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
                 LOGGER.info("URL adicionado: " + url);
                 saveQueueToFile();
                 notifyAll();
+
             } catch (Exception e) {
                 Thread.currentThread().interrupt();
                 LOGGER.severe("Erro ao adicionar URL{} " + url);
@@ -56,7 +57,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
         // Retira a próxima URL da fila
         String url = urls.take();
         LOGGER.info("URL removida da fila: " + url);
-        markURLAsProcessed(url);
+        //markURLAsProcessed(url);
 
         // Salva a fila atualizada no ficheiro
         saveQueueToFile();

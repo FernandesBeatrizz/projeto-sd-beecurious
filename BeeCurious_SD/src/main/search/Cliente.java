@@ -19,8 +19,9 @@ public class Cliente implements ClienteINTER {
     public static void main(String[] args) {
         try{
             Cliente cliente = new Cliente();  // Cria uma instância do Cliente
-            cliente.run();
             cliente.solicitarURL();;// Chama o metodo para o usuário inserir um URL
+            cliente.run();
+
 
         } catch (RemoteException| NotBoundException e) {
             e.printStackTrace();

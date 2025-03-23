@@ -5,6 +5,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
@@ -14,6 +15,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private ClienteINTER cliente;
     private Set<String> urlsIndexados= new HashSet<>();
     private QueueInterface urlQueue;
+    private DownloaderINTER downloader;
     //private Timer syncTimer;
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
@@ -137,6 +139,22 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     @Override
     public void addLinksToURL(String url, List<String> links) throws RemoteException {
         System.out.println("");
+    }
+
+
+    public void processarQueue() throws RemoteException {
+        while(true){
+            try{
+                String url= urlQueue.getURL();
+                if (url!=null){
+                    downloader.processarPagina(url);
+                }else{
+                    Thread.sleep(2000);
+                }
+            }catch (Exception e){
+                Logger.getLogger("Erro"+ e.getMessage());
+            }
+        }
     }
 
 
