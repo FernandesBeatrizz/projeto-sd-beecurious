@@ -20,7 +20,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     public Barrels( String name, int port) throws RemoteException {
         super(port);
         this.indiceInvertido=new HashMap<>();
-        this.gateway = new Gateway();
         this.name = name;
         this.port = port;
         this.ponteiros = new HashMap<>();
@@ -64,6 +63,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             // Armazena a URL, título, citação e links como um array
             indiceInvertido.get(word).add(new String[]{url, titulo, citacao, String.join(",", links)});
         }
+        salvar();
     }
 
 

@@ -8,11 +8,11 @@ public class Menu {
         this.cliente = cliente;
     }
 
-    public static void main (String[] args) {
+    public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         int opçao;
 
-        do{
+        do {
             System.out.println("\nEscolha uma opção");
             System.out.println("1 - indexar URLs");
             System.out.println("2 - indexar URLs recursivamente");
@@ -26,14 +26,14 @@ public class Menu {
             opçao = sc.nextInt();
             sc.nextLine();
 
-            switch (opçao){
+            switch (opçao) {
                 case 1:
                     break;
                 case 2:
                     break;
-                case 3:
-                    pesquisarportermos(sc);
-                    break;
+                //case 3:
+                    //pesquisarportermos(sc);
+                    //break;
                 case 4:
                     break;
                 case 5:
@@ -46,14 +46,15 @@ public class Menu {
                 default:
                     System.out.println("Opção inválida");
             }
-        }while(opçao!=0);
-            sc.close();
+        } while (opçao != 0);
+        sc.close();
     }
+}
 
-
+/*
     private void pesquisarportermos(Scanner sc) {
         System.out.print();
         String termos=sc.nextLine();
         cliente.pesquisarconjtermos(sc);
     }
-}
+}*/

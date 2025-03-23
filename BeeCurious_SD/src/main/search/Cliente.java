@@ -16,6 +16,24 @@ public class Cliente implements ClienteINTER {
         this.gateway = (GatewayINTER) registry.lookup("Gateway");
     }
 
+    public static void main(String[] args) {
+        try{
+            Cliente cliente = new Cliente();  // Cria uma instância do Cliente
+            cliente.run();
+            cliente.solicitarURL();;// Chama o metodo para o usuário inserir um URL
+
+        } catch (RemoteException| NotBoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void run() throws RemoteException {
+        Scanner sc = new Scanner(System.in);
+        String word = sc.nextLine();
+        List <String> resultados = this.searchWord(word);
+        System.out.print (resultados);
+    }
     @Override
     public void printOnClient() throws RemoteException {
     }
@@ -32,8 +50,7 @@ public class Cliente implements ClienteINTER {
     @Override
     public synchronized List<String> searchWord(String word) throws RemoteException{
         try {
-            List<String> resultados = gateway.searchWord(word);
-            return resultados;
+            return gateway.searchWord(word);
         } catch (Exception e) {
             System.out.println("falha na pesquisa");
             return new ArrayList<>();
@@ -110,12 +127,3 @@ public class Cliente implements ClienteINTER {
         }
     }
 
-    public static void main(String[] args) {
-        try{
-            Cliente cliente = new Cliente();  // Cria uma instância do Cliente
-            cliente.solicitarURL();  // Chama o metodo para o usuário inserir um URL
-        } catch (RemoteException| NotBoundException e) {
-            e.printStackTrace();
-        }
-    }
-}

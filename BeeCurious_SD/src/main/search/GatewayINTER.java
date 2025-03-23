@@ -38,6 +38,8 @@ public interface GatewayINTER extends Remote {
 
     void putNew(String var1) throws RemoteException;
 
+    void markURLAsProcessed(String url) throws RemoteException;
+
     void addToIndex(String word, String url) throws RemoteException;
 
     String get_url() throws RemoteException;
@@ -48,7 +50,8 @@ public interface GatewayINTER extends Remote {
 
     List<String> getCachedResults(String word) throws RemoteException;
 
-    List<String> guardaResultado(String palavra) throws RemoteException;
-
     void registerClient(ClienteINTER cliente) throws RemoteException;
+
+    //queue
+    void registerQueue(QueueInterface queue) throws RemoteException;
 }

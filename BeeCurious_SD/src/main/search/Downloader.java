@@ -14,7 +14,7 @@ import java.rmi.registry.Registry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-public class Downloader extends UnicastRemoteObject implements DownloaderINTER, Runnable, ClienteINTER {
+public class Downloader extends UnicastRemoteObject implements DownloaderINTER, Runnable {
 
     private static final int timeout = 5000;
     GatewayINTER gateway;
@@ -26,7 +26,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         this.urlQueue = urlQueue;
     }
 
-    public void executar(){
+    public void executar() throws RemoteException {
         try {
             String rmiName = "Gateway";
             String rmiHost = "localhost";
@@ -59,6 +59,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                 if (!urlsProcessados.contains(url.trim().toLowerCase())) {
                     urlsProcessados.add(url.trim().toLowerCase());
                     processarPagina(url);
+                    urlQueue.markURLAsProcessed(url);
                 }
                 Thread.sleep(1000);
             }
@@ -165,10 +166,8 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                     }
                 }
 
-                if(!barrel.containsURL(url)) {
-                    for (String palavra : palavrasExtraidas) {
-                        barrel.addToIndex(palavra, url, titulo, citacao, listaLinks);
-                    }
+                for (String palavra : palavrasExtraidas) {
+                    barrel.addToIndex(palavra, url, titulo, citacao, listaLinks);
                 }
             }catch (IOException e){
                 System.out.println("Erro"+ e.getMessage());
@@ -209,8 +208,12 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
 
 @Override
     public void run() {
+    try {
         executar();
+    } catch (RemoteException e) {
+        throw new RuntimeException(e);
     }
+}
 
     public static void main(String[] args) {
         try {
@@ -238,16 +241,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
             throw new RuntimeException(e);
         }
 
-    }
-
-    @Override
-    public void printOnClient() throws RemoteException {
-        System.out.println("Print on client");
-    }
-
-    @Override
-    public List<String> searchWord(String word) throws RemoteException {
-        return List.of();
     }
 
     public String get_url() throws RemoteException {

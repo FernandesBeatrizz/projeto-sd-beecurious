@@ -8,21 +8,18 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-
-
-//usar o properties para o maximo da queue(ver o projeto d diogo)
-
-
 public class URLqueue extends UnicastRemoteObject implements QueueInterface {
-    private LinkedBlockingQueue<String> urls;
+    private static LinkedBlockingQueue<String> urls;
     private final int max_size;
     //final private static String QUEUE_CONFIG = "queue.properties";
     private static final Logger LOGGER = Logger.getLogger(URLqueue.class.getName());
     private static final String caminhoficheiro = " url.data"; //meter dps o caminho
+    private GatewayINTER gateway;
 
     public URLqueue(int max_size) throws RemoteException{
         this.max_size=max_size;
         this.urls= new LinkedBlockingQueue<>(this.max_size);
+        this.loadQueueFromFile();
     }
 
     public synchronized void putURL(String url) throws RemoteException{
@@ -31,6 +28,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
             try {
                 urls.put(url);
                 LOGGER.info("URL adicionado: " + url);
+                saveQueueToFile();
                 notifyAll();
             } catch (Exception e) {
                 Thread.currentThread().interrupt();
@@ -41,45 +39,60 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
         }
     }
 
-
     public synchronized String getURL() throws RemoteException, InterruptedException {
         LOGGER.info("Solicitar um URL");
+
+        // Bloqueia até que a fila tenha um elemento
         while (urls.isEmpty()) {
-            try{
-                System.out.println("Fila vazia, a espera de novos URLs...");
+            try {
+                System.out.println("Fila vazia, aguardando novos URLs...");
                 wait(); // Bloqueia até que a fila tenha um elemento
-            }catch (InterruptedException e){
-                LOGGER.warning("Erro "+ e.getMessage());
+            } catch (InterruptedException e) {
+                LOGGER.warning("Erro: " + e.getMessage());
                 throw e;
             }
         }
 
-        String url = urls.take(); // Retira a próxima URL da fila
-        LOGGER.info("URL removida da fila: " + url); // Log para depuração
-        //esta parte vai ser para salvar o URL
-        try {
-            // 1. Carrega a fila existente do ficheiro (se existir)
-            LinkedBlockingQueue<String> filaExistente = new LinkedBlockingQueue<>();
-            if (new File(caminhoficheiro).exists()) {
-                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(caminhoficheiro))) {
-                    filaExistente = (LinkedBlockingQueue<String>) in.readObject();
-                } catch (Exception e) {
-                    LOGGER.warning("Erro ao carregar fila existente: " + e.getMessage());
-                }
-            }
+        // Retira a próxima URL da fila
+        String url = urls.take();
+        LOGGER.info("URL removida da fila: " + url);
+        markURLAsProcessed(url);
 
-            // 2. Adiciona o URL removido à fila carregada
-            filaExistente.add(url);
+        // Salva a fila atualizada no ficheiro
+        saveQueueToFile();
 
-            // 3. Guarda a fila atualizada no ficheiro
-            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(caminhoficheiro))) {
-                out.writeObject(filaExistente);
-                LOGGER.info("Fila de URLs guardada com sucesso.");
-            }
-        } catch (Exception e) {
+        return url;
+    }
+
+    private void saveQueueToFile() {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(caminhoficheiro))) {
+            out.writeObject(urls);
+            LOGGER.info("Fila de URLs guardada com sucesso.");
+        } catch (IOException e) {
             LOGGER.warning("Erro ao guardar a fila de URLs: " + e.getMessage());
         }
-        return url;
+    }
+
+    private void loadQueueFromFile() {
+        if (new File(caminhoficheiro).exists()) {
+            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(caminhoficheiro))) {
+                LinkedBlockingQueue<String> filaCarregada = (LinkedBlockingQueue<String>) in.readObject();
+                urls.addAll(filaCarregada);
+                LOGGER.info("Fila de URLs carregada com sucesso.");
+            } catch (Exception e) {
+                LOGGER.warning("Erro ao carregar fila de URLs: " + e.getMessage());
+            }
+        }
+    }
+
+    public synchronized void markURLAsProcessed(String url) throws RemoteException {
+        if (urls.remove(url)) {
+            LOGGER.info("URL processado e removido da fila: " + url);
+            saveQueueToFile(); // Salva a fila após remover o URL
+            notifyAll();
+        } else {
+            LOGGER.warning("URL não encontrado na fila: " + url);
+        }
     }
 
     @Override
@@ -95,23 +108,29 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
         return max_size;
     }
 
+    public static URLqueue createQueue() throws RemoteException {
+        URLqueue queue = new URLqueue(1000);
+        try {
+            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
+            queue.gateway = (GatewayINTER) registry.lookup("Gateway");
+            registry.rebind("URLqueue", queue);
+            return queue;
+        }catch (Exception e){
+                e.printStackTrace();
+                return null;
+            }
+    }
+
+
+
     public static void main(String[] args) {
         try {
             String rmiName = "Gateway";
             String rmiHost = "localhost";
             int rmiPort = 8183;
-/*
-            // Cria uma instância da URLqueue com tamanho máximo de 10000
-            URLqueue urlQueue = new URLqueue(100);
 
-            // Cria ou obtém o RMI Registry na porta padrão (1099)
-            Registry registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
-
-
-            registry.rebind("URLqueue", urlQueue);
-*/
-            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
-            GatewayINTER gateway = (GatewayINTER) registry.lookup("Gateway");
+            URLqueue queue = createQueue();
+            queue.gateway.registerQueue(queue);
 
             System.out.println("URLqueue registrado no RMI Registry e pronto para uso.");
             while (true) {

@@ -9,4 +9,5 @@ public interface QueueInterface extends Remote{
     String getUrlQueue() throws RemoteException, InterruptedException;
     int getQueueSize() throws RemoteException, InterruptedException;
     int getMaxSize() throws RemoteException, InterruptedException;
+    void markURLAsProcessed(String url)throws RemoteException;
 }

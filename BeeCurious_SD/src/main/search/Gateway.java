@@ -1,6 +1,5 @@
 package main.search;
 
-import javax.swing.tree.ExpandVetoException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -8,9 +7,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
-    //vamos ter d meter aqui o nome d barrel p identificar o barrel p dps haver conexao
-    //vamos ter d conectar com os barrels
-    private LinkedList<String> listaParaFazerCrawl = new LinkedList<>();// mudei p queue
     private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
     private int currentBarrelIndex = 0;
@@ -19,8 +15,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private Set<String> urlsIndexados= new HashSet<>();
     private QueueInterface urlQueue;
     //private Timer syncTimer;
-
-
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
 
@@ -30,15 +24,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         this.urlQueue=new URLqueue(1000);
         //this.syncTimer = new Timer();
         //this.syncTimer.scheduleAtFixedRate(new SyncTask(), 0, 300000);
-        /*try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
-            this.urlQueue = (QueueInterface) registry.lookup("URLqueue");  // Aqui busca a fila remota registrada
-        } catch (Exception e) {
-            System.err.println("Erro ao conectar à fila remota: " + e.getMessage());
-            e.printStackTrace();
-        }*/
         barrels = new ArrayList<>();
-        //queue = null;
     }
 
     public static void main(String[] args) {
@@ -64,23 +50,21 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
+    public void registerQueue(QueueInterface queue) throws RemoteException {
+        this.urlQueue = queue;
+    }
 
     //CLIENTS  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     public synchronized List<String> searchWord(String word) throws RemoteException {
-        /*ArrayList<String> urls = new ArrayList<>(String);
-        for (BarrelsINTER barrel : barrels) {
+        ArrayList<String> urls = new ArrayList<String>();
+        BarrelsINTER barrel = getBarrel();
             try {
-                urls.putAll(barrel.searchWord(word);
+                urls.addAll(barrel.searchWord(word));
                 return urls;
             } catch (RemoteException error) {
-                //barrel morreu;
-            }*/
-        //return List.of();
-        if(barrels.isEmpty()){
-            return List.of();
-        }
-        BarrelsINTER barrel = getBarrel();
-        return barrel.searchWord(word);
+                error.getMessage();
+            }
+        return urls;
     }
 
     public List<String> next_page() throws RemoteException{
@@ -155,6 +139,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         System.out.println("");
     }
 
+
     //REGISTAR E SINCRONIZAR BARRELS
     @Override
     public void registerBarrel(BarrelsINTER barrel) throws RemoteException {
@@ -180,6 +165,11 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         for (BarrelsINTER barrel : barrels) {
             barrel.updateIndex(indiceInvertido);
         }
+    }
+
+    @Override
+    public QueueInterface getUrlQueue() throws RemoteException {
+        return this.urlQueue;
     }
 
     public BarrelsINTER getBarrel() throws RemoteException{
@@ -209,9 +199,10 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
                     urlQueue.putURL(url);  // Coloca o URL na fila
                     urlsIndexados.add(url); // Marca a URL como indexada
                     System.out.println("URL adicionado: " + url); // Log para verificação
+
                 }else{
                     System.out.println("Queue cheia");
-                    wait();
+                    //wait();
                 }
             } else {
                 System.out.println("URL já adicionado: " + url); // A URL já foi registrada antes
@@ -220,6 +211,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             Thread.currentThread().interrupt(); // Restaura o estado de interrupção
             System.out.println("Erro ao adicionar URL à fila: " + e.getMessage());
         }
+    }
+
+    @Override
+    public synchronized void markURLAsProcessed(String url) throws RemoteException {
+        urlQueue.markURLAsProcessed(url);
+        notifyAll();
     }
 
     public synchronized void addToIndex(String word, String url) throws RemoteException {
@@ -253,23 +250,9 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     //RANDOM - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
-    @Override
-    public List<String> guardaResultado(String palavra) throws RemoteException {
-        if (this.indiceInvertido.containsKey(palavra)) {
-            return this.indiceInvertido.get(palavra);
-        } else {
-            return new ArrayList<>();
-        }
-    }
-
     @Override
     public void registerClient(ClienteINTER cliente) throws RemoteException {
 
-    }
-
-    public QueueInterface getUrlQueue() throws RemoteException {
-        return this.urlQueue;
     }
 
 }
