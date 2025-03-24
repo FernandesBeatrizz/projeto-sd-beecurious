@@ -3,7 +3,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import java.io.IOException;
+
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.NotBoundException;
@@ -13,6 +14,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Downloader extends UnicastRemoteObject implements DownloaderINTER, Runnable {
 
@@ -20,6 +22,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     GatewayINTER gateway;
     private static final Set<String> urlsProcessados= new HashSet<>();
     QueueInterface urlQueue;
+    private static final String nomesficheiroparaguardar = "informacoescompletas.obj";
 
     public Downloader(QueueInterface urlQueue) throws RemoteException, InterruptedException {
         super();
@@ -71,7 +74,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
 
 
 
-    public void processarPagina(String url) throws RemoteException {
+    /*public void processarPagina(String url) throws RemoteException {
         BarrelsINTER barrel= gateway.getBarrel();
         if (!barrel.containsURL(url)){
             try{
@@ -141,6 +144,78 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                 System.out.println("Erro"+ e.getMessage());
             }
         }
+    }*/
+    public void processarPagina(String url) throws RemoteException {
+        BarrelsINTER barrel= gateway.getBarrel();
+        if (!barrel.containsURL(url)){
+            try{
+                Document doc= Jsoup.connect(url).get();
+
+                //titulo
+                String titulo = doc.title();
+                System.out.println(titulo);
+
+
+                //citação
+                String citacao= "";
+                Element primeiroparagrafo= doc.select("p").first();
+                if (primeiroparagrafo != null) {
+                    citacao = primeiroparagrafo.text();
+                }else{
+                    citacao = doc.select("meta[property=og:description]").attr("content");
+                    if (citacao.isEmpty()) {
+                        citacao = doc.select("meta[name=description]").attr("content");
+                    }
+                    if (citacao.isEmpty()) {
+                        citacao = "Nenhuma citação encontrada.";
+                    }
+                }
+                System.out.println("Citação: " + citacao);
+
+
+                //Extrair link
+                Elements anchors = doc.select("a");
+                String baseUrl = doc.baseUri(); // A URL original do cliente
+                List<String> listaLinks = new ArrayList<>();
+
+                if (baseUrl.isEmpty()) {
+                    System.err.println("Erro: baseUri() não foi definido corretamente!");
+                    return;
+                }
+                for (Element anchor : anchors) {
+                    String href = anchor.attr("href");
+                    if (href.isEmpty() || href.startsWith("#")) {
+                        continue;
+                    }
+                    String absoluteUrl=transformarUrlAbsoluta(baseUrl, href);
+                    if (absoluteUrl != null) {
+                        gateway.putNew(absoluteUrl);
+                        System.out.println("Link extraído: " + absoluteUrl);
+                    }
+                }
+
+
+                //extrair palavras
+                HashMap<String, HashSet<String>> index = new HashMap<>(); // Índice invertido local
+                String[] palavras = doc.text().toLowerCase().replaceAll("[^a-zA-Z ]", "").split("\\s+");
+                Set<String> palavrasExtraidas = new HashSet<>();
+                for (String palavra : palavras) {
+                    index.computeIfAbsent(palavra, k -> new HashSet<>()).add(url);
+                    gateway.addToIndex(palavra, url);
+                    palavrasExtraidas.add(palavra);
+                }
+
+                for(String palavra : palavrasExtraidas){
+                    salvarinformacoesnecessarias(palavra, url, titulo, citacao, listaLinks);
+                }
+
+                for (String palavra : palavrasExtraidas) {
+                    barrel.addToIndex(palavra, url, titulo, citacao, listaLinks);
+                }
+            }catch (IOException e){
+                System.out.println("Erro"+ e.getMessage());
+            }
+        }
     }
 
 
@@ -164,6 +239,73 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     }
 
 
+
+    public void salvarinformacoesnecessarias(String palavra, String url, String titulo, String citacao, List<String>listaLinks){
+        try{
+            //ObjectOutputStream out;
+            File file= new File(nomesficheiroparaguardar);
+
+            //verificar se o arquivo existe
+            /*if(file.exists()){
+                out = new ObjectOutputStream(new FileOutputStream(file, true)) {
+                    @Override
+                    protected void writeStreamHeader() throws IOException {
+                        // Não sobrescreve o cabeçalho do arquivo
+                    }
+                };
+            }else{
+                out= new ObjectOutputStream(new FileOutputStream(file));
+            }*/
+
+            List<HashMap<String, Object>> dadosExistentes = new ArrayList<>();
+
+            // Verificar se o arquivo já existe e carregar dados antigos
+            if (file.exists() && file.length() > 0) {
+                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
+                    while (true) {
+                        try {
+                            HashMap<String, Object> dados = (HashMap<String, Object>) in.readObject();
+                            dadosExistentes.add(dados);
+                        } catch (EOFException e) {
+                            break; // Fim do arquivo
+                        }
+                    }
+                } catch (ClassNotFoundException e) {
+                    System.err.println("Erro ao ler dados existentes: " + e.getMessage());
+                }
+            }
+
+            // Verificar se a URL já foi processada
+            for (HashMap<String, Object> dados : dadosExistentes) {
+                if (dados.get("url").equals(url)) {
+                    System.out.println("Informação já processada");
+                    return;
+                }
+            }
+
+            HashMap<String, Object> dados = new HashMap<>();
+            dados.put("palavra", palavra);
+            dados.put("url", url);
+            dados.put("titulo", titulo);
+            dados.put("citacao", citacao);
+            dados.put("links", listaLinks);
+
+            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file, true)) {
+                @Override
+                protected void writeStreamHeader() throws IOException {
+                    if (file.length() == 0) {
+                        super.writeStreamHeader(); // Escreve cabeçalho apenas se o arquivo estiver vazio
+                    }
+                }
+            }) {
+                out.writeObject(dados);
+                System.out.println("As informações foram salvas com sucesso!");
+            }
+
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar as informações: " + e.getMessage());
+        }
+    }
 
 @Override
     public void run() {

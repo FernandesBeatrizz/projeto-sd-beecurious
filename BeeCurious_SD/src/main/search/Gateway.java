@@ -111,6 +111,17 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
+
+    public List<String> obterPaginasApontamPara(String url) throws RemoteException {
+        List<String> paginasApontam = new ArrayList<>();
+
+        for (BarrelsINTER barrel : barrels) {
+            paginasApontam.addAll(barrel.obterpaginaurlponteiros(url));
+        }
+
+        return paginasApontam;
+    }
+
     //RELACIONADO A URLS
     public void indexarURL(String url) throws RemoteException {
         System.out.println("URL recebido para indexação: " + url);

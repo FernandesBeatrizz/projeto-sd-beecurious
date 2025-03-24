@@ -63,14 +63,20 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             barrel1.addToIndex("cidade", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade conhecida...", Arrays.asList("https://outroexemplo.com"));
             barrel1.addToIndex("mármore", "https://exemplo.com/borba", "Cidade de Borba", "Borba é conhecida pelo seu mármore...", Arrays.asList("https://outroexemplo.com"));
 
-            // Consultando quais páginas apontam para "https://outroexemplo.com"
-            List<String> paginasQueApontam = barrel1.obterpaginaurlponteiros("https://outroexemplo.com");
+           */
+            barrel1.addToIndex("tecnologia", "http://example1.com", "Página de Tecnologia", "A tecnologia está evoluindo rapidamente e novas inovações estão sendo feitas todos os dias.", Arrays.asList("http://example2.com", "http://example3.com", "http://example4.com"));
+            barrel1.addToIndex("tecnologia", "http://example2.com", "Página de Ciência", "A ciência e a tecnologia são fundamentais para o progresso da humanidade.", Arrays.asList("http://example1.com", "http://example3.com"));
+            barrel1.addToIndex("tecnologia", "http://example3.com", "Página de Programação", "Programação é uma habilidade essencial, e a tecnologia é seu alicerce.", Arrays.asList("http://example1.com"));
+            barrel1.addToIndex("tecnologia", "http://example4.com", "Página de Redes", "Redes de comunicação são fundamentais para a evolução da tecnologia.", Arrays.asList("http://example1.com", "http://example5.com"));
+            barrel1.addToIndex("tecnologia", "http://example5.com", "Página de Inovação", "Inovações tecnológicas estão mudando o mundo.", Arrays.asList("http://example4.com"));
 
-            // Exibindo os resultados
-            System.out.println("Páginas que apontam para https://outroexemplo.com:");
-            for (String pagina : paginasQueApontam) {
-                System.out.println(pagina);
-            }*/
+            // Testando a funcionalidade de pesquisa
+            String termos = "tecnologia";
+            barrel1.top10(termos); // Vai exibir resultados relacionados a "tecnologia", com diferentes backlinks
+
+            // Teste com outro termo, como "ciência"
+            termos = "ciência";
+            barrel1.top10(termos);
 
 
         }
@@ -114,20 +120,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         }
     }
 
-    /*
-    //ACHO QUE ISTO PODE SER UM EXEMPLO DE COMO O MENU SERIA P ESTA FUNCIONALIDADE, NAO TENHO A CERTEZA! eu testei com as coisas que estao no main desta classe
-    // Exemplo de como chamar a função e exibir o resultado
-List<String> paginasQueApontam = obterpaginaurlponteiros("https://outroexemplo.com");   //AQUI MUDAVAMOS PQ ERA A PESSOA NO MENU QUE ESCREVIA O URL
-
-if (paginasQueApontam.isEmpty()) {
-    System.out.println("Nenhuma página encontrada que aponte para https://outroexemplo.com");
-} else {
-    System.out.println("Páginas que apontam para https://outroexemplo.com:");
-    for (String url : paginasQueApontam) {
-        System.out.println(url);
-    }
-}
-*/
 
     @Override
     public synchronized List<String> searchWord(String word) throws RemoteException {
@@ -197,6 +189,7 @@ if (paginasQueApontam.isEmpty()) {
 
     }
 
+
     @Override
     public void indexarURL(String url) throws RemoteException {
 
@@ -204,8 +197,6 @@ if (paginasQueApontam.isEmpty()) {
 
 
 
-
-    //ver estas 2 funçoes melhor!!!
     private int pagina=1;
     private Scanner sc= new Scanner(System.in);
     public List<String[]> top10(String termos) throws RemoteException{
@@ -246,6 +237,12 @@ if (paginasQueApontam.isEmpty()) {
             public int compare(String[] pag1, String[] pag2) {
                 int count1= contarTermosNaPagina(pag1, palavras);
                 int count2= contarTermosNaPagina(pag2, palavras);
+
+                if(count1==count2){
+                    int ponteiro1= obterrelevancia(pag1[0]);
+                    int ponteiro2= obterrelevancia(pag2[0]);
+                    return Integer.compare(ponteiro1, ponteiro2);
+                }
                 return Integer.compare(count2, count1);
             }
         });
@@ -292,7 +289,6 @@ if (paginasQueApontam.isEmpty()) {
         return resultados;
     }
 
-
     private int contarTermosNaPagina(String[] pagina, String[] termos) {
         int count = 0;
         String conteudo = pagina[1] + " " + pagina[2]; // Título + citação
@@ -304,6 +300,14 @@ if (paginasQueApontam.isEmpty()) {
         }
 
         return count;
+    }
+
+    public int obterrelevancia(String url){
+        //basicamente vamos contar os ponteiros
+        if (ponteiros.containsKey(url)){
+            return ponteiros.get(url).size();
+        }
+        return 0;
     }
 
 

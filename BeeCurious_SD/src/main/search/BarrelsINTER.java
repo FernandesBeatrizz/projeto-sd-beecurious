@@ -1,10 +1,7 @@
 package main.search;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 public interface BarrelsINTER extends Remote {
 
@@ -26,6 +23,8 @@ public interface BarrelsINTER extends Remote {
     public boolean containsURL(String url) throws RemoteException;
 
     List<String[]> top10(String termos) throws RemoteException;
+
+    List<String> obterpaginaurlponteiros(String url) throws RemoteException;
 }
 
 

@@ -35,6 +35,8 @@ public interface GatewayINTER extends Remote {
 
     List<String[]> top10(String termos) throws RemoteException;
 
+    List<String> obterPaginasApontamPara(String url) throws RemoteException;
+
 
     //downloaders
     String takeNext() throws RemoteException, InterruptedException;

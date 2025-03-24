@@ -25,11 +25,6 @@ public class Cliente implements ClienteINTER {
             cliente.exibirMenu();
 
 
-            cliente.solicitarURL();
-            ;// Chama o metodo para o usuário inserir um URL
-            cliente.run();
-
-
         } catch (RemoteException | NotBoundException e) {
             e.printStackTrace();
         }
@@ -43,7 +38,7 @@ public class Cliente implements ClienteINTER {
             System.out.println("1 - indexar URLs");
             System.out.println("2 - Pesquisar paginas");
             System.out.println("3 - Ordenar resultados por importância");
-            System.out.println("4 - Consultar ligações para uma página");
+            System.out.println("4 - Consultar ligações para uma página"); //etsa dps juntar com a d cima
             System.out.println("5 - Aprendizagem de palavras vazias");
             System.out.println("6- Sair");
             System.out.print("Qual opção quer: ");
@@ -62,8 +57,11 @@ public class Cliente implements ClienteINTER {
                 case 3:
                     break;
                 case 4:
+                    //gateway, barrels e cliente
+                    consultarligacoespagina();
                     break;
                 case 5:
+                    //apontei q é p usar os downloaders
                     break;
                 case 6:
                     exit = true;
@@ -118,6 +116,21 @@ public class Cliente implements ClienteINTER {
             }
         } catch (RemoteException e) {
             System.err.println("Erro ao pesquisar: " + e.getMessage());
+        }
+    }
+
+    public void consultarligacoespagina() throws RemoteException {
+        System.out.println("Digite a URL para consultar ligações: ");
+        String url = sc.nextLine();
+        List<String> paginas = gateway.obterPaginasApontamPara(url);
+
+        if (paginas.isEmpty()) {
+            System.out.println("Nenhuma página encontrada que aponte para esta URL.");
+        } else {
+            System.out.println("As seguintes páginas apontam para " + url + ":");
+            for (String pagina : paginas) {
+                System.out.println(pagina);
+            }
         }
     }
 }
