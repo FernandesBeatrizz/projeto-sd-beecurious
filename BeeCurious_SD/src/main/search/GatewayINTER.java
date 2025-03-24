@@ -33,6 +33,9 @@ public interface GatewayINTER extends Remote {
 
     BarrelsINTER getBarrel() throws RemoteException;
 
+    List<String[]> top10(String termos) throws RemoteException;
+
+
     //downloaders
     String takeNext() throws RemoteException, InterruptedException;
 

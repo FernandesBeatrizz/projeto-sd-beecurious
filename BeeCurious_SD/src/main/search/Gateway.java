@@ -96,9 +96,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     //BARRELS - - - - - - - - - - - - - - - - - - - - - - -
 
     public List<String[]> top10(String termos) throws RemoteException{
-        if(barrels.isEmpty()){
-            throw new RemoteException("Nenhum barrel");
-        }
         return barrels.get(0).top10(termos);
     }
 

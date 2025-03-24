@@ -12,32 +12,33 @@ public class Cliente implements ClienteINTER {
 
     private GatewayINTER gateway;
     private Scanner sc;
+
     public Cliente() throws NotBoundException, RemoteException {
         Registry registry = LocateRegistry.getRegistry("localhost", 8183);
         this.gateway = (GatewayINTER) registry.lookup("Gateway");
-        this.sc= new Scanner(System.in);
+        this.sc = new Scanner(System.in);
     }
 
     public static void main(String[] args) {
-        try{
+        try {
             Cliente cliente = new Cliente();  // Cria uma instância do Cliente
             cliente.exibirMenu();
 
 
-
-            cliente.solicitarURL();;// Chama o metodo para o usuário inserir um URL
+            cliente.solicitarURL();
+            ;// Chama o metodo para o usuário inserir um URL
             cliente.run();
 
 
-        } catch (RemoteException| NotBoundException e) {
+        } catch (RemoteException | NotBoundException e) {
             e.printStackTrace();
         }
     }
 
     public void exibirMenu() throws RemoteException {
-        int opcao=0;
-        boolean exit=false;
-        while(!exit){
+        int opcao = 0;
+        boolean exit = false;
+        while (!exit) {
             System.out.println("\nEscolha uma opção");
             System.out.println("1 - indexar URLs");
             System.out.println("2 - Pesquisar paginas");
@@ -55,6 +56,8 @@ public class Cliente implements ClienteINTER {
                     solicitarURL();
                     break;
                 case 2:
+                    //aqui meter a dar gateway, barrels e cliente
+                    pesquisarconjtermos();
                     break;
                 case 3:
                     break;
@@ -63,7 +66,7 @@ public class Cliente implements ClienteINTER {
                 case 5:
                     break;
                 case 6:
-                    exit=true;
+                    exit = true;
                     break;
                 default:
                     System.out.println("Opção inválida");
@@ -76,9 +79,10 @@ public class Cliente implements ClienteINTER {
     public void run() throws RemoteException {
         Scanner sc = new Scanner(System.in);
         String word = sc.nextLine();
-        List <String> resultados = this.searchWord(word);
-        System.out.print (resultados);
+        List<String> resultados = this.searchWord(word);
+        System.out.print(resultados);
     }
+
     @Override
     public void printOnClient() throws RemoteException {
     }
@@ -93,7 +97,7 @@ public class Cliente implements ClienteINTER {
     }
 
     @Override
-    public synchronized List<String> searchWord(String word) throws RemoteException{
+    public synchronized List<String> searchWord(String word) throws RemoteException {
         try {
             return gateway.searchWord(word);
         } catch (Exception e) {
@@ -102,73 +106,19 @@ public class Cliente implements ClienteINTER {
         }
     }
 
-    public void pesquisarconjtermos(Scanner sc) throws RemoteException {
-        try{
+    public void pesquisarconjtermos() throws RemoteException {
+        try {
             System.out.println("Digite os termos de pesquisa: ");
             String termos = sc.nextLine();
 
-            List<String[]>resultados=gateway.getBarrel().top10(termos);
-            if (resultados.isEmpty()){
+            List<String[]> resultados = gateway.top10(termos);
+            if (resultados.isEmpty()) {
                 System.out.println("Nenhum resultado encontrado");
                 return;
-            }
-
-            int paginaAtual = 1;
-            boolean sair = false;
-
-            while (!sair) {
-                System.out.println("\n=== Página " + paginaAtual + " ===");
-
-                // Exibir 10 resultados por página
-                int inicio = (paginaAtual - 1) * 10;
-                int fim = Math.min(inicio + 10, resultados.size());
-
-                for (int i = inicio; i < fim; i++) {
-                    String[] pagina = resultados.get(i);
-                    String titulo = pagina[1];
-                    String url = pagina[0];
-                    String citacao = pagina[2];
-
-                    System.out.println("Título: " + titulo);
-                    System.out.println("URL: " + url);
-                    System.out.println("Citação: " + citacao);
-                    System.out.println("-----------------------------");
-                }
-
-                // Opções de navegação
-                System.out.println("\nEscolha uma opção:");
-                System.out.println("1 - Próxima página");
-                System.out.println("2 - Página anterior");
-                System.out.println("3 - Voltar ao menu");
-                System.out.print("Opção: ");
-                int opcaoPagina = sc.nextInt();
-                sc.nextLine(); // Consumir a nova linha
-
-                switch (opcaoPagina) {
-                    case 1:
-                        if (fim < resultados.size()) {
-                            paginaAtual++;
-                        } else {
-                            System.out.println("Você já está na última página.");
-                        }
-                        break;
-                    case 2:
-                        if (paginaAtual > 1) {
-                            paginaAtual--;
-                        } else {
-                            System.out.println("Você já está na primeira página.");
-                        }
-                        break;
-                    case 3:
-                        sair = true;
-                        break;
-                    default:
-                        System.out.println("Opção inválida. Tente novamente.");
-                }
             }
         } catch (RemoteException e) {
             System.err.println("Erro ao pesquisar: " + e.getMessage());
         }
-        }
     }
+}
 

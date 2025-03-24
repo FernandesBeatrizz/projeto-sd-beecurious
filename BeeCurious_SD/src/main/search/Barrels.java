@@ -42,7 +42,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             barrel1.addToIndex("borba", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
             barrel1.addToIndex("mármore", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
             barrel1.addToIndex("portugal", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
-            */// este for é p ver como ele lidava com mais d 10
+            // este for é p ver como ele lidava com mais d 10
             for (int i = 1; i <= 15; i++) {
                 String termo = "borba";
                 String url = "https://exemplo.com/borba" + i;  // URL única para cada entrada
@@ -53,7 +53,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
             //estas 2 de baixo era p testar a funcionalidade 3. ela esta a dar mas o output p borba é palavra nao encontrada
             String termos="borba";
-            barrel1.top10(termos);
+            barrel1.top10(termos);*/
 
 
 
@@ -207,7 +207,9 @@ if (paginasQueApontam.isEmpty()) {
 
     //ver estas 2 funçoes melhor!!!
     private int pagina=1;
+    private Scanner sc= new Scanner(System.in);
     public List<String[]> top10(String termos) throws RemoteException{
+        Scanner sc = new Scanner(System.in);
         String[] palavras = termos.toLowerCase().split(" ");
         List<String[]> resultados = new ArrayList<>();
 
@@ -253,7 +255,7 @@ if (paginasQueApontam.isEmpty()) {
         boolean sair=false;
 
 
-        while (pagina <= totalPaginas) {
+        while (pagina <= totalPaginas && !sair) {
             int inicio = (pagina - 1) * resultadospag; // Página começa a contar de 1
             int fim = Math.min(inicio + resultadospag, resultados.size());
 
@@ -269,9 +271,10 @@ if (paginasQueApontam.isEmpty()) {
             }
 
             // Aumenta a página para a próxima chamada
-            pagina++;
+            //pagina++;
 
             if (pagina <= totalPaginas) {
+
                 System.out.println("Pressione Enter para ver a próxima página ou digite 'sair' para voltar ao menu...");
                 String entrada = sc.nextLine();
                 if (entrada.equalsIgnoreCase("sair")) {
@@ -334,7 +337,7 @@ if (paginasQueApontam.isEmpty()) {
 //era o metodo de guardar as coisas que estao na queue, ainda nao acabei
     private void salvar(){
         synchronized (this) {
-            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream("barrel_index.dat"))) {
+            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream("barrel_index.obj"))) {
                 output.writeObject(indiceInvertido);
                 System.out.println("Índice salvo com sucesso.");
             } catch (IOException e) {
