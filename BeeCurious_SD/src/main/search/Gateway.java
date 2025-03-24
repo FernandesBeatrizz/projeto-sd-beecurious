@@ -16,7 +16,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private Set<String> urlsIndexados= new HashSet<>();
     private QueueInterface urlQueue;
     private DownloaderINTER downloader;
-    //private Timer syncTimer;
+    private Timer syncTimer;
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
 
@@ -24,7 +24,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         super();
         this.cliente=null;
         this.urlQueue=new URLqueue(1000);
-        //this.syncTimer = new Timer();
+        this.syncTimer = new Timer();
         //this.syncTimer.scheduleAtFixedRate(new SyncTask(), 0, 300000);
         barrels = new ArrayList<>();
     }
@@ -102,7 +102,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         return barrels.get(0).top10(termos);
     }
 
-    /*private class BarrelsSyn extends TimerTask {
+    private class BarrelsSyn extends TimerTask {
         @Override
         public void run() {
             try {
@@ -111,7 +111,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
                 e.printStackTrace();
             }
         }
-    }*/
+    }
 
     //RELACIONADO A URLS
     public void indexarURL(String url) throws RemoteException {

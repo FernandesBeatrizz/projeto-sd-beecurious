@@ -42,7 +42,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             barrel1.addToIndex("borba", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
             barrel1.addToIndex("mármore", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
             barrel1.addToIndex("portugal", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
-            // este for é p ver como ele lidava com mais d 10
+            */// este for é p ver como ele lidava com mais d 10
             for (int i = 1; i <= 15; i++) {
                 String termo = "borba";
                 String url = "https://exemplo.com/borba" + i;  // URL única para cada entrada
@@ -53,7 +53,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
 
             //estas 2 de baixo era p testar a funcionalidade 3. ela esta a dar mas o output p borba é palavra nao encontrada
             String termos="borba";
-            barrel1.top10(termos);*/
+            barrel1.top10(termos);
+
 
 
 
@@ -249,8 +250,10 @@ if (paginasQueApontam.isEmpty()) {
 
         int resultadospag=10;
         int totalPaginas = (int) Math.ceil((double) resultados.size() / resultadospag);
+        boolean sair=false;
 
-        if (pagina <= totalPaginas) {
+
+        while (pagina <= totalPaginas) {
             int inicio = (pagina - 1) * resultadospag; // Página começa a contar de 1
             int fim = Math.min(inicio + resultadospag, resultados.size());
 
@@ -267,8 +270,20 @@ if (paginasQueApontam.isEmpty()) {
 
             // Aumenta a página para a próxima chamada
             pagina++;
-        } else {
-            System.out.println("Fim dos resultados.");
+
+            if (pagina <= totalPaginas) {
+                System.out.println("Pressione Enter para ver a próxima página ou digite 'sair' para voltar ao menu...");
+                String entrada = sc.nextLine();
+                if (entrada.equalsIgnoreCase("sair")) {
+                    sair = true;
+                } else {
+                    pagina++;
+                }
+            } else {
+                System.out.println("Fim dos resultados. Pressione Enter para voltar ao menu.");
+                sc.nextLine();
+                sair = true;
+            }
         }
 
         return resultados;
