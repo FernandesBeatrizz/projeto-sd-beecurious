@@ -337,7 +337,7 @@ if (paginasQueApontam.isEmpty()) {
 //era o metodo de guardar as coisas que estao na queue, ainda nao acabei
     private void salvar(){
         synchronized (this) {
-            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream("barrel_index.obj"))) {
+            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream("barrel1.obj"))) {
                 output.writeObject(indiceInvertido);
                 System.out.println("Índice salvo com sucesso.");
             } catch (IOException e) {

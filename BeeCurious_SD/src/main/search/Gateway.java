@@ -15,7 +15,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private ClienteINTER cliente;
     private Set<String> urlsIndexados= new HashSet<>();
     private QueueInterface urlQueue;
-    private DownloaderINTER downloader;
+    private DownloaderINTER downloaders;
     private Timer syncTimer;
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
@@ -145,7 +145,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             try{
                 String url= urlQueue.getURL();
                 if (url!=null){
-                    downloader.processarPagina(url);
+                    downloaders.processarPagina(url);
                 }else{
                     Thread.sleep(2000);
                 }

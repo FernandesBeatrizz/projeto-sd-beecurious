@@ -13,7 +13,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     private final int max_size;
     //final private static String QUEUE_CONFIG = "queue.properties";
     private static final Logger LOGGER = Logger.getLogger(URLqueue.class.getName());
-    private static final String caminhoficheiro = " url.obj"; //meter dps o caminho
+    private static final String caminhoficheiro = "barrel2.obj"; //meter dps o caminho
     private GatewayINTER gateway;
 
     public URLqueue(int max_size) throws RemoteException{
