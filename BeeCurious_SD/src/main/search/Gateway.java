@@ -25,7 +25,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         this.cliente=null;
         this.urlQueue=new URLqueue(1000);
         this.syncTimer = new Timer();
-        //this.syncTimer.scheduleAtFixedRate(new SyncTask(), 0, 300000);
+        this.syncTimer.scheduleAtFixedRate(new SyncTask(), 0, 300000);
         barrels = new ArrayList<>();
     }
 
@@ -102,13 +102,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         return barrels.get(0).top10(termos);
     }
 
-    private class BarrelsSyn extends TimerTask {
+    private class SyncTask extends TimerTask {
         @Override
         public void run() {
             try {
                 syncBarrels();
+                System.out.println("[Timer] Sincronização dos barrels check <3");
             } catch (RemoteException e) {
-                e.printStackTrace();
+                System.err.println("[Timer] Erro ao sincronizar Barrels: " + e.getMessage());
             }
         }
     }
