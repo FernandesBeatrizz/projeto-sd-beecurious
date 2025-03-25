@@ -8,15 +8,15 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
-    private HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
+    private final HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
     private int currentBarrelIndex = 0;
     private String url;
-    private ClienteINTER cliente;
-    private Set<String> urlsIndexados= new HashSet<>();
+    private final ClienteINTER cliente;
+    private final Set<String> urlsIndexados= new HashSet<>();
     private QueueInterface urlQueue;
     private DownloaderINTER downloaders;
-    private Timer syncTimer;
+    private final Timer syncTimer;
     //private long counter = 0L;
     //private long timestamp = System.currentTimeMillis()
 
@@ -147,7 +147,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     @Override
     public void addLinksToURL(String url, List<String> links) throws RemoteException {
-        System.out.println("");
+        System.out.println();
     }
 
 
@@ -248,7 +248,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     public synchronized void addToIndex(String word, String url) throws RemoteException {
         if (this.indiceInvertido.containsKey(word)) {
-            if (!((ArrayList)this.indiceInvertido.get(word)).contains(url)) {
+            if (!this.indiceInvertido.get(word).contains(url)) {
                 this.indiceInvertido.get(word).add(url);
             }
         } else {

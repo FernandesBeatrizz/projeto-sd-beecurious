@@ -7,7 +7,7 @@ import java.util.List;
 public interface GatewayINTER extends Remote {
 
     //cliente
-    public List<String> searchWord(String word) throws RemoteException;
+    List<String> searchWord(String word) throws RemoteException;
 
     List<String> next_page() throws RemoteException;
 
@@ -15,7 +15,7 @@ public interface GatewayINTER extends Remote {
 
     List<String> links_para_url(String url) throws RemoteException;
 
-    public void printOnClient() throws RemoteException;
+    void printOnClient() throws RemoteException;
 
 
     //barrels

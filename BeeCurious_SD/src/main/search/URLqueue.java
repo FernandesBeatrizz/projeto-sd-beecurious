@@ -13,12 +13,12 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     private final int max_size;
     //final private static String QUEUE_CONFIG = "queue.properties";
     private static final Logger LOGGER = Logger.getLogger(URLqueue.class.getName());
-    private static final String caminhoficheiro = "barrel2.obj"; //meter dps o caminho
+    private static final String caminhoficheiro = "queue.obj";
     private GatewayINTER gateway;
 
     public URLqueue(int max_size) throws RemoteException{
         this.max_size=max_size;
-        this.urls= new LinkedBlockingQueue<>(this.max_size);
+        urls= new LinkedBlockingQueue<>(this.max_size);
         this.loadQueueFromFile();
     }
 
@@ -57,10 +57,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
         // Retira a próxima URL da fila
         String url = urls.take();
         LOGGER.info("URL removida da fila: " + url);
-        //markURLAsProcessed(url);
-
-        // Salva a fila atualizada no ficheiro
-        saveQueueToFile();
+        markURLAsProcessed(url);
 
         return url;
     }
@@ -89,7 +86,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     public synchronized void markURLAsProcessed(String url) throws RemoteException {
         if (urls.remove(url)) {
             LOGGER.info("URL processado e removido da fila: " + url);
-            saveQueueToFile(); // Salva a fila após remover o URL
+            saveQueueToFile();
             notifyAll();
         } else {
             LOGGER.warning("URL não encontrado na fila: " + url);
@@ -126,17 +123,11 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
 
     public static void main(String[] args) {
         try {
-            String rmiName = "Gateway";
-            String rmiHost = "localhost";
-            int rmiPort = 8183;
 
             URLqueue queue = createQueue();
             queue.gateway.registerQueue(queue);
+            System.out.println("-- queue check");
 
-            System.out.println("URLqueue registrado no RMI Registry e pronto para uso.");
-            while (true) {
-                Thread.sleep(1000);
-            }
         } catch (RemoteException e) {
             System.err.println("Erro de comunicação remota: " + e.getMessage());
             e.printStackTrace();

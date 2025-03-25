@@ -9,7 +9,7 @@ public interface ClienteINTER extends Remote {
 
    void printOnClient() throws RemoteException;
 
-   public List<String> searchWord(String word) throws RemoteException;
+   List<String> searchWord(String word) throws RemoteException;
 }
 
 

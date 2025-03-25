@@ -10,8 +10,8 @@ import java.util.Scanner;
 
 public class Cliente implements ClienteINTER {
 
-    private GatewayINTER gateway;
-    private Scanner sc;
+    private final GatewayINTER gateway;
+    private final Scanner sc;
 
     public Cliente() throws NotBoundException, RemoteException {
         Registry registry = LocateRegistry.getRegistry("localhost", 8183);
@@ -112,7 +112,6 @@ public class Cliente implements ClienteINTER {
             List<String[]> resultados = gateway.top10(termos);
             if (resultados.isEmpty()) {
                 System.out.println("Nenhum resultado encontrado");
-                return;
             }
         } catch (RemoteException e) {
             System.err.println("Erro ao pesquisar: " + e.getMessage());

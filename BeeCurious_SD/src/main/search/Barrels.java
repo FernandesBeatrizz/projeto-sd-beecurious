@@ -9,34 +9,54 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
-public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
-    private HashMap<String, ArrayList<String[]>> indiceInvertido = new HashMap<>();
+public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
+    private HashMap<String, ArrayList<String[]>> indiceInvertido;
     private GatewayINTER gateway;
-    private String name;
-    private int port;
-    private HashMap<String, HashSet<String>> ponteiros= new HashMap<>();
-    private static final String ficheiroURLbarrels= "barrels.data";
+    private static String name;
+    private HashMap<String, HashSet<String>> ponteiros;
+    private static String ficheiroURLbarrels;
 
-    public Barrels( String name, int port) throws RemoteException {
-        super(port);
-        this.indiceInvertido=new HashMap<>();
+    public Barrels(String name) throws RemoteException {
+        super();
+        this.indiceInvertido = new HashMap<>();
         this.name = name;
-        this.port = port;
         this.ponteiros = new HashMap<>();
+        this.ficheiroURLbarrels = name + ".obj";
 
     }
 
+    public static Barrels criarbarrel(String barrel_nome, int gateway_port, String host) {
+        try {
+            Barrels novo = new Barrels(barrel_nome);
+            Registry registry = LocateRegistry.getRegistry("localhost", gateway_port);
+            System.setProperty("java.rmi.server.hostname", host);
+            registry.rebind(barrel_nome, novo);
+
+            novo.gateway = (GatewayINTER) registry.lookup("Gateway");
+            novo.gateway.registerBarrel(novo);
+
+            return novo;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static void main(String[] args) {
-        try{
-            String gatewayName = "gateway";
-            String gatewayHost = "localhost";
-            int gatewayPort = 8183;
+        try {
+            String name = args[0];
+            int gateway_port = Integer.parseInt(args[1]);
+            String host = args[2] ;
 
-            Barrels barrel1 = criarbarrel("Barrel1", 1000, gatewayPort );
-            Barrels barrel2 = criarbarrel("Barrel2", 2000, gatewayPort );
-            Barrels barrel3 = criarbarrel("Barrel3", 3000, gatewayPort);
+            Barrels barrel = criarbarrel(name, gateway_port, host);
 
-            System.out.println("- - barrels check");
+            System.out.println("- - barrel " + name+ " check");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
             /*
             //p ver s a FUNCIONALIDADE 3 esta a dar--------------------------
             barrel1.addToIndex("borba", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
@@ -63,7 +83,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             barrel1.addToIndex("cidade", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade conhecida...", Arrays.asList("https://outroexemplo.com"));
             barrel1.addToIndex("mármore", "https://exemplo.com/borba", "Cidade de Borba", "Borba é conhecida pelo seu mármore...", Arrays.asList("https://outroexemplo.com"));
 
-           */
+
             barrel1.addToIndex("tecnologia", "http://example1.com", "Página de Tecnologia", "A tecnologia está evoluindo rapidamente e novas inovações estão sendo feitas todos os dias.", Arrays.asList("http://example2.com", "http://example3.com", "http://example4.com"));
             barrel1.addToIndex("tecnologia", "http://example2.com", "Página de Ciência", "A ciência e a tecnologia são fundamentais para o progresso da humanidade.", Arrays.asList("http://example1.com", "http://example3.com"));
             barrel1.addToIndex("tecnologia", "http://example3.com", "Página de Programação", "Programação é uma habilidade essencial, e a tecnologia é seu alicerce.", Arrays.asList("http://example1.com"));
@@ -78,15 +98,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             termos = "ciência";
             barrel1.top10(termos);
 
-
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    */
 
     @Override
-    public void addToIndex(String word, String url, String titulo, String citacao, List<String>links) throws RemoteException {
+    public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws
+            RemoteException {
         indiceInvertido.putIfAbsent(word, new ArrayList<>());
 
 
@@ -110,11 +126,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         salvar();
     }
 
-    public List<String> obterpaginaurlponteiros(String url){
+    public List<String> obterpaginaurlponteiros(String url) {
         //primeiro verificamos se a url existe
         if (ponteiros.containsKey(url)) {
             return new ArrayList<>(ponteiros.get(url));
-        }else {
+        } else {
             System.out.println("Nenhuma pagina encontrada para este url");
             return new ArrayList<>();
         }
@@ -132,17 +148,17 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         //ArrayList<String>> sortedURLS = new ArrayList<>();
 
         if (indiceInvertido.containsKey(words[0])) {
-            for(String[] pagina : indiceInvertido.get(words[0])) {
+            for (String[] pagina : indiceInvertido.get(words[0])) {
                 resultadourls.add(pagina[0]);
             }
         } else {
             return resultadourls; // Se o primeiro termo não existe no índice, retorna lista vazia
         }
 
-        for (int i =1; i<words.length; i++) {
+        for (int i = 1; i < words.length; i++) {
             if (indiceInvertido.containsKey(words[i])) {
                 resultadourls.retainAll(indiceInvertido.get(words[i])); //addAll ou retainAll
-            }else{
+            } else {
                 //resultadourls.clear(); //ver bem este else
                 //break;
                 return new ArrayList<>();
@@ -151,7 +167,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         return resultadourls;
     }
 
-    public void ping() throws RemoteException {
+    public void ping(Barrels barrels) throws RemoteException {
     }
 
     @Override
@@ -164,27 +180,25 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
             } catch (RemoteException e) {
                 throw new RuntimeException(e);
             }
-        }else{
+        } else {
             gateway.syncBarrels();
         }
     }
 
     @Override
     public void updateIndex(HashMap<String, ArrayList<String>> indiceParaPesquisas) throws RemoteException {
-        
+
     }
 
     public void reviverBarrel() throws RemoteException {
-        Registry registry = LocateRegistry.getRegistry("localhost", this.port);
+        Registry registry = LocateRegistry.getRegistry("localhost", 8183);
         try {
             registry.unbind(this.name);
             this.gateway.unregisterBarrel(this);
             System.out.println("Barrel " + this.name + " removido do RMI Registry.");
-            String nome = this.name;
-            criarbarrel( nome, this.port, 8183);
-        }
-        catch (Exception e){
-            System.out.println (" erro a reviver barrel");
+            criarbarrel(name, 8183, "localhost");
+        } catch (Exception e) {
+            System.out.println(" erro a reviver barrel");
         }
 
     }
@@ -196,17 +210,17 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     }
 
 
+    private int pagina = 1;
+    private final Scanner sc = new Scanner(System.in);
 
-    private int pagina=1;
-    private Scanner sc= new Scanner(System.in);
-    public List<String[]> top10(String termos) throws RemoteException{
+    public List<String[]> top10(String termos) throws RemoteException {
         Scanner sc = new Scanner(System.in);
         String[] palavras = termos.toLowerCase().split(" ");
         List<String[]> resultados = new ArrayList<>();
 
         //vou ver s os termos existem no indiceinvertido
-        for(String palavra : palavras) {
-            if(!indiceInvertido.containsKey(palavra)){
+        for (String palavra : palavras) {
+            if (!indiceInvertido.containsKey(palavra)) {
                 System.out.println("palavra não encontrada");
                 return resultados; //s nao encontrar nd retorna lista vazia
             }
@@ -235,21 +249,21 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         //ordeno os resultados pela quantidade de termos encontrados
         resultados.sort(new Comparator<String[]>() {
             public int compare(String[] pag1, String[] pag2) {
-                int count1= contarTermosNaPagina(pag1, palavras);
-                int count2= contarTermosNaPagina(pag2, palavras);
+                int count1 = contarTermosNaPagina(pag1, palavras);
+                int count2 = contarTermosNaPagina(pag2, palavras);
 
-                if(count1==count2){
-                    int ponteiro1= obterrelevancia(pag1[0]);
-                    int ponteiro2= obterrelevancia(pag2[0]);
+                if (count1 == count2) {
+                    int ponteiro1 = obterrelevancia(pag1[0]);
+                    int ponteiro2 = obterrelevancia(pag2[0]);
                     return Integer.compare(ponteiro1, ponteiro2);
                 }
                 return Integer.compare(count2, count1);
             }
         });
 
-        int resultadospag=10;
+        int resultadospag = 10;
         int totalPaginas = (int) Math.ceil((double) resultados.size() / resultadospag);
-        boolean sair=false;
+        boolean sair = false;
 
 
         while (pagina <= totalPaginas && !sair) {
@@ -302,48 +316,30 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         return count;
     }
 
-    public int obterrelevancia(String url){
+    public int obterrelevancia(String url) {
         //basicamente vamos contar os ponteiros
-        if (ponteiros.containsKey(url)){
+        if (ponteiros.containsKey(url)) {
             return ponteiros.get(url).size();
         }
         return 0;
     }
 
 
-    public boolean verificarbarrel(Barrels barrels){
-        try{
-            this.ping();
+    public boolean verificarbarrel(Barrels barrel) {
+        try {
+            this.ping(this);
             return true;
-        }catch(RemoteException e){
-            System.out.println("Barrel inativo: "+ this.name);
+        } catch (RemoteException e) {
+            System.out.println("Barrel inativo: " + this.name);
             return false;
         }
     }
 
-
-    public static Barrels criarbarrel(String barrel_nome, int barrel_port, int gateway_port){
-        try{
-            Barrels novo = new Barrels(barrel_nome, barrel_port);
-            Registry registry = LocateRegistry.getRegistry("localhost", gateway_port);
-            registry.rebind(barrel_nome, novo);
-
-            novo.gateway = (GatewayINTER) registry.lookup("Gateway");
-            novo.gateway.registerBarrel(novo);
-
-            return novo;
-        }catch(Exception e){
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-//era o metodo de guardar as coisas que estao na queue, ainda nao acabei
-    private void salvar(){
+    private void salvar() {
         synchronized (this) {
-            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream("barrel1.obj"))) {
+            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(ficheiroURLbarrels))) {
                 output.writeObject(indiceInvertido);
-                System.out.println("Índice salvo com sucesso.");
+                System.out.println("Indice salvo com sucesso.");
             } catch (IOException e) {
                 System.err.println("Erro ao salvar o índice: " + e.getMessage());
             }
@@ -351,10 +347,9 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
     }
 
 
-
-    public boolean containsURL(String url){
+    public boolean containsURL(String url) {
         for (ArrayList<String[]> paginas : indiceInvertido.values()) {
-            for(String[] pagina: paginas){
+            for (String[] pagina : paginas) {
                 if (pagina[0].equals(url)) {
                     return true;
                 }
@@ -362,10 +357,4 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER{
         }
         return false;
     }
-
-
-    //nos barels temos de ver quando eles s deligam e dps fazer a conexao de novo com a gateway e ver se a informaçao é a mesma
 }
-
-//vao se ligar a gateway atraves d RMI callback
-//têm de ter estas funçoes: fazer pesquisa e ...

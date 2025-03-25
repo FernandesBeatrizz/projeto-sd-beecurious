@@ -20,7 +20,7 @@ public interface BarrelsINTER extends Remote {
 
     //void linksURLaddToIndex(String word, String url, String titulo, String citacao, List<String>links)  throws RemoteException;
 
-    public boolean containsURL(String url) throws RemoteException;
+    boolean containsURL(String url) throws RemoteException;
 
     List<String[]> top10(String termos) throws RemoteException;
 
