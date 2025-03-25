@@ -117,6 +117,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         if (!urlExiste) {
             // Armazena a URL, título, citação e links como um array
             indiceInvertido.get(word).add(new String[]{url, titulo, citacao, String.join(",", links)});
+
         }
         //p ver quem aponta
         for (String link : links) {
@@ -247,7 +248,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
 
         //ordeno os resultados pela quantidade de termos encontrados
-        resultados.sort(new Comparator<String[]>() {
+        /*resultados.sort(new Comparator<String[]>() {
             public int compare(String[] pag1, String[] pag2) {
                 int count1 = contarTermosNaPagina(pag1, palavras);
                 int count2 = contarTermosNaPagina(pag2, palavras);
@@ -258,6 +259,19 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                     return Integer.compare(ponteiro1, ponteiro2);
                 }
                 return Integer.compare(count2, count1);
+            }
+        });*/
+        resultados.sort(new Comparator<String[]>() {
+            public int compare(String[] pag1, String[] pag2) {
+                int ponteiro1 = obterrelevancia(pag1[0]);
+                int ponteiro2 = obterrelevancia(pag2[0]);
+
+                if (ponteiro1 == ponteiro2) {
+                    int count1 = contarTermosNaPagina(pag1, palavras);
+                    int count2 = contarTermosNaPagina(pag2, palavras);
+                    return Integer.compare(count1, count2);  //oq tem mais termos primeiro
+                }
+                return Integer.compare(ponteiro2, ponteiro1); //oq tem mais links primeiro
             }
         });
 

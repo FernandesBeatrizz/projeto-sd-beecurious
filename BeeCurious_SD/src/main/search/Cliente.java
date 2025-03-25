@@ -7,12 +7,21 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.List;
 import java.util.Scanner;
-
+/**
+ * Classe que implementa a interface do cliente para o motor de pesuisa.
+ *
+ * <p>Esta classe permite aos clientes interagir com o sistema através de um menu, fornecendo as funcionalidades propostas no enunciado</p>
+ *
+ */
 public class Cliente implements ClienteINTER {
 
     private final GatewayINTER gateway;
     private final Scanner sc;
-
+    /**
+     * Construtor da classe Cliente.
+     *
+     * <p>Estabelece a conexão com o servidor RMI e obtém a referência para o Gateway.</p>
+     */
     public Cliente() throws NotBoundException, RemoteException {
         Registry registry = LocateRegistry.getRegistry("localhost", 8183);
         this.gateway = (GatewayINTER) registry.lookup("Gateway");
@@ -35,12 +44,11 @@ public class Cliente implements ClienteINTER {
         boolean exit = false;
         while (!exit) {
             System.out.println("\nEscolha uma opção");
-            System.out.println("1 - indexar URLs");
-            System.out.println("2 - Pesquisar paginas");
-            System.out.println("3 - Ordenar resultados por importância");
-            System.out.println("4 - Consultar ligações para uma página"); //etsa dps juntar com a d cima
-            System.out.println("5 - Aprendizagem de palavras vazias");
-            System.out.println("6- Sair");
+            System.out.println("1 - indexar URLs"); //funcionalidade 1 e 2
+            System.out.println("2 - Pesquisar paginas por importância"); //funcionalidade 3 e 4
+            System.out.println("3 - Consultar ligações para uma página"); //funcionalidade 5
+            System.out.println("4 - Aprendizagem de palavras vazias"); //funcionalidade 6
+            System.out.println("5- Sair");
             System.out.print("Qual opção quer: ");
 
             opcao = sc.nextInt();
@@ -55,15 +63,13 @@ public class Cliente implements ClienteINTER {
                     pesquisarconjtermos();
                     break;
                 case 3:
-                    break;
-                case 4:
                     //gateway, barrels e cliente
                     consultarligacoespagina();
                     break;
-                case 5:
+                case 4:
                     //apontei q é p usar os downloaders
                     break;
-                case 6:
+                case 5:
                     exit = true;
                     break;
                 default:
