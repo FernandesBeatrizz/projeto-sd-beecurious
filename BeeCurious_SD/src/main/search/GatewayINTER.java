@@ -4,57 +4,125 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 
+
+/**
+ * @throws RemoteException Se houver um erro de comunicação remota.
+ */
 public interface GatewayINTER extends Remote {
 
-    //cliente
+    // ========== CLIENTE ==========
+
+    /**
+     * Realiza a pesquisa por uma palavra-chave no índice de pesquisa.
+     *
+     */
     List<String> searchWord(String word) throws RemoteException;
 
 
 
-    //barrels
+    // ========== BARRELS ==========
+
     void indexarURL(String url) throws RemoteException;
+
 
     void addLinksToURL(String url, List<String> links) throws RemoteException;
 
+    /**
+     * Registra um novo barrel (módulo de indexação) no sistema.
+     *
+     */
     void registerBarrel(BarrelsINTER barrel) throws RemoteException;
 
+    /**
+     * Sincroniza os barrels registrados no sistema.
+     *
+     */
     void syncBarrels() throws RemoteException;
 
+    /**
+     * Obtém a interface da fila de URLs para controle de downloads e indexação.
+     *
+     */
     QueueInterface getQueue() throws RemoteException;
 
+    /**
+     * Remove um barrel previamente registrado no sistema.
+     *
+     */
     void unregisterBarrel(BarrelsINTER barrel) throws RemoteException;
+
 
     QueueInterface getUrlQueue() throws RemoteException;
 
+    /**
+     * Obtém um barrel disponível no sistema.
+     *
+     */
     BarrelsINTER getBarrel() throws RemoteException;
 
+    /**
+     * Obtém os 10 principais resultados para um termo de pesquisa.
+     *
+     */
     List<String[]> top10(String termos) throws RemoteException;
 
+    /**
+     * Retorna uma lista de páginas que apontam para uma URL específica.
+     *
+     */
     List<String> obterPaginasApontamPara(String url) throws RemoteException;
 
 
-    //downloaders
+    // ========== DOWNLOADERS ==========
+
+
     String takeNext() throws RemoteException, InterruptedException;
 
+    /**
+     * Adiciona uma nova URL à fila de processamento.
+     *
+     */
     void putNew(String var1) throws RemoteException;
+
 
     void markURLAsProcessed(String url) throws RemoteException;
 
+    /**
+     * Adiciona uma palavra ao índice associando-a a uma URL.
+     *
+     */
     void addToIndex(String word, String url) throws RemoteException;
 
+    /**
+     * Obtém uma URL disponível para download e processamento.
+     *
+     */
     String get_url() throws RemoteException;
 
+    /**
+     * Registra um downloader (processo responsável por baixar páginas) no sistema.
+     *
+     */
     void registerDownloader(DownloaderINTER downloader) throws RemoteException;
 
 
-    //caching
+    // ========== CACHING ==========
+
+
     void cacheSearchResults(String word, List<String> results) throws RemoteException;
+
 
     List<String> getCachedResults(String word) throws RemoteException;
 
+
     void registerClient(ClienteINTER cliente) throws RemoteException;
 
-    //queue
+    // ========== QUEUE ==========
+
+    /**
+     * Registra a fila de URLs no sistema para gerenciamento de downloads e indexação.
+     *
+     */
     void registerQueue(QueueInterface queue) throws RemoteException;
 
 }

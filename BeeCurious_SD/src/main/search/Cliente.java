@@ -28,6 +28,7 @@ public class Cliente implements ClienteINTER {
         this.sc = new Scanner(System.in);
     }
 
+
     public static void main(String[] args) {
         try {
             Cliente cliente = new Cliente();  // Cria uma instância do Cliente
@@ -39,6 +40,10 @@ public class Cliente implements ClienteINTER {
         }
     }
 
+    /**
+     * Exibe o menu principal e processa as opções do usuário.
+     *
+     */
     public void exibirMenu() throws RemoteException {
         int opcao = 0;
         boolean exit = false;
@@ -109,6 +114,7 @@ public class Cliente implements ClienteINTER {
             return new ArrayList<>();
         }
     }
+
 
     public void pesquisarconjtermos() throws RemoteException {
         try {

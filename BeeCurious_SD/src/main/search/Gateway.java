@@ -6,7 +6,10 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.logging.Logger;
-
+/**
+ * Classe que implementa o Gateway para comunicar entre clientes, barrels e downloaders.
+ *
+ */
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private final HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
@@ -17,7 +20,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private QueueInterface urlQueue;
     private ArrayList<DownloaderINTER> downloaders;
     private final Timer syncTimer;
-
+    /**
+     * Construtor da classe Gateway.
+     * Inicializa a fila de URLs e configura um temporizador para sincronização periódica dos barrels.
+     *
+     *
+     */
     public Gateway() throws RemoteException {
         super();
         this.cliente=null;
@@ -28,6 +36,11 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         downloaders = new ArrayList<>();
     }
 
+
+    /**
+     * Metodo principal para iniciar o Gateway e registrá-lo no RMI Registry.
+     *
+     */
     public static void main(String[] args) {
       try {
         Gateway gateway = new Gateway();
@@ -48,11 +61,23 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
+
+    /**
+     * Registra uma fila de URLs para a Gateway.
+     *
+     * @param queue A fila de URLs a ser registrada.
+     */
     public void registerQueue(QueueInterface queue) throws RemoteException {
         this.urlQueue = queue;
     }
 
     //CLIENTS  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    /**
+     * Realiza a pesquisa de uma palavra no índice invertido.
+     *
+     * @param word Palavra a ser pesquisada.
+     * @return Lista de URLs relacionadas à palavra pesquisada.
+     */
     public synchronized List<String> searchWord(String word) throws RemoteException {
         ArrayList<String> urls = new ArrayList<>();
         BarrelsINTER barrel = getBarrel();
@@ -82,6 +107,11 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     private class SyncTask extends TimerTask {
+
+        /**
+         * Executa a sincronização dos barrels quando a tarefa é acionada.
+         * Se ocorrer um erro de comunicação remota, ele será capturado e registrado no console.
+         */
         @Override
         public void run() {
             try {
@@ -93,7 +123,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
-
+    /**
+     * Obtém as páginas que apontam para um determinado URL.
+     *
+     * @param url O URL de interesse.
+     * @return Lista de URLs que apontam para o URL fornecido.
+     */
     public List<String> obterPaginasApontamPara(String url) throws RemoteException {
         List<String> paginasApontam = new ArrayList<>();
 
@@ -105,6 +140,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     //RELACIONADO A URLS
+
     public void indexarURL(String url) throws RemoteException {
         System.out.println("URL recebido para indexação: " + url);
         try{
@@ -150,12 +186,22 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
 
     //REGISTAR E SINCRONIZAR BARRELS
+    /**
+     * Registra um novo Barrel no Gateway.
+     *
+     * @param barrel O Barrel a ser registrado.
+     */
     @Override
     public void registerBarrel(BarrelsINTER barrel) throws RemoteException {
         this.barrels.add(barrel);
         System.out.println("Barrel registado "); //nao sei s é preciso esta mensagem
     }
 
+    /**
+     * Remove um Barrel do Gateway.
+     *
+     * @param barrel O Barrel a ser removido.
+     */
     @Override
     public void unregisterBarrel(BarrelsINTER barrel) throws RemoteException{
         if (barrels.contains(barrel)) {
@@ -166,6 +212,10 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
+    /**
+     * Sincroniza os barrels registrando os índices atualizados.
+     *
+     */
     @Override
     public void syncBarrels() throws RemoteException {
         for (BarrelsINTER barrel : barrels) {
@@ -178,6 +228,11 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         return this.urlQueue;
     }
 
+    /**
+     * Obtém um Barrel ativo do Gateway, alternando entre os disponíveis.
+     *
+     * @return Um objeto BarrelINTER ativo.
+     */
     public BarrelsINTER getBarrel() throws RemoteException{
         try{
             BarrelsINTER barrel = barrels.get(currentBarrelIndex);
@@ -191,10 +246,22 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
 
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -
+
+    /**
+     * Registra um downloader para processamento de URLs.
+     *
+     * @param downloader O downloader a ser registrado.
+     */
     public synchronized void registerDownloader (DownloaderINTER downloader){
         this.downloaders.add(downloader);
         System.out.println("Downloader registado ");
     }
+
+    /**
+     * Obtém um downloader disponível.
+     *
+     * @return Um objeto DownloaderINTER ativo.
+     */
     public synchronized DownloaderINTER getDownloader() throws RemoteException{
         try{
             DownloaderINTER downloader = downloaders.get(currentDownloaderIndex);
@@ -206,10 +273,20 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         return null;
     }
 
+    /**
+     * Obtém a próxima URL da fila de processamento.
+     *
+     * @return A próxima URL na fila.
+     */
     public synchronized String takeNext() throws RemoteException, InterruptedException {
         return urlQueue.getURL();
     }
 
+    /**
+     * Adiciona uma nova URL para indexação.
+     *
+     * @param url A URL a ser adicionada.
+     */
     public synchronized void putNew(String url) throws RemoteException {
         try {
             System.out.println("Verificar se o URL já foi indexado");
@@ -239,6 +316,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         notifyAll();
     }
 
+    /**
+     * Adiciona uma palavra e o URL correspondente ao índice invertido.
+     *
+     * @param word A palavra a ser indexada.
+     * @param url  A URL associada à palavra.
+     */
     public synchronized void addToIndex(String word, String url) throws RemoteException {
         if (this.indiceInvertido.containsKey(word)) {
             if (!this.indiceInvertido.get(word).contains(url)) {
@@ -275,6 +358,11 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     }
 
+    /**
+     * Retorna a fila de URLs do sistema.
+     *
+     * @return A interface da fila de URLs.
+     */
     public QueueInterface getQueue() throws RemoteException {
         return this.urlQueue;
     }

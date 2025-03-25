@@ -14,6 +14,11 @@ import java.rmi.registry.Registry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+/**
+ * Classe responsável por baixar e processar páginas da web.
+ *
+ * <p>O Downloader obtém URLs da fila, extrai informações e links, e indexa palavras para referência futura.</p>
+ */
 public class Downloader extends UnicastRemoteObject implements DownloaderINTER, Runnable {
 
     GatewayINTER gateway;
@@ -22,11 +27,22 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     QueueInterface urlQueue;
     private static final String nomesficheiroparaguardar = "informacoescompletas.obj";
 
+
+    /**
+     * Construtor da classe Downloader.
+     *
+     * @param name Nome do downloader.
+     */
     public Downloader(String name) throws RemoteException, InterruptedException {
         super();
         this.downloader_name=name;
     }
 
+    /**
+     * Cria e registra um novo downloader no RMI.
+     *
+     * @param downloader_nome Nome do downloader.
+     */
     public static void criarDownloader(String downloader_nome) {
         try {
             Downloader novo = new Downloader(downloader_nome);
@@ -41,6 +57,11 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         }
 }
 
+
+    /**
+     * Metodo principal para execução do downloader.
+     *
+     */
     public void executar() throws RemoteException {
         try {
             int tentativas=0;
@@ -74,9 +95,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
             e.printStackTrace();
         }
     }
-
-
-
 
     /*public void processarPagina(String url) throws RemoteException {
         BarrelsINTER barrel= gateway.getBarrel();
@@ -149,6 +167,12 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
             }
         }
     }*/
+
+    /**
+     * Processa uma página da web e extrai informações relevantes.
+     *
+     * @param url A URL da página a ser processada.
+     */
     public void processarPagina(String url) throws RemoteException {
         BarrelsINTER barrel= gateway.getBarrel();
         if (!barrel.containsURL(url)){
@@ -223,7 +247,13 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     }
 
 
-
+    /**
+     * Converte URLs relativas em URLs absolutas.
+     *
+     * @param baseUrl URL base.
+     * @param href URL relativa.
+     * @return URL absoluta ou null em caso de erro.
+     */
     private String transformarUrlAbsoluta(String baseUrl, String href){
         try {
             URI baseUri = new URI(baseUrl);
@@ -243,23 +273,25 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     }
 
 
-
+    /**
+     * Salva as informações necessárias em um arquivo.
+     *
+     * Este metodo tenta salvar um conjunto de dados que inclui uma palavra, uma URL, o título da página,
+     * uma citação extraída da página e uma lista de links encontrados. As informações são armazenadas em um
+     * arquivo binário no formato de objetos. Caso o arquivo já exista, ele tenta carregar os dados antigos
+     * para verificar se a URL já foi processada. Se a URL já tiver sido processada, o metodo simplesmente
+     * retorna sem salvar novamente.
+     *
+     * @param palavra A palavra extraída do conteúdo da página que será usada para indexação.
+     * @param url A URL da página processada.
+     * @param titulo O título da página processada.
+     * @param citacao A citação extraída do primeiro parágrafo ou metadados da página.
+     * @param listaLinks A lista de links extraídos da página.
+     */
     public void salvarinformacoesnecessarias(String palavra, String url, String titulo, String citacao, List<String>listaLinks){
         try{
             //ObjectOutputStream out;
             File file= new File(nomesficheiroparaguardar);
-
-            //verificar se o arquivo existe
-            /*if(file.exists()){
-                out = new ObjectOutputStream(new FileOutputStream(file, true)) {
-                    @Override
-                    protected void writeStreamHeader() throws IOException {
-                        // Não sobrescreve o cabeçalho do arquivo
-                    }
-                };
-            }else{
-                out= new ObjectOutputStream(new FileOutputStream(file));
-            }*/
 
             List<HashMap<String, Object>> dadosExistentes = new ArrayList<>();
 
@@ -311,6 +343,15 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         }
     }
 
+
+    /**
+     * Metodo executado pela thread que faz o download e processa as URLs.
+     *
+     * Este metodo é a execução principal da thread. Ele é responsável por pegar a próxima URL da fila,
+     * verificar se a URL é válida, processá-la, extrair informações dela e, em seguida, marcar a URL como
+     * processada. Ele continua em execução até que a fila de URLs esteja vazia por um longo tempo.
+     *
+     */
 @Override
     public void run() {
     try {
@@ -320,6 +361,50 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     }
 }
 
+    /**
+     * Obtém a URL da fila de URLs do gateway.
+     *
+     * Este metodo faz uma chamada ao gateway para obter a URL próxima que precisa ser processada.
+     *
+     * @return A URL a ser processada.
+     */
+    public String get_url() throws RemoteException {
+        return gateway.get_url();
+    }
+
+
+    /**
+     * Coloca uma nova URL na fila do gateway.
+     *
+     * Este metodo faz uma chamada ao gateway para adicionar uma nova URL à fila de URLs que precisam
+     * ser processadas.
+     *
+     * @param url A URL a ser adicionada à fila.
+     */
+    public void put_url(String url) throws RemoteException {
+        gateway.putNew(url);
+    }
+
+    /**
+     * Salva uma palavra no índice do gateway.
+     *
+     * Este metodo envia uma palavra extraída de uma página para ser salva no índice do gateway.
+     *
+     * @param word A palavra a ser indexada.
+     * @param url A URL associada à palavra.
+     */
+    public void save_words(String word, String url) throws java.rmi.RemoteException {
+        gateway.addToIndex(word, url);
+    }
+
+    /**
+     * Metodo principal que inicializa o downloader.
+     *
+     * Este metodo é responsável por inicializar o downloader, registrar o downloader no registro RMI
+     * e iniciar a execução da thread de download.
+     *
+     * @param args Argumentos passados para o metodo principal, com o nome do downloader.
+     */
     public static void main(String[] args) throws RemoteException{
         String name = args[0];
 
@@ -327,18 +412,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
 
         System.out.println("- - downloader " + name+ " check");
 
-    }
-
-    public String get_url() throws RemoteException {
-        return gateway.get_url();
-    }
-
-    public void put_url(String url) throws RemoteException {
-        gateway.putNew(url);
-    }
-
-    public void save_words(String word, String url) throws java.rmi.RemoteException {
-        gateway.addToIndex(word, url);
     }
 
 }

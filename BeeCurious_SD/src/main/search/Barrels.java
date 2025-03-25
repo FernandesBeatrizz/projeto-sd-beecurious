@@ -8,7 +8,12 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-
+/**
+ * Classe que implementa o servidor Barrel para armazenamento dos dados.
+ *
+ * <p>Esta classe é responsável por armazenar parte do índice invertido e fornecer funcionalidades de pesquisa. Opera como um servidor RMI que pode ser replicado
+ * para garantir tolerância a falhas.</p>-- NAO SEI SE É NECESSARIO
+ */
 public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private HashMap<String, ArrayList<String[]>> indiceInvertido;
     private GatewayINTER gateway;
@@ -16,6 +21,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private HashMap<String, HashSet<String>> ponteiros;
     private static String ficheiroURLbarrels;
 
+    /**
+     * Construtor da classe Barrels.
+     *
+     * @param name Nome do barrel
+     */
     public Barrels(String name) throws RemoteException {
         super();
         this.indiceInvertido = new HashMap<>();
@@ -25,6 +35,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     }
 
+    /**
+     * Metodo para criar um novo barrel e registá-lo no gateway.
+     *
+     * @param barrel_nome Nome do barrel
+     * @param gateway_port Porta do gateway
+     */
     public static void criarbarrel(String barrel_nome, int gateway_port) {
         try {
             Barrels novo = new Barrels(barrel_nome);
@@ -38,6 +54,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
+    /**
+     * Metodo principal para iniciar um barrel.
+     *
+     * @param args Argumentos de entrada: nome do barrel e porta do gateway
+     */
     public static void main(String[] args) {
         try {
             String name = args[0];
@@ -95,6 +116,15 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     */
 
+    /**
+     * Adiciona um termo ao índice invertido.
+     *
+     * @param word Termo a ser indexado
+     * @param url URL associada ao termo
+     * @param titulo Título da página
+     * @param citacao Citação de texto
+     * @param links Lista de links relacionados
+     */
     @Override
     public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws
             RemoteException {
@@ -122,6 +152,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         salvar();
     }
 
+    /**
+     * Obtém a lista de páginas que apontam para um determinado URL.
+     *
+     * @param url O URL de interesse.
+     * @return Lista de URLs que apontam para o URL fornecido.
+     */
     public List<String> obterpaginaurlponteiros(String url) {
         //primeiro verificamos se a url existe
         if (ponteiros.containsKey(url)) {
@@ -133,6 +169,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     }
 
 
+    /**
+     * Pesquisa um termo no índice invertido.
+     *
+     * @param word Termo a ser pesquisado
+     * @return Lista de URLs que contêm o termo
+     */
     @Override
     public synchronized List<String> searchWord(String word) throws RemoteException {
         String[] words = word.toLowerCase().split(" ");
@@ -330,6 +372,9 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
+    /**
+     * Salva o índice invertido em um arquivo.
+     */
     private void salvar() {
         synchronized (this) {
             try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(ficheiroURLbarrels))) {
@@ -341,7 +386,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
-
+    /**
+     * Verifica se um URL está contido no índice.
+     *
+     * @param url URL a ser verificada
+     * @return true se o URL está contido, false caso contrário
+     */
     public boolean containsURL(String url) {
         for (ArrayList<String[]> paginas : indiceInvertido.values()) {
             for (String[] pagina : paginas) {
