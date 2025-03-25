@@ -11,9 +11,6 @@ public interface BarrelsINTER extends Remote {
     // Busca todas as URLs associadas a uma palavra
     List<String> searchWord(String word) throws RemoteException;
 
-    // Sincronização entre réplicas (replica deve enviar o seu estado para outro Storage Barrel)
-    void syncWithReplica() throws RemoteException;
-
     void updateIndex(HashMap<String, ArrayList<String>> indiceParaPesquisas) throws RemoteException;
 
     void indexarURL(String url) throws RemoteException;

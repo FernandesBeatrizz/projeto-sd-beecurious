@@ -9,13 +9,6 @@ public interface GatewayINTER extends Remote {
     //cliente
     List<String> searchWord(String word) throws RemoteException;
 
-    List<String> next_page() throws RemoteException;
-
-    List<String> previous_page() throws RemoteException;
-
-    List<String> links_para_url(String url) throws RemoteException;
-
-    void printOnClient() throws RemoteException;
 
 
     //barrels
@@ -27,9 +20,11 @@ public interface GatewayINTER extends Remote {
 
     void syncBarrels() throws RemoteException;
 
-    QueueInterface getUrlQueue() throws RemoteException;
+    QueueInterface getQueue() throws RemoteException;
 
     void unregisterBarrel(BarrelsINTER barrel) throws RemoteException;
+
+    QueueInterface getUrlQueue() throws RemoteException;
 
     BarrelsINTER getBarrel() throws RemoteException;
 
@@ -49,6 +44,8 @@ public interface GatewayINTER extends Remote {
 
     String get_url() throws RemoteException;
 
+    void registerDownloader(DownloaderINTER downloader) throws RemoteException;
+
 
     //caching
     void cacheSearchResults(String word, List<String> results) throws RemoteException;
@@ -59,4 +56,5 @@ public interface GatewayINTER extends Remote {
 
     //queue
     void registerQueue(QueueInterface queue) throws RemoteException;
+
 }

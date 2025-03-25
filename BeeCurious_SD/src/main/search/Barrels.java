@@ -25,20 +25,16 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     }
 
-    public static Barrels criarbarrel(String barrel_nome, int gateway_port, String host) {
+    public static void criarbarrel(String barrel_nome, int gateway_port) {
         try {
             Barrels novo = new Barrels(barrel_nome);
             Registry registry = LocateRegistry.getRegistry("localhost", gateway_port);
-            System.setProperty("java.rmi.server.hostname", host);
             registry.rebind(barrel_nome, novo);
 
             novo.gateway = (GatewayINTER) registry.lookup("Gateway");
             novo.gateway.registerBarrel(novo);
-
-            return novo;
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
     }
 
@@ -46,9 +42,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         try {
             String name = args[0];
             int gateway_port = Integer.parseInt(args[1]);
-            String host = args[2] ;
 
-            Barrels barrel = criarbarrel(name, gateway_port, host);
+            criarbarrel(name, gateway_port);
 
             System.out.println("- - barrel " + name+ " check");
 
@@ -171,20 +166,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     public void ping(Barrels barrels) throws RemoteException {
     }
 
-    @Override
-    public void syncWithReplica() throws RemoteException {
-        if (!verificarbarrel(this)) {
-            System.out.println("Necessário reviver barrel ");
-            try {
-                this.reviverBarrel();
-
-            } catch (RemoteException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            gateway.syncBarrels();
-        }
-    }
 
     @Override
     public void updateIndex(HashMap<String, ArrayList<String>> indiceParaPesquisas) throws RemoteException {
@@ -197,7 +178,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             registry.unbind(this.name);
             this.gateway.unregisterBarrel(this);
             System.out.println("Barrel " + this.name + " removido do RMI Registry.");
-            criarbarrel(name, 8183, "localhost");
+            criarbarrel(name, 8183);
         } catch (Exception e) {
             System.out.println(" erro a reviver barrel");
         }

@@ -11,14 +11,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private final HashMap<String, ArrayList<String>> indiceInvertido = new HashMap<>();
     private ArrayList<BarrelsINTER> barrels;
     private int currentBarrelIndex = 0;
-    private String url;
+    private int currentDownloaderIndex = 0;
     private final ClienteINTER cliente;
     private final Set<String> urlsIndexados= new HashSet<>();
     private QueueInterface urlQueue;
-    private DownloaderINTER downloaders;
+    private ArrayList<DownloaderINTER> downloaders;
     private final Timer syncTimer;
-    //private long counter = 0L;
-    //private long timestamp = System.currentTimeMillis()
 
     public Gateway() throws RemoteException {
         super();
@@ -27,6 +25,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         this.syncTimer = new Timer();
         this.syncTimer.scheduleAtFixedRate(new SyncTask(), 0, 300000);
         barrels = new ArrayList<>();
+        downloaders = new ArrayList<>();
     }
 
     public static void main(String[] args) {
@@ -42,9 +41,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         registry.rebind(gatewayName, gateway);
 
         System.out.println("gateway ready. Waiting for input...");
-         //Thread.sleep(4000L);
-         //server.printOnClient();
-
 
           System.out.println("printed");
         } catch (Exception var3) {
@@ -58,7 +54,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     //CLIENTS  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     public synchronized List<String> searchWord(String word) throws RemoteException {
-        ArrayList<String> urls = new ArrayList<String>();
+        ArrayList<String> urls = new ArrayList<>();
         BarrelsINTER barrel = getBarrel();
             try {
                 urls.addAll(barrel.searchWord(word));
@@ -69,20 +65,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         return urls;
     }
 
-    public List<String> next_page() throws RemoteException{
-        return new ArrayList<>();
-    }
-
-    public List<String> previous_page() throws RemoteException{
-        return new ArrayList<>();
-    }
-
-    public List<String> links_para_url(String url) throws RemoteException{
-        this.url = url;
-        return new ArrayList<>(); //nao percebo s é isto
-    }
-
-
     public void printOnClient() {
         if (this.cliente != null) {
             try {
@@ -90,7 +72,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             } catch (RemoteException var2) {
                 var2.printStackTrace();
             }
-        }//acho que devemos meter um else, ou nao
+        }
     }
 
     //BARRELS - - - - - - - - - - - - - - - - - - - - - - -
@@ -156,7 +138,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             try{
                 String url= urlQueue.getURL();
                 if (url!=null){
-                    downloaders.processarPagina(url);
+                    getDownloader().processarPagina(url);
                 }else{
                     Thread.sleep(2000);
                 }
@@ -170,9 +152,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     //REGISTAR E SINCRONIZAR BARRELS
     @Override
     public void registerBarrel(BarrelsINTER barrel) throws RemoteException {
-        if (this.barrels == null) {
-            this.barrels = new ArrayList<>();
-        }
         this.barrels.add(barrel);
         System.out.println("Barrel registado "); //nao sei s é preciso esta mensagem
     }
@@ -212,8 +191,22 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
 
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -
+    public synchronized void registerDownloader (DownloaderINTER downloader){
+        this.downloaders.add(downloader);
+        System.out.println("Downloader registado ");
+    }
+    public synchronized DownloaderINTER getDownloader() throws RemoteException{
+        try{
+            DownloaderINTER downloader = downloaders.get(currentDownloaderIndex);
+            currentDownloaderIndex = (currentDownloaderIndex + 1) % downloaders.size();
+            return downloader;
+        }catch (Exception e){
+            System.out.print("Erro"+ e.getMessage());
+        }
+        return null;
+    }
+
     public synchronized String takeNext() throws RemoteException, InterruptedException {
-        //return listaParaFazerCrawl.poll();
         return urlQueue.getURL();
     }
 
@@ -280,6 +273,10 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     @Override
     public void registerClient(ClienteINTER cliente) throws RemoteException {
 
+    }
+
+    public QueueInterface getQueue() throws RemoteException {
+        return this.urlQueue;
     }
 
 }

@@ -7,38 +7,42 @@ import org.jsoup.select.Elements;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.rmi.NotBoundException;
 import java.util.*;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class Downloader extends UnicastRemoteObject implements DownloaderINTER, Runnable {
 
-    private static final int timeout = 5000;
     GatewayINTER gateway;
+    String downloader_name;
     private static final Set<String> urlsProcessados= new HashSet<>();
     QueueInterface urlQueue;
     private static final String nomesficheiroparaguardar = "informacoescompletas.obj";
 
-    public Downloader(QueueInterface urlQueue) throws RemoteException, InterruptedException {
+    public Downloader(String name) throws RemoteException, InterruptedException {
         super();
-        this.urlQueue = urlQueue;
+        this.downloader_name=name;
     }
+
+    public static void criarDownloader(String downloader_nome) {
+        try {
+            Downloader novo = new Downloader(downloader_nome);
+            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
+            registry.rebind(downloader_nome, novo);
+
+            novo.gateway = (GatewayINTER) registry.lookup("Gateway");
+            novo.gateway.registerDownloader(novo);
+            novo.urlQueue=novo.gateway.getQueue();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+}
 
     public void executar() throws RemoteException {
         try {
-            String rmiName = "Gateway";
-            String rmiHost = "localhost";
-            int rmiPort = 8183;
-
-            Registry registry = LocateRegistry.getRegistry(rmiHost, rmiPort);
-            gateway = (GatewayINTER) registry.lookup(rmiName);
-            //gateway.registerClient((ClienteINTER) this);  //ver isto tbm
-
             int tentativas=0;
             while (true) {
                 //String url = gateway.takeNext();
@@ -57,7 +61,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                 }
                 tentativas=0;
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                    url = transformarUrlAbsoluta("http://" + new URI(url).getHost(), url); // Use uma baseUrl apropriada
+                    url = transformarUrlAbsoluta("http://" + new URI(url).getHost(), url);
                 }
                 if (!urlsProcessados.contains(url.trim().toLowerCase())) {
                     urlsProcessados.add(url.trim().toLowerCase());
@@ -316,31 +320,12 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
     }
 }
 
-    public static void main(String[] args) {
-        try {
-            int numDownloaders=3;
-            //URLqueue urlQueue= new URLqueue(100);
-            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
-            GatewayINTER gateway = (GatewayINTER) registry.lookup("Gateway");
-            QueueInterface urlQueue = gateway.getUrlQueue();
+    public static void main(String[] args) throws RemoteException{
+        String name = args[0];
 
-            Thread[] threads = new Thread[numDownloaders];
-            for (int i = 0; i < numDownloaders; i++) {
-                Downloader d= new Downloader(urlQueue);
-                threads[i]= new Thread(d);
-                threads[i].start();
-            }
-            for (Thread thread : threads) {
-                thread.join();
-            }
-        } catch (RemoteException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (NotBoundException e) {
-            throw new RuntimeException(e);
-        }
+        criarDownloader(name);
+
+        System.out.println("- - downloader " + name+ " check");
 
     }
 
