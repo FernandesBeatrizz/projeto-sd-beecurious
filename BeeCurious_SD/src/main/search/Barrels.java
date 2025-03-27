@@ -41,7 +41,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      * @param barrel_nome Nome do barrel
      * @param gateway_port Porta do gateway
      */
-    public static void criarbarrel(String barrel_nome, int gateway_port) {
+    public static Barrels criarbarrel(String barrel_nome, int gateway_port) {
         try {
             Barrels novo = new Barrels(barrel_nome);
             Registry registry = LocateRegistry.getRegistry("localhost", gateway_port);
@@ -49,8 +49,10 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
             novo.gateway = (GatewayINTER) registry.lookup("Gateway");
             novo.gateway.registerBarrel(novo);
+            return novo;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
 
@@ -64,15 +66,19 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             String name = args[0];
             int gateway_port = Integer.parseInt(args[1]);
 
-            criarbarrel(name, gateway_port);
+            Barrels barrel = criarbarrel(name, gateway_port);
+            System.out.println("- - barrel " + name + " check");
 
-            System.out.println("- - barrel " + name+ " check");
-
+            // Mantém o Barrel ativo
+            while(true) {
+                System.out.println("Barrel ativo...");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
             /*
             //p ver s a FUNCIONALIDADE 3 esta a dar--------------------------
             barrel1.addToIndex("borba", "https://exemplo.com/borba", "Cidade de Borba", "Borba é uma cidade em Portugal conhecida pelo seu mármore.", new ArrayList<>());
@@ -205,7 +211,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         return resultadourls;
     }
 
-    public void ping(Barrels barrels) throws RemoteException {
+
+    public void ping() throws RemoteException{
     }
 
 
@@ -226,7 +233,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
 
     }
-
 
     @Override
     public void indexarURL(String url) throws RemoteException {
@@ -359,17 +365,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             return ponteiros.get(url).size();
         }
         return 0;
-    }
-
-
-    public boolean verificarbarrel(Barrels barrel) {
-        try {
-            this.ping(this);
-            return true;
-        } catch (RemoteException e) {
-            System.out.println("Barrel inativo: " + this.name);
-            return false;
-        }
     }
 
     /**

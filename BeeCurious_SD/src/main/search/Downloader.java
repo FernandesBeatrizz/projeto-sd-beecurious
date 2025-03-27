@@ -66,14 +66,12 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
         try {
             int tentativas=0;
             while (true) {
-                //String url = gateway.takeNext();
                 String url= urlQueue.getURL();
                 System.out.println(url);
                 if(url == null){
-                    //break;
                     System.out.println("fila vazia");
                     tentativas+=1;
-                    if (tentativas > urlQueue.getMaxSize()) {  // Melhor usar a variável
+                    if (tentativas > urlQueue.getMaxSize()) {
                         System.out.println("Fila vazia por muito tempo. Encerrando processo.");
                         break;
                     }

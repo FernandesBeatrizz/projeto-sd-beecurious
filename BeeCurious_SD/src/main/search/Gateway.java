@@ -219,7 +219,13 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     @Override
     public void syncBarrels() throws RemoteException {
         for (BarrelsINTER barrel : barrels) {
-            barrel.updateIndex(indiceInvertido);
+            try{
+                barrel.ping();
+                barrel.updateIndex(indiceInvertido);
+            }catch(RemoteException e){
+                System.out.print("Erro a sincronizar barrel, barrel , a reviver barrel");
+                barrel.reviverBarrel();
+            }
         }
     }
 
