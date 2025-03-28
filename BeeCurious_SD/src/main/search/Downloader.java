@@ -172,22 +172,21 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
      * @param url A URL da página a ser processada.
      */
     public void processarPagina(String url) throws RemoteException {
-        BarrelsINTER barrel= gateway.getBarrel();
-        if (!barrel.containsURL(url)){
-            try{
-                Document doc= Jsoup.connect(url).get();
+        BarrelsINTER barrel = gateway.getBarrel();
+        if (!barrel.containsURL(url)) {
+            try {
+                Document doc = Jsoup.connect(url).get();
 
-                //titulo
+                // Extrair título
                 String titulo = doc.title();
                 System.out.println(titulo);
 
-
-                //citação
-                String citacao= "";
-                Element primeiroparagrafo= doc.select("p").first();
+                // Extrair citação
+                String citacao = "";
+                Element primeiroparagrafo = doc.select("p").first();
                 if (primeiroparagrafo != null) {
                     citacao = primeiroparagrafo.text();
-                }else{
+                } else {
                     citacao = doc.select("meta[property=og:description]").attr("content");
                     if (citacao.isEmpty()) {
                         citacao = doc.select("meta[name=description]").attr("content");
@@ -198,48 +197,44 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
                 }
                 System.out.println("Citação: " + citacao);
 
-
-                //Extrair link
+                // Extrair links
                 Elements anchors = doc.select("a");
-                String baseUrl = doc.baseUri(); // A URL original do cliente
+                String baseUrl = doc.baseUri();
                 List<String> listaLinks = new ArrayList<>();
 
-                if (baseUrl.isEmpty()) {
-                    System.err.println("Erro: baseUri() não foi definido corretamente!");
-                    return;
-                }
                 for (Element anchor : anchors) {
                     String href = anchor.attr("href");
                     if (href.isEmpty() || href.startsWith("#")) {
                         continue;
                     }
-                    String absoluteUrl=transformarUrlAbsoluta(baseUrl, href);
+                    String absoluteUrl = transformarUrlAbsoluta(baseUrl, href);
                     if (absoluteUrl != null) {
                         gateway.putNew(absoluteUrl);
+                        listaLinks.add(absoluteUrl);  // Adiciona à lista de links
                         System.out.println("Link extraído: " + absoluteUrl);
                     }
                 }
 
+                // Extrair palavras
+                String[] palavras = doc.text().toLowerCase()
+                        .replaceAll("[^a-zA-Z ]", "").split("\\s+");
 
-                //extrair palavras
-                HashMap<String, HashSet<String>> index = new HashMap<>(); // Índice invertido local
-                String[] palavras = doc.text().toLowerCase().replaceAll("[^a-zA-Z ]", "").split("\\s+");
-                Set<String> palavrasExtraidas = new HashSet<>();
+                // Chamada correta para gateway.addToIndex()
                 for (String palavra : palavras) {
-                    index.computeIfAbsent(palavra, k -> new HashSet<>()).add(url);
-                    gateway.addToIndex(palavra, url);
-                    palavrasExtraidas.add(palavra);
+                    if (!palavra.isEmpty()) {
+                        gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
+                    }
                 }
 
-                for(String palavra : palavrasExtraidas){
-                    salvarinformacoesnecessarias(palavra, url, titulo, citacao, listaLinks);
+                // Chamada para o Barrel (opcional, se ainda necessário)
+                for (String palavra : palavras) {
+                    if (!palavra.isEmpty()) {
+                        barrel.addToIndex(palavra, url, titulo, citacao, listaLinks);
+                    }
                 }
 
-                for (String palavra : palavrasExtraidas) {
-                    barrel.addToIndex(palavra, url, titulo, citacao, listaLinks);
-                }
-            }catch (IOException e){
-                System.out.println("Erro"+ e.getMessage());
+            } catch (IOException e) {
+                System.out.println("Erro ao processar página: " + e.getMessage());
             }
         }
     }
@@ -381,18 +376,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER, 
      */
     public void put_url(String url) throws RemoteException {
         gateway.putNew(url);
-    }
-
-    /**
-     * Salva uma palavra no índice do gateway.
-     *
-     * Este metodo envia uma palavra extraída de uma página para ser salva no índice do gateway.
-     *
-     * @param word A palavra a ser indexada.
-     * @param url A URL associada à palavra.
-     */
-    public void save_words(String word, String url) throws java.rmi.RemoteException {
-        gateway.addToIndex(word, url);
     }
 
     /**

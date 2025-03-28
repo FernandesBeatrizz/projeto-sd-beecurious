@@ -15,7 +15,7 @@ import java.util.*;
  * para garantir tolerância a falhas.</p>-- NAO SEI SE É NECESSARIO
  */
 public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
-    private HashMap<String, ArrayList<String[]>> indiceInvertido;
+    private HashMap<String, ArrayList<String []>> indiceInvertido;
     private GatewayINTER gateway;
     private static String name;
     private HashMap<String, HashSet<String>> ponteiros;
@@ -49,6 +49,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
             novo.gateway = (GatewayINTER) registry.lookup("Gateway");
             novo.gateway.registerBarrel(novo);
+            novo.gateway.syncBarrels();
             return novo;
         } catch (Exception e) {
             e.printStackTrace();
@@ -69,10 +70,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             Barrels barrel = criarbarrel(name, gateway_port);
             System.out.println("- - barrel " + name + " check");
 
-            // Mantém o Barrel ativo
-            while(true) {
-                System.out.println("Barrel ativo...");
-            }
+            System.out.println("Barrel ativo...");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -215,17 +213,44 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     public void ping() throws RemoteException{
     }
 
-
     @Override
-    public void updateIndex(HashMap<String, ArrayList<String>> indiceParaPesquisas) throws RemoteException {
+    public synchronized void updateIndex(HashMap<String, ArrayList<String[]>> novoIndice) throws RemoteException {
+        if (novoIndice == null) return;
 
+        for (String word : novoIndice.keySet()) {
+            ArrayList<String[]> newPages = novoIndice.get(word);
+            if (!indiceInvertido.containsKey(word)) {
+                indiceInvertido.put(word, new ArrayList<>(new ArrayList<>()));
+                continue;
+            }
+            // Para palavras existentes, verifica cada página
+            ArrayList<String[]> currentPages = indiceInvertido.get(word);
+
+            for (String[] novaPagina : newPages) {
+                boolean jaExiste = false;
+
+                // Verifica se a URL já existe
+                for (String[] paginaExistente : currentPages) {
+                    if (paginaExistente[0].equals(novaPagina[0])) {
+                        jaExiste = true;
+                        break;
+                    }
+                }
+
+                // Adiciona apenas se for nova
+                if (!jaExiste) {
+                    currentPages.add(novaPagina);
+                }
+            }
+        }
+        salvar();
     }
 
     public void reviverBarrel() throws RemoteException {
         Registry registry = LocateRegistry.getRegistry("localhost", 8183);
         try {
-            registry.unbind(this.name);
             this.gateway.unregisterBarrel(this);
+            registry.unbind(this.name);
             System.out.println("Barrel " + this.name + " removido do RMI Registry.");
             criarbarrel(name, 8183);
         } catch (Exception e) {
@@ -233,12 +258,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
 
     }
-
-    @Override
-    public void indexarURL(String url) throws RemoteException {
-
-    }
-
 
     private int pagina = 1;
     private final Scanner sc = new Scanner(System.in);

@@ -21,14 +21,8 @@ public interface BarrelsINTER extends Remote {
     List<String> searchWord(String word) throws RemoteException;
 
     /**
-     * Atualiza o índice de pesquisa com novas associações entre palavras e URLs.
-     */
-    void updateIndex(HashMap<String, ArrayList<String>> indiceParaPesquisas) throws RemoteException;
-
-    /**
      * Indexa uma URL, processando seu conteúdo para extração de palavras-chave.
      */
-    void indexarURL(String url) throws RemoteException;
 
     //void linksURLaddToIndex(String word, String url, String titulo, String citacao, List<String>links)  throws RemoteException;
 
@@ -49,7 +43,13 @@ public interface BarrelsINTER extends Remote {
 
     void ping() throws RemoteException;
 
-    public void reviverBarrel() throws RemoteException;
+    void updateIndex(HashMap<String, ArrayList<String[]>> novoIndice) throws RemoteException;
+
+    void reviverBarrel() throws RemoteException;
+
+    /**
+     * Atualiza o índice de pesquisa com novas associações entre palavras e URLs.
+     */
 }
 
 

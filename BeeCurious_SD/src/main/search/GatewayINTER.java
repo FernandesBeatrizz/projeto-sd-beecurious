@@ -22,11 +22,9 @@ public interface GatewayINTER extends Remote {
 
     // ========== BARRELS ==========
 
-    void indexarURL(String url) throws RemoteException;
-
-
     void addLinksToURL(String url, List<String> links) throws RemoteException;
 
+    public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException;
     /**
      * Registra um novo barrel (módulo de indexação) no sistema.
      *
@@ -86,12 +84,6 @@ public interface GatewayINTER extends Remote {
 
 
     void markURLAsProcessed(String url) throws RemoteException;
-
-    /**
-     * Adiciona uma palavra ao índice associando-a a uma URL.
-     *
-     */
-    void addToIndex(String word, String url) throws RemoteException;
 
     /**
      * Obtém uma URL disponível para download e processamento.
