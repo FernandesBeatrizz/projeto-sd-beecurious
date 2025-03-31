@@ -26,7 +26,6 @@ public interface QueueInterface extends Remote{
      */
     String getURL() throws RemoteException, InterruptedException;
 
-    String getUrlQueue() throws RemoteException, InterruptedException;
 
 
     /**

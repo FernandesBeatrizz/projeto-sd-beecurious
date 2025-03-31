@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     private static LinkedBlockingQueue<String> urls;
     private final int max_size;
-    //final private static String QUEUE_CONFIG = "queue.properties";
     private static final Logger LOGGER = Logger.getLogger(URLqueue.class.getName());
     private static final String caminhoficheiro = "queue.obj";
     private GatewayINTER gateway;
@@ -22,7 +21,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     /**
      * Constrói uma nova instância da URLqueue com um tamanho máximo para a queue.
      *
-     * O construtor inicializa a fila e carrega os dados persistidos do arquivo, se houver.
+     * O construtor inicializa a fila e carrega os dados do arquivo
      *
      * @param max_size O tamanho máximo da fila de URLs.
      */
@@ -64,7 +63,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
      *
      * Este metodo bloqueia a execução até que uma URL esteja disponível na fila. Se a fila estiver vazia,
      * o metodo aguarda até que uma nova URL seja adicionada. Após remover a URL da fila, ela é marcada
-     * como processada e a fila é salva em disco.
+     * como processada e a fila é salva no ficheiro.
      *
      * @return A próxima URL da fila.
      */
@@ -93,7 +92,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     /**
      * Guarda o estado atual da queue.
      *
-     * Este metodo serializa a fila de URLs e escreve-a em um arquivo, garantindo
+     * Este metodo escreve a fila no ficheiro, garantindo
      * que as URLs adicionadas ou removidas possam ser recuperadas na próxima execução.
      */
     private void saveQueueToFile() {
@@ -108,8 +107,8 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     /**
      * Carrega o estado da queu do arquivo.
      *
-     * Caso o arquivo exista, a queue é carregada a partir dele. Isso permite que
-     * a queue seja restaurada de seu estado anterior após uma reinicialização.
+     * Caso o arquivo exista, a queue é carregada a partir dele. Isto permite que
+     * a queue seja restaurada a partir do estado anterior após uma reinicialização.
      */
     private void loadQueueFromFile() {
         if (new File(caminhoficheiro).exists()) {
@@ -124,9 +123,9 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     }
 
     /**
-     * Marca o URL como processado e remove-a da fila.
+     * Marca o URL como processado e remove-o da fila.
      *
-     * Esse metodo remove a URL da fila e a salva em disco. Ele é utilizado após a URL ser processada.
+     * Este metodo remove a URL da fila. Ele é utilizado após a URL ser processada.
      *
      * @param url URL que vai ser marcado como processado.
      */
@@ -138,13 +137,6 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
         } else {
             LOGGER.warning("URL não encontrado na fila: " + url);
         }
-    }
-
-
-
-    @Override
-    public String getUrlQueue() throws RemoteException, InterruptedException {
-        return this.toString();
     }
 
     /**
@@ -167,12 +159,12 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
 
 
     /**
-     * Cria e registra uma nova instância da fila de URLs no registro RMI.
+     * Cria e regista uma nova instância da fila de URLs no registo RMI.
      *
-     * Esse metodo cria uma fila com o tamanho máximo de 1000 URLs e registra a fila no registro RMI
+     * Este metodo cria uma fila com o tamanho máximo de 1000 URLs e regista a fila no registo RMI
      * para que outros componentes possam acessá-la remotamente.
      *
-     * @return A instância da URLqueue registrada no RMI.
+     * @return A instância da URLqueue registada no RMI.
      */
     public static URLqueue createQueue() throws RemoteException {
         URLqueue queue = new URLqueue(1000);
@@ -187,12 +179,8 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
             }
     }
 
-
     /**
-     * Metodo principal que cria e registra a fila no registro RMI.
-     *
-     * Este metodo é responsável por inicializar e registrar a queue de URLs no registro RMI para que outros
-     * componentes possam acessá-la remotamente.
+     * Metodo principal que cria e regista a fila no registro RMI..
      *
      * @param args Argumentos passados para o metodo principal.
      */

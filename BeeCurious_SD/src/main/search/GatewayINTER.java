@@ -19,10 +19,7 @@ public interface GatewayINTER extends Remote {
     List<String> searchWord(String word) throws RemoteException;
 
 
-
     // ========== BARRELS ==========
-
-    void addLinksToURL(String url, List<String> links) throws RemoteException;
 
     public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException;
     /**
@@ -49,9 +46,6 @@ public interface GatewayINTER extends Remote {
      */
     void unregisterBarrel(BarrelsINTER barrel) throws RemoteException;
 
-
-    QueueInterface getUrlQueue() throws RemoteException;
-
     /**
      * Obtém um barrel disponível no sistema.
      *
@@ -72,24 +66,11 @@ public interface GatewayINTER extends Remote {
 
 
     // ========== DOWNLOADERS ==========
-
-
-    String takeNext() throws RemoteException, InterruptedException;
-
     /**
      * Adiciona uma nova URL à fila de processamento.
      *
      */
     void putNew(String var1) throws RemoteException;
-
-
-    void markURLAsProcessed(String url) throws RemoteException;
-
-    /**
-     * Obtém uma URL disponível para download e processamento.
-     *
-     */
-    String get_url() throws RemoteException;
 
     /**
      * Registra um downloader (processo responsável por baixar páginas) no sistema.
@@ -105,9 +86,6 @@ public interface GatewayINTER extends Remote {
 
 
     List<String> getCachedResults(String word) throws RemoteException;
-
-
-    void registerClient(ClienteINTER cliente) throws RemoteException;
 
     // ========== QUEUE ==========
 

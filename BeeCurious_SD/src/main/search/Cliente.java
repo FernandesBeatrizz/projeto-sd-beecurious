@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Scanner;
 /**
  * Classe que implementa a interface do cliente para o motor de pesuisa.
- *
- * <p>Esta classe permite aos clientes interagir com o sistema através de um menu, fornecendo as funcionalidades propostas no enunciado</p>
+ * <p>
+ * Esta classe permite aos clientes interagir com o sistema através de um menu, fornecendo as funcionalidades propostas no enunciado</p>
  *
  */
 public class Cliente implements ClienteINTER {
@@ -31,7 +31,7 @@ public class Cliente implements ClienteINTER {
 
     public static void main(String[] args) {
         try {
-            Cliente cliente = new Cliente();  // Cria uma instância do Cliente
+            Cliente cliente = new Cliente();
             cliente.exibirMenu();
 
 
@@ -41,7 +41,7 @@ public class Cliente implements ClienteINTER {
     }
 
     /**
-     * Exibe o menu principal e processa as opções do usuário.
+     * Exibe o menu principal e processa as opções do user.
      *
      */
     public void exibirMenu() throws RemoteException {
@@ -83,20 +83,6 @@ public class Cliente implements ClienteINTER {
         }
     }
 
-
-    @Override
-    public void run() throws RemoteException {
-        Scanner sc = new Scanner(System.in);
-        String word = sc.nextLine();
-        List<String> resultados = this.searchWord(word);
-        System.out.print(resultados);
-    }
-
-    @Override
-    public void printOnClient() throws RemoteException {
-    }
-
-
     public void solicitarURL() throws RemoteException {
         Scanner sc = new Scanner(System.in);
         System.out.println("Digite um URL: ");
@@ -105,31 +91,48 @@ public class Cliente implements ClienteINTER {
         System.out.println("URL enviado: " + url);
     }
 
-    @Override
-    public synchronized List<String> searchWord(String word) throws RemoteException {
-        try {
-            return gateway.searchWord(word);
-        } catch (Exception e) {
-            System.out.println("falha na pesquisa");
-            return new ArrayList<>();
-        }
-    }
-
-
     public void pesquisarconjtermos() throws RemoteException {
         try {
-            System.out.println("Digite os termos de pesquisa: ");
-            String termos = sc.nextLine();
+            String input = sc.nextLine();
 
-            List<String[]> resultados = gateway.top10(termos);
-            if (resultados.isEmpty()) {
-                System.out.println("Nenhum resultado encontrado");
+            // Divide os termos e remove espaços em branco
+            String[] termos = input.toLowerCase().split("\\s+");
+
+            if (termos.length == 0) {
+                System.out.println("Nenhum termo de pesquisa fornecido");
+                return;
             }
+
+            // Verifica se cada termo existe no índice
+            for (String termo : termos) {
+                List<String> resultadosParciais = gateway.searchWord(termo);
+                if (resultadosParciais.isEmpty()) {
+                    System.out.println("Termo '" + termo + "' não encontrado em nenhuma página");
+                    return;
+                }
+            }
+
+            List<String[]> resultados = gateway.top10(input);
+
+            if (resultados.isEmpty()) {
+                System.out.println("Nenhum resultado encontrado para todos os termos juntos");
+                return;
+            }
+
+            // Exibe os resultados formatados
+            System.out.println("\nTop " + resultados.size() + " resultados para: " + input);
+            for (String[] pagina : resultados) {
+                System.out.println("\nTítulo: " + pagina[1]);
+                System.out.println("URL: " + pagina[0]);
+                System.out.println("Citação: " + pagina[2]);
+                System.out.println("Links relacionados: " + pagina[3]);
+                System.out.println("---------------------------");
+            }
+
         } catch (RemoteException e) {
             System.err.println("Erro ao pesquisar: " + e.getMessage());
         }
     }
-
     public void consultarligacoespagina() throws RemoteException {
         System.out.println("Digite a URL para consultar ligações: ");
         String url = sc.nextLine();

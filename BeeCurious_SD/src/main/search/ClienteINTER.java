@@ -5,11 +5,6 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 public interface ClienteINTER extends Remote {
-   void run() throws RemoteException;
-
-   void printOnClient() throws RemoteException;
-
-   List<String> searchWord(String word) throws RemoteException;
 }
 
 
