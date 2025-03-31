@@ -43,7 +43,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
       try {
         Gateway gateway = new Gateway();
         String gatewayName = "Gateway";
-        String gatewayHost = "localhost";
+        String gatewayHost = "192.168.136.133";
         int gatewayPort = 8183;
 
         System.setProperty("java.rmi.server.hostname", gatewayHost);

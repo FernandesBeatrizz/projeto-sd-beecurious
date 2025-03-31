@@ -46,7 +46,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     public static Barrels criarbarrel(String barrel_nome, int gateway_port) {
         try {
             Barrels novo = new Barrels(barrel_nome);
-            Registry registry = LocateRegistry.getRegistry("localhost", gateway_port);
+            Registry registry = LocateRegistry.getRegistry("192.168.136.133", gateway_port);
             registry.rebind(barrel_nome, novo);
 
             novo.gateway = (GatewayINTER) registry.lookup("Gateway");
@@ -147,7 +147,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         ArrayList<String> resultadourls = new ArrayList<>();
         //ArrayList<String>> sortedURLS = new ArrayList<>();
 
-        for (int i = 1; i < words.length; i++) {
+        for (int i = 0; i < words.length; i++) {
             if (indiceInvertido.containsKey(words[i])) {
                 resultadourls.retainAll(indiceInvertido.get(words[i]));
             } else {
@@ -176,7 +176,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     }
 
     public void reviverBarrel() throws RemoteException {
-        Registry registry = LocateRegistry.getRegistry("localhost", 8183);
+        Registry registry = LocateRegistry.getRegistry("192.168.136.133", 8183);
         try {
             this.gateway.unregisterBarrel(this);
             registry.unbind(this.name);

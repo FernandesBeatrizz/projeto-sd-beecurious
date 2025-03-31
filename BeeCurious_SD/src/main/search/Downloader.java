@@ -46,7 +46,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
     public static Downloader criarDownloader(String downloader_nome) {
         try {
             Downloader novo = new Downloader(downloader_nome);
-            Registry registry = LocateRegistry.getRegistry("localhost", 8183);
+            Registry registry = LocateRegistry.getRegistry("192.168.136.133", 8183);
             registry.rebind(downloader_nome, novo);
 
             novo.gateway = (GatewayINTER) registry.lookup("Gateway");
