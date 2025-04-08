@@ -46,7 +46,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     public static Barrels criarbarrel(String barrel_nome, int gateway_port) {
         try {
             Barrels novo = new Barrels(barrel_nome);
-            Registry registry = LocateRegistry.getRegistry("192.168.136.133", gateway_port);
+            Registry registry = LocateRegistry.getRegistry("localHost", gateway_port);
             registry.rebind(barrel_nome, novo);
 
             novo.gateway = (GatewayINTER) registry.lookup("Gateway");
@@ -134,29 +134,39 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     /**
      * Pesquisa um termo no índice invertido.
      *
-     * @param word Termo a ser pesquisado
+     * @param words Termo a ser pesquisado
      * @return Lista de URLs que contêm o termo
      */
     @Override
-    public synchronized List<String> searchWord(String word) throws RemoteException {
-        String[] words = word.toLowerCase().split(" ");
+    public synchronized List<String[]> searchWord(String words) throws RemoteException {
+        String[] terms = words.toLowerCase().split("\\s+");
+        List<String[]> results = new ArrayList<>();
 
-        if (words.length == 0)
-            return new ArrayList<>();
-
-        ArrayList<String> resultadourls = new ArrayList<>();
-        //ArrayList<String>> sortedURLS = new ArrayList<>();
-
-        for (int i = 0; i < words.length; i++) {
-            if (indiceInvertido.containsKey(words[i])) {
-                resultadourls.retainAll(indiceInvertido.get(words[i]));
-            } else {
-                //resultadourls.clear(); //ver bem este else
-                //break;
-                return new ArrayList<>();
-            }
+        if (terms.length == 0) {
+            return results;
         }
-        return resultadourls;
+
+        // Para o primeiro termo, adiciona todas as páginas correspondentes
+        if (indiceInvertido.containsKey(terms[0])) {
+            results.addAll(indiceInvertido.get(terms[0]));
+        }
+
+        // Para os termos seguintes, filtra mantendo apenas páginas que contêm todos os termos
+        for (int i = 1; i < terms.length && !results.isEmpty(); i++) {
+            String term = terms[i];
+            if (!indiceInvertido.containsKey(term)) {
+                results.clear();
+                break;
+            }
+
+            List<String[]> termPages = indiceInvertido.get(term);
+            results = results.stream()
+                    .filter(page -> termPages.stream()
+                            .anyMatch(termPage -> termPage[0].equals(page[0])))
+                    .collect(Collectors.toList());
+        }
+
+        return results;
     }
 
     public void ping() throws RemoteException{
@@ -176,7 +186,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     }
 
     public void reviverBarrel() throws RemoteException {
-        Registry registry = LocateRegistry.getRegistry("192.168.136.133", 8183);
+        Registry registry = LocateRegistry.getRegistry("localHost", 8183);
         try {
             this.gateway.unregisterBarrel(this);
             registry.unbind(this.name);

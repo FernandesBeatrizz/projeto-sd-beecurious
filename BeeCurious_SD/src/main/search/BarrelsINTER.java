@@ -18,7 +18,7 @@ public interface BarrelsINTER extends Remote {
     /**
      * Busca todas as URLs associadas a uma palavra no índice.
      */
-    List<String> searchWord(String word) throws RemoteException;
+    List<String[]> searchWord(String word) throws RemoteException;
 
     /**
      * Indexa uma URL, processando seu conteúdo para extração de palavras-chave.

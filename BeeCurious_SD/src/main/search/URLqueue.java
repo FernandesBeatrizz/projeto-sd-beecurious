@@ -169,7 +169,7 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     public static URLqueue createQueue() throws RemoteException {
         URLqueue queue = new URLqueue(1000);
         try {
-            Registry registry = LocateRegistry.getRegistry("192.168.136.133", 8183);
+            Registry registry = LocateRegistry.getRegistry("localHost", 8183);
             queue.gateway = (GatewayINTER) registry.lookup("Gateway");
             registry.rebind("URLqueue", queue);
             return queue;

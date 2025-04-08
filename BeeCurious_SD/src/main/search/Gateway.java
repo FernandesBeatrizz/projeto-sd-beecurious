@@ -43,7 +43,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
       try {
         Gateway gateway = new Gateway();
         String gatewayName = "Gateway";
-        String gatewayHost = "192.168.136.133";
+        String gatewayHost = "localHost";
         int gatewayPort = 8183;
 
         System.setProperty("java.rmi.server.hostname", gatewayHost);
@@ -75,20 +75,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     /**
      * Realiza a pesquisa de uma palavra no índice invertido.
      *
-     * @param word Palavra a ser pesquisada.
+     * @param words Palavra a ser pesquisada.
      * @return Lista de URLs relacionadas à palavra pesquisada.
      */
-    public synchronized List<String> searchWord(String word) throws RemoteException {
-        ArrayList<String> urls = new ArrayList<>();
-        BarrelsINTER barrel = getBarrel();
-            try {
-                urls.addAll(barrel.searchWord(word));
-                return urls;
-            } catch (RemoteException error) {
-                error.getMessage();
-            }
-        return urls;
-    }
+    @Override
+
+
 
     //BARRELS - - - - - - - - - - - - - - - - - - - - - - -
 
