@@ -134,39 +134,54 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     /**
      * Pesquisa um termo no índice invertido.
      *
-     * @param words Termo a ser pesquisado
+     * @param word Termo a ser pesquisado
      * @return Lista de URLs que contêm o termo
      */
+    /**
+     * Pesquisa uma palavra no índice e retorna todas as informações das páginas correspondentes.
+     * @param word Palavra ou termos de pesquisa (separados por espaços).
+     * @return Lista de arrays, onde cada array contém: [URL, título, citação, links].
+     */
     @Override
-    public synchronized List<String[]> searchWord(String words) throws RemoteException {
-        String[] terms = words.toLowerCase().split("\\s+");
-        List<String[]> results = new ArrayList<>();
+    public synchronized List<String[]> searchWord(String word) throws RemoteException {
+        List<String[]> resultados = new ArrayList<>();
+        String[] termos = word.toLowerCase().split("\\s+");
 
-        if (terms.length == 0) {
-            return results;
+        // Se nenhum termo for encontrado, retorna lista vazia
+        if (termos.length == 0) {
+            return resultados;
         }
 
-        // Para o primeiro termo, adiciona todas as páginas correspondentes
-        if (indiceInvertido.containsKey(terms[0])) {
-            results.addAll(indiceInvertido.get(terms[0]));
+        // Verifica se o primeiro termo existe no índice
+        if (!indiceInvertido.containsKey(termos[0])) {
+            return resultados; // Retorna vazio se o primeiro termo não existir
         }
 
-        // Para os termos seguintes, filtra mantendo apenas páginas que contêm todos os termos
-        for (int i = 1; i < terms.length && !results.isEmpty(); i++) {
-            String term = terms[i];
-            if (!indiceInvertido.containsKey(term)) {
-                results.clear();
-                break;
+        // Começa com as páginas do primeiro termo
+        List<String[]> paginasFiltradas = new ArrayList<>(indiceInvertido.get(termos[0]));
+
+        // Filtra para páginas que contêm TODOS os termos
+        for (int i = 1; i < termos.length; i++) {
+            String termo = termos[i];
+            if (!indiceInvertido.containsKey(termo)) {
+                return new ArrayList<>(); // Se algum termo não existir, retorna vazio
             }
-
-            List<String[]> termPages = indiceInvertido.get(term);
-            results = results.stream()
-                    .filter(page -> termPages.stream()
-                            .anyMatch(termPage -> termPage[0].equals(page[0])))
-                    .collect(Collectors.toList());
+            paginasFiltradas.removeIf(pagina ->
+                    !contemPagina(indiceInvertido.get(termo), pagina[0])
+            );
         }
 
-        return results;
+        return paginasFiltradas;
+    }
+
+    // Método auxiliar para verificar se uma página está na lista de um termo
+    private boolean contemPagina(List<String[]> paginasTermo, String url) {
+        for (String[] pagina : paginasTermo) {
+            if (pagina[0].equals(url)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void ping() throws RemoteException{

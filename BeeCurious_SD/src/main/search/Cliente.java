@@ -92,47 +92,27 @@ public class Cliente implements ClienteINTER {
     }
 
     public void pesquisarconjtermos() throws RemoteException {
-        try {
-            String input = sc.nextLine();
+        System.out.println("Digite o(s) termo(s) de pesquisa:");
+        String input = sc.nextLine().trim();
 
-            // Divide os termos e remove espaços em branco
-            String[] termos = input.toLowerCase().split("\\s+");
+        // Obtém os resultados do Barrel via Gateway
+        List<String[]> resultados = gateway.searchWord(input);
 
-            if (termos.length == 0) {
-                System.out.println("Nenhum termo de pesquisa fornecido");
-                return;
-            }
-
-            // Verifica se cada termo existe no índice
-            for (String termo : termos) {
-                List<String> resultadosParciais = gateway.searchWord(termo);
-                if (resultadosParciais.isEmpty()) {
-                    System.out.println("Termo '" + termo + "' não encontrado em nenhuma página");
-                    return;
-                }
-            }
-
-            List<String[]> resultados = gateway.top10(input);
-
-            if (resultados.isEmpty()) {
-                System.out.println("Nenhum resultado encontrado para todos os termos juntos");
-                return;
-            }
-
-            // Exibe os resultados formatados
-            System.out.println("\nTop " + resultados.size() + " resultados para: " + input);
+        // Imprime os resultados formatados
+        if (resultados.isEmpty()) {
+            System.out.println("Nenhum resultado encontrado para: '" + input + "'");
+        } else {
+            System.out.println("\n=== Resultados para '" + input + "' ===");
             for (String[] pagina : resultados) {
-                System.out.println("\nTítulo: " + pagina[1]);
-                System.out.println("URL: " + pagina[0]);
+                System.out.println("\nURL: " + pagina[0]);
+                System.out.println("Título: " + pagina[1]);
                 System.out.println("Citação: " + pagina[2]);
-                System.out.println("Links relacionados: " + pagina[3]);
-                System.out.println("---------------------------");
+                System.out.println("Links: " + pagina[3]);
+                System.out.println("----------------------------");
             }
-
-        } catch (RemoteException e) {
-            System.err.println("Erro ao pesquisar: " + e.getMessage());
         }
     }
+
     public void consultarligacoespagina() throws RemoteException {
         System.out.println("Digite a URL para consultar ligações: ");
         String url = sc.nextLine();

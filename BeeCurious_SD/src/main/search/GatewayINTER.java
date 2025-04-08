@@ -16,8 +16,7 @@ public interface GatewayINTER extends Remote {
      * Realiza a pesquisa por uma palavra-chave no índice de pesquisa.
      *
      */
-    List<String> searchWord(String word) throws RemoteException;
-
+    List<String []> searchWord(String word) throws RemoteException;
 
     // ========== BARRELS ==========
 

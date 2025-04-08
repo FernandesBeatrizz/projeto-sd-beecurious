@@ -6,6 +6,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Classe que implementa o Gateway para comunicar entre clientes, barrels e downloaders.
@@ -79,7 +80,20 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      * @return Lista de URLs relacionadas à palavra pesquisada.
      */
     @Override
+    public List<String[]> searchWord(String words) throws RemoteException {
+        List<String[]> finalResults = new ArrayList<>();
 
+        for (BarrelsINTER barrel : barrels) {
+            try {
+                List<String[]> barrelResults = barrel.searchWord(words);
+                finalResults.addAll(barrelResults);
+            } catch (RemoteException e) {
+                // Tratar barrel inativo
+            }
+        }
+
+        return finalResults;
+    }
 
 
     //BARRELS - - - - - - - - - - - - - - - - - - - - - - -
