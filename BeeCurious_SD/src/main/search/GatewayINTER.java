@@ -28,12 +28,6 @@ public interface GatewayINTER extends Remote {
     void registerBarrel(BarrelsINTER barrel) throws RemoteException;
 
     /**
-     * Sincroniza os barrels registrados no sistema.
-     *
-     */
-    void syncBarrels() throws RemoteException;
-
-    /**
      * Obtém a interface da fila de URLs para controle de downloads e indexação.
      *
      */
@@ -94,4 +88,5 @@ public interface GatewayINTER extends Remote {
      */
     void registerQueue(QueueInterface queue) throws RemoteException;
 
+    String getNextURL() throws InterruptedException, RemoteException;
 }

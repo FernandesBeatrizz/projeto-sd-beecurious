@@ -11,10 +11,9 @@ import java.util.logging.Logger;
 
 
 public class URLqueue extends UnicastRemoteObject implements QueueInterface {
-    private static LinkedBlockingQueue<String> urls;
+    private LinkedBlockingQueue<String> urls;
     private final int max_size;
     private static final Logger LOGGER = Logger.getLogger(URLqueue.class.getName());
-    private static final String caminhoficheiro = "queue.obj";
     private GatewayINTER gateway;
 
 
@@ -28,7 +27,6 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     public URLqueue(int max_size) throws RemoteException{
         this.max_size=max_size;
         urls= new LinkedBlockingQueue<>(this.max_size);
-        this.loadQueueFromFile();
     }
 
     /**
@@ -45,8 +43,6 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
             try {
                 urls.put(url);
                 LOGGER.info("URL adicionado: " + url);
-                saveQueueToFile();
-                notifyAll();
 
             } catch (Exception e) {
                 Thread.currentThread().interrupt();
@@ -84,60 +80,10 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
         // Retira a próxima URL da fila
         String url = urls.take();
         LOGGER.info("URL removida da fila: " + url);
-        markURLAsProcessed(url);
 
         return url;
     }
 
-    /**
-     * Guarda o estado atual da queue.
-     *
-     * Este metodo escreve a fila no ficheiro, garantindo
-     * que as URLs adicionadas ou removidas possam ser recuperadas na próxima execução.
-     */
-    private void saveQueueToFile() {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(caminhoficheiro))) {
-            out.writeObject(urls);
-            LOGGER.info("Fila de URLs guardada com sucesso.");
-        } catch (IOException e) {
-            LOGGER.warning("Erro ao guardar a fila de URLs: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Carrega o estado da queu do arquivo.
-     *
-     * Caso o arquivo exista, a queue é carregada a partir dele. Isto permite que
-     * a queue seja restaurada a partir do estado anterior após uma reinicialização.
-     */
-    private void loadQueueFromFile() {
-        if (new File(caminhoficheiro).exists()) {
-            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(caminhoficheiro))) {
-                LinkedBlockingQueue<String> filaCarregada = (LinkedBlockingQueue<String>) in.readObject();
-                urls.addAll(filaCarregada);
-                LOGGER.info("Fila de URLs carregada com sucesso.");
-            } catch (Exception e) {
-                LOGGER.warning("Erro ao carregar fila de URLs: " + e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Marca o URL como processado e remove-o da fila.
-     *
-     * Este metodo remove a URL da fila. Ele é utilizado após a URL ser processada.
-     *
-     * @param url URL que vai ser marcado como processado.
-     */
-    public synchronized void markURLAsProcessed(String url) throws RemoteException {
-        if (urls.remove(url)) {
-            LOGGER.info("URL processado e removido da fila: " + url);
-            saveQueueToFile();
-            notifyAll();
-        } else {
-            LOGGER.warning("URL não encontrado na fila: " + url);
-        }
-    }
 
     /**
      * Retorna o número de URLs presentes na fila.

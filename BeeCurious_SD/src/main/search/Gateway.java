@@ -13,14 +13,12 @@ import java.util.stream.Collectors;
  *
  */
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
-    private final HashMap<String, ArrayList<String []>> indiceInvertido = new HashMap<>();
     private final ArrayList<BarrelsINTER> barrels;
     private int currentBarrelIndex = 0;
     private int currentDownloaderIndex = 0;
     private final Set<String> urlsIndexados= new HashSet<>();
     private QueueInterface urlQueue;
     private ArrayList<DownloaderINTER> downloaders;
-    private final Timer syncTimer;
     /**
      * Construtor da classe Gateway.
      * Inicializa a fila de URLs e configura um temporizador para sincronização periódica dos barrels.
@@ -30,8 +28,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     public Gateway() throws RemoteException {
         super();
         this.urlQueue=new URLqueue(1000);
-        this.syncTimer = new Timer();
-        this.syncTimer.scheduleAtFixedRate(new SyncTask(), 0, 6000);
         barrels = new ArrayList<>();
         downloaders = new ArrayList<>();
     }
@@ -102,25 +98,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         return getBarrel().top10(termos);
     }
 
-    private class SyncTask extends TimerTask {
-
-        /**
-         * Executa a sincronização dos barrels quando a tarefa é acionada.
-         * Se ocorrer um erro de comunicação remota, ele será capturado e registado na consola.
-         */
-        @Override
-        public void run() {
-            try {
-                syncBarrels();
-                System.out.println("[Timer] Sincronização dos barrels check <3");
-            } catch (RemoteException e) {
-                System.err.println("[Timer] Erro ao sincronizar Barrels: " + e.getMessage());
-            } catch (NullPointerException n){
-                System.err.println("[Timer] Não há barrels conectados! :( " + n.getMessage());
-            }
-        }
-    }
-
     /**
      * Obtém as páginas que apontam para um determinado URL.
      *
@@ -164,33 +141,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
-    /**
-     * Sincroniza os barrels registando os índices atualizados.
-     *
-     */
-    @Override
-    public void syncBarrels() throws RemoteException {
-        synchronized (indiceInvertido) {
-            if (barrels.isEmpty()) {
-                System.out.println("Não há barrels para sincronizar  :(");
-                return;
-            }
-            if (barrels.size() == 1) {
-                System.out.print("Só um barrel ligado, não é preciso sincronizar");
-                return;
-            }
-            for (BarrelsINTER barrel : barrels) {
-                try {
-                    System.out.println("[DEBUG]\n");
-                    barrel.ping();
-                    barrel.updateIndex(indiceInvertido);
-                } catch (RemoteException e) {
-                    System.out.print("Erro a sincronizar barrel, barrel , a reviver barrel");
-                    barrel.reviverBarrel();
-                }
-            }
-        }
-    }
 
     /**
      * Obtém um Barrel ativo do Gateway, alternando entre os disponíveis.
@@ -243,10 +193,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      */
     public synchronized void putNew(String url) throws RemoteException {
         try {
-            System.out.println("Verificar se o URL já foi indexado");
             if (!urlsIndexados.contains(url)) {
                 if (urlQueue.getQueueSize() < urlQueue.getMaxSize()) {
-                    System.out.println("Adicionar o URL a fila");
                     urlQueue.putURL(url);
                     urlsIndexados.add(url);
                     System.out.println("URL adicionado: " + url); // Log para verificação
@@ -270,19 +218,17 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      * @param word A palavra a ser indexada.
      * @param url  A URL associada à palavra.
      */
-    public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException {
-        String[] pagina = {url, titulo, citacao, String.join(",", links)};
-        synchronized (indiceInvertido) {
-            if (this.indiceInvertido.containsKey(word)) {
-                if (!this.indiceInvertido.get(word).equals(pagina[0])) {
-                    this.indiceInvertido.get(word).add(pagina);
-                }
-            } else {
-                ArrayList<String[]> novaLista = new ArrayList<>();
-                novaLista.add(pagina);
-                this.indiceInvertido.put(word, novaLista);
-            }
-            syncBarrels();
+    @Override
+    public void addToIndex(String word, String url, String titulo, String citacao, List<String> links)
+            throws RemoteException {
+
+        // Obtém um Barrel disponível
+        BarrelsINTER barrel = getBarrel();
+        if (barrel != null) {
+            // Envia diretamente para o Barrel
+            barrel.addToIndex(word, url, titulo, citacao, links);
+        } else {
+            System.err.println("Nenhum Barrel disponível para indexação!");
         }
     }
 
@@ -306,6 +252,15 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      */
     public QueueInterface getQueue() throws RemoteException {
         return this.urlQueue;
+    }
+
+    public synchronized String getNextURL() throws InterruptedException, RemoteException {
+        if (urlQueue.getQueueSize() == 0) {
+            return null; // Fila vazia
+        }
+        String url = urlQueue.getURL(); // Remove da fila
+        urlsIndexados.add(url); // Marca como processado
+        return url;
     }
 
 }

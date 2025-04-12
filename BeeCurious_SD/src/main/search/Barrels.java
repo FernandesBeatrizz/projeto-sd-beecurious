@@ -1,8 +1,8 @@
 package main.search;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -22,6 +22,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private static String name;
     private HashMap<String, HashSet<String>> ponteiros;
     private static String ficheiroURLbarrels;
+    private static final Object fileLock = new Object();  // Lock estático compartilhado por todos os barrels
 
     /**
      * Construtor da classe Barrels.
@@ -34,6 +35,14 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         this.name = name;
         this.ponteiros = new HashMap<>();
         this.ficheiroURLbarrels = name + ".obj";
+        carregarIndice();
+        System.out.println("[DEBUG] Índice após carregar: " + indiceInvertido);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Executando shutdown seguro...");
+            if (!new File(ficheiroURLbarrels).exists()) {
+                salvar(); // Garante salvamento final
+            }
+        }));
 
     }
 
@@ -51,7 +60,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
             novo.gateway = (GatewayINTER) registry.lookup("Gateway");
             novo.gateway.registerBarrel(novo);
-            novo.gateway.syncBarrels();
             return novo;
         } catch (Exception e) {
             e.printStackTrace();
@@ -71,11 +79,63 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
             Barrels barrel = criarbarrel(name, gateway_port);
             System.out.println("- - barrel " + name + " check");
-            while (true) {
-                System.out.println("indice invertido: " + barrel.indiceInvertido);
-            }
+
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Carrega o índice invertido a partir do ficheiro, se existir.
+     */
+    @SuppressWarnings("unchecked")
+    private void carregarIndice() {
+        File file = new File(ficheiroURLbarrels);
+        System.out.println("[DEBUG] Caminho do ficheiro: " + file.getAbsolutePath());
+        System.out.println("[DEBUG] Tamanho do ficheiro: " + file.length() + " bytes");
+
+        if (!file.exists() || file.length() == 0) {
+            System.out.println("Ficheiro não existe ou está vazio. Criando novo índice.");
+            return;
+        }
+
+        try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(file))) {
+            Object obj = input.readObject();
+            System.out.println("[DEBUG] Objeto desserializado: " + obj.getClass().getName());
+
+            if (obj instanceof HashMap) {
+                indiceInvertido = (HashMap<String, ArrayList<String[]>>) obj;
+                System.out.println("[DEBUG] Índice carregado com " + indiceInvertido.size() + " termos.");
+                reconstruirPonteiros();
+            } else {
+                System.err.println("Erro: Formato inválido do ficheiro.");
+            }
+        } catch (EOFException e) {
+            System.err.println("Erro: Ficheiro corrompido (EOF inesperado). Criando novo índice.");
+            file.delete(); // Remove o ficheiro inválido
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Erro ao carregar o índice: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Reconstrói o mapa de ponteiros a partir do índice invertido carregado.
+     */
+    private void reconstruirPonteiros() {
+        ponteiros.clear();
+        for (ArrayList<String[]> paginas : indiceInvertido.values()) {
+            for (String[] pagina : paginas) {
+                if (pagina.length >= 4) { // Verifica se tem links
+                    String[] links = pagina[3].split(",");
+                    for (String link : links) {
+                        if (!link.isEmpty()) {
+                            ponteiros.putIfAbsent(link, new HashSet<>());
+                            ponteiros.get(link).add(pagina[0]);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -90,29 +150,18 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      */
     @Override
     public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException {
-        indiceInvertido.putIfAbsent(word, new ArrayList<>());
 
-
-        boolean urlExiste = false;
-        for (String[] pagina : indiceInvertido.get(word)) {
-            if (pagina[0].equals(url)) {
-                urlExiste = true;
-                break;
+        // Adiciona ao índice local do Barrel
+        String[] pagina = {url, titulo, citacao, String.join(",", links)};
+        synchronized (indiceInvertido) {
+            if (!indiceInvertido.containsKey(word)) {
+                indiceInvertido.put(word, new ArrayList<>());
             }
-        }
-
-        if (!urlExiste) {
-            // Armazena a URL, título, citação e links como um array
-            indiceInvertido.get(word).add(new String[]{url, titulo, citacao, String.join(",", links)});
-
-        }
-        //p ver quem aponta
-        for (String link : links) {
-            ponteiros.putIfAbsent(link, new HashSet<>());
-            ponteiros.get(link).add(url); // A URL atual aponta para a página 'link'
-        }
+            indiceInvertido.get(word).add(pagina);
+        System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
         salvar();
     }
+}
 
     /**
      * Obtém a lista de páginas que apontam para um determinado URL.
@@ -161,7 +210,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         List<String[]> paginasFiltradas = new ArrayList<>(indiceInvertido.get(termos[0]));
 
         // Filtra para páginas que contêm TODOS os termos
-        for (int i = 1; i < termos.length; i++) {
+        for (int i = 0; i < termos.length; i++) {
             String termo = termos[i];
             if (!indiceInvertido.containsKey(termo)) {
                 return new ArrayList<>(); // Se algum termo não existir, retorna vazio
@@ -265,13 +314,26 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     /**
      * Salva o índice invertido em um arquivo.
      */
+
     private void salvar() {
-        synchronized (this) {
-            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(ficheiroURLbarrels))) {
-                output.writeObject(indiceInvertido);
-                System.out.println("Indice salvo com sucesso.");
+        synchronized (fileLock) {  // Bloqueio a nível de classe
+            File tempFile = new File(ficheiroURLbarrels + ".tmp");
+            try {
+                // Passo 1: Escreve em arquivo temporário
+                try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempFile))) {
+                    output.writeObject(indiceInvertido);
+                }
+
+                // Passo 2: Substitui o arquivo principal atomicamente
+                Files.move(
+                        tempFile.toPath(),
+                        new File(ficheiroURLbarrels).toPath(),
+                        StandardCopyOption.REPLACE_EXISTING
+                );
             } catch (IOException e) {
-                System.err.println("Erro ao salvar o índice: " + e.getMessage());
+                System.err.println("Erro ao salvar: " + e.getMessage());
+            } finally {
+                if (tempFile.exists()) tempFile.delete();  // Limpeza
             }
         }
     }

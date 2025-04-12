@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
  * os seus métodos podem ser chamados remotamente via RMI.
  *
  */
-public interface QueueInterface extends Remote{
+public interface QueueInterface extends Remote {
 
     /**
      * Adiciona uma URL à fila.Este metodo permite que clientes remotos adicionem uma URL à queue para processamento posterior.
@@ -27,7 +27,6 @@ public interface QueueInterface extends Remote{
     String getURL() throws RemoteException, InterruptedException;
 
 
-
     /**
      * Retorna o número de URLs presentes atualmente na fila.
      *
@@ -42,11 +41,4 @@ public interface QueueInterface extends Remote{
      */
     int getMaxSize() throws RemoteException, InterruptedException;
 
-
-    /**
-     * Marca uma URL como processada e a remove da queue.
-     *
-     * @param url A URL a ser marcada como processada.
-     */
-    void markURLAsProcessed(String url)throws RemoteException;
 }

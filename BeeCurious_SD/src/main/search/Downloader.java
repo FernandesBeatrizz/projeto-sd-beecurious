@@ -23,7 +23,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
 
     GatewayINTER gateway;
     String downloader_name;
-    private static final Set<String> urlsProcessados= new HashSet<>();
     QueueInterface urlQueue;
 
 
@@ -67,7 +66,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
         try {
             int tentativas=0;
             while (true) {
-                String url= urlQueue.getURL();
+                String url = gateway.getNextURL();
                 System.out.println(url);
                 if(url == null){
                     System.out.println("fila vazia");
@@ -83,11 +82,9 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
                     url = transformarUrlAbsoluta("http://" + new URI(url).getHost(), url);
                 }
-                if (!urlsProcessados.contains(url.trim().toLowerCase())) {
-                    urlsProcessados.add(url.trim().toLowerCase());
-                    processarPagina(url);
-                    urlQueue.markURLAsProcessed(url);
-                }
+
+                processarPagina(url);
+
                 Thread.sleep(1000);
             }
         } catch (Exception e) {
@@ -145,17 +142,14 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                 }
 
                 // Extrair palavras
-                String[] palavras = doc.text().toLowerCase().split("\\s+");
+                String textoCompleto = doc.text().toLowerCase();
+                // Remove pontuação e divide em palavras
+                String[] palavras = textoCompleto.replaceAll("[^a-z0-9áéíóúãõâêôç\\s]", " ")
+                        .split("\\s+");
 
                 for (String palavra : palavras) {
                     if (!palavra.isEmpty()) {
                         gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
-                    }
-                }
-
-                for (String palavra : palavras) {
-                    if (!palavra.isEmpty()) {
-                        barrel.addToIndex(palavra, url, titulo, citacao, listaLinks);
                     }
                 }
 
