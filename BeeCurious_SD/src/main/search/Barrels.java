@@ -157,10 +157,20 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             if (!indiceInvertido.containsKey(word)) {
                 indiceInvertido.put(word, new ArrayList<>());
             }
-            indiceInvertido.get(word).add(pagina);
-        System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
-        salvar();
-    }
+            boolean urlExiste = false;
+            for (String[] pagina_indice : indiceInvertido.get(word)) {
+                if (pagina_indice[0].equals(url)) {
+                    urlExiste = true;
+                    break;
+                }
+            }
+
+            if (!urlExiste) {
+                indiceInvertido.get(word).add(pagina);
+            }
+            System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
+            salvar();
+        }
 }
 
     /**
@@ -210,7 +220,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         List<String[]> paginasFiltradas = new ArrayList<>(indiceInvertido.get(termos[0]));
 
         // Filtra para páginas que contêm TODOS os termos
-        for (int i = 0; i < termos.length; i++) {
+        for (int i = 1; i < termos.length; i++) {
             String termo = termos[i];
             if (!indiceInvertido.containsKey(termo)) {
                 return new ArrayList<>(); // Se algum termo não existir, retorna vazio
@@ -261,33 +271,97 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
 
     }
-
     private int pagina = 1;
+    private final Scanner sc = new Scanner(System.in);
 
     public List<String[]> top10(String termos) throws RemoteException {
+        Scanner sc = new Scanner(System.in);
         String[] palavras = termos.toLowerCase().split(" ");
+        List<String[]> resultados = new ArrayList<>();
 
-        for (String termo : palavras) {
-            if (!indiceInvertido.containsKey(termo)) {
-                System.out.println(" Palavra '" + termo + "' não encontrada");
-                continue;
+        //vou ver s os termos existem no indiceinvertido
+        for (String palavra : palavras) {
+            if (!indiceInvertido.containsKey(palavra)) {
+                System.out.println("palavra não encontrada");
+                return resultados; //s nao encontrar nd retorna lista vazia
+            }
+        }
+        resultados.addAll(indiceInvertido.get(palavras[0])); //todas as paginas q contêm o primeiro termo
+
+        // Filtra os resultados para páginas que contêm todos os termos
+        for (int i = 1; i < palavras.length; i++) {
+            List<String[]> tempResultados = new ArrayList<>();
+            Set<String> urlsExistentes = new HashSet<>();
+
+            // Armazena as URLs atuais
+            for (String[] pagina : resultados) {
+                urlsExistentes.add(pagina[0]);
             }
 
-            List<String[]> paginas = indiceInvertido.get(termo);
+            // Adiciona páginas que contenham o termo atual e estejam nas URLs anteriores
+            for (String[] pagina : indiceInvertido.get(palavras[i])) {
+                if (urlsExistentes.contains(pagina[0])) {
+                    tempResultados.add(pagina);
+                }
+            }
+            resultados = tempResultados;
+        }
 
-            for (String[] pagina : paginas) {
-                System.out.println("   Título: " + pagina[1]);
-                System.out.println("   URL: " + pagina[0]);
-                System.out.println("   ---");
+        resultados.sort(new Comparator<String[]>() {
+            public int compare(String[] pag1, String[] pag2) {
+                int ponteiro1 = obterrelevancia(pag1[0]);
+                int ponteiro2 = obterrelevancia(pag2[0]);
+
+                if (ponteiro1 == ponteiro2) {
+                    int count1 = contarTermosNaPagina(pag1, palavras);
+                    int count2 = contarTermosNaPagina(pag2, palavras);
+                    return Integer.compare(count1, count2);  //oq tem mais termos primeiro
+                }
+                return Integer.compare(ponteiro2, ponteiro1); //oq tem mais links primeiro
+            }
+        });
+        return resultados;
+/*
+        int resultadospag = 10;
+        int totalPaginas = (int) Math.ceil((double) resultados.size() / resultadospag);
+        boolean sair = false;
+
+
+        while (pagina <= totalPaginas && !sair) {
+            int inicio = (pagina - 1) * resultadospag; // Página começa a contar de 1
+            int fim = Math.min(inicio + resultadospag, resultados.size());
+
+            // Exibe os resultados da página atual
+            List<String[]> resultadosDaPagina = resultados.subList(inicio, fim);
+
+            System.out.println("\nResultados da pesquisa para: " + termos + " - Página " + pagina);
+            for (String[] resultado : resultadosDaPagina) {
+                System.out.println("Título: " + resultado[1]);
+                System.out.println("URL: " + resultado[0]);
+                System.out.println("Citação: " + resultado[2]);
+                System.out.println("---------------------------");
+            }
+
+            // Aumenta a página para a próxima chamada
+            //pagina++;
+
+            if (pagina <= totalPaginas) {
+
+                System.out.println("Pressione Enter para ver a próxima página ou digite 'sair' para voltar ao menu...");
+                String entrada = sc.nextLine();
+                if (entrada.equalsIgnoreCase("sair")) {
+                    sair = true;
+                } else {
+                    pagina++;
+                }
+            } else {
+                System.out.println("Fim dos resultados. Pressione Enter para voltar ao menu.");
+                sc.nextLine();
+                sair = true;
             }
         }
 
-        System.out.println("\nPressione Enter para voltar...");
-        new Scanner(System.in).nextLine();
-
-        return indiceInvertido.values().stream()
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+        return resultados;*/
     }
 
     private int contarTermosNaPagina(String[] pagina, String[] termos) {
@@ -354,4 +428,5 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
         return false;
     }
+
 }
