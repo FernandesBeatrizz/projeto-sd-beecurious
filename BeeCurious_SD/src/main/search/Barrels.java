@@ -150,28 +150,72 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      */
     @Override
     public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException {
+        // Obtém o Barrel Principal (O primeiro que processa a URL)
+        BarrelsINTER barrelPrincipal = gateway.getBarrel();  // O barrel principal vai indexar
 
-        // Adiciona ao índice local do Barrel
+        if (barrelPrincipal != null) {
+            String[] pagina = {url, titulo, citacao, String.join(",", links)};
+            synchronized (indiceInvertido) {
+                if (!indiceInvertido.containsKey(word)) {
+                    indiceInvertido.put(word, new ArrayList<>());
+                }
+
+                // Verifica se a URL já está indexada para a palavra
+                boolean urlExiste = false;
+                for (String[] pagina_indice : indiceInvertido.get(word)) {
+                    if (pagina_indice[0].equals(url)) {
+                        urlExiste = true;
+                        break;
+                    }
+                }
+
+                // Se não existe, adiciona a URL ao índice
+                if (!urlExiste) {
+                    indiceInvertido.get(word).add(pagina);
+                }
+
+                // Log de indexação no barrel principal
+                System.out.println("[Barrel Principal] Palavra indexada: " + word + " (URL: " + url + ")");
+                salvar();
+            }
+
+            // Agora propaga para os outros barrels
+            try {
+                List<BarrelsINTER> outrosBarrels = gateway.getAllBarrels();
+                for (BarrelsINTER barrel : outrosBarrels) {
+                    if (!barrel.getName().equals(barrelPrincipal.getName())) {
+                        // Envia a palavra para os outros barrels
+                        barrel.mandarIndex(word, url, titulo, citacao, links);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao propagar a indexação para os outros barrels: " + e.getMessage());
+            }
+        } else {
+            System.err.println("Nenhum barrel principal disponível para indexação!");
+        }
+    }
+
+
+    public void mandarIndex(String word, String url, String titulo, String citacao, List<String> links) {
         String[] pagina = {url, titulo, citacao, String.join(",", links)};
         synchronized (indiceInvertido) {
             if (!indiceInvertido.containsKey(word)) {
                 indiceInvertido.put(word, new ArrayList<>());
             }
-            boolean urlExiste = false;
+
+            // Verifica se a URL já foi indexada para a palavra
             for (String[] pagina_indice : indiceInvertido.get(word)) {
                 if (pagina_indice[0].equals(url)) {
-                    urlExiste = true;
-                    break;
+                    return;  // Não indexa novamente se a URL já estiver presente
                 }
             }
-
-            if (!urlExiste) {
-                indiceInvertido.get(word).add(pagina);
-            }
-            System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
+            indiceInvertido.get(word).add(pagina);
             salvar();
+            System.out.println("[Barrel] Palavra replicada: " + word + " (URL: " + url + ")");
         }
-}
+    }
+
 
     /**
      * Obtém a lista de páginas que apontam para um determinado URL.
@@ -271,6 +315,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
 
     }
+
+    @Override
+    public String getName() throws RemoteException {
+        return "";
+    }
+
     private int pagina = 1;
     private final Scanner sc = new Scanner(System.in);
 

@@ -259,4 +259,9 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         return url;
     }
 
+    @Override
+    public List<BarrelsINTER> getAllBarrels() {
+        return List.of();
+    }
+
 }

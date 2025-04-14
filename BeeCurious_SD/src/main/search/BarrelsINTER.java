@@ -45,6 +45,11 @@ public interface BarrelsINTER extends Remote {
 
     void reviverBarrel() throws RemoteException;
 
+    String getName() throws RemoteException;
+
+    void mandarIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException;
+
+
     /**
      * Atualiza o índice de pesquisa com novas associações entre palavras e URLs.
      */

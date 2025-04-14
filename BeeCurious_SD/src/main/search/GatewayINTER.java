@@ -89,4 +89,6 @@ public interface GatewayINTER extends Remote {
     void registerQueue(QueueInterface queue) throws RemoteException;
 
     String getNextURL() throws InterruptedException, RemoteException;
+
+    List<BarrelsINTER> getAllBarrels();
 }
