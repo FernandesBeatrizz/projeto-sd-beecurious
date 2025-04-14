@@ -90,5 +90,5 @@ public interface GatewayINTER extends Remote {
 
     String getNextURL() throws InterruptedException, RemoteException;
 
-    List<BarrelsINTER> getAllBarrels();
+    List<BarrelsINTER> getAllBarrels() throws RemoteException;
 }
