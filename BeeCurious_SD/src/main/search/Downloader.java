@@ -40,7 +40,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
      * Cria e registra um novo downloader no RMI.
      *
      * @param downloader_nome Nome do downloader.
-     * @return
      */
     public static Downloader criarDownloader(String downloader_nome) {
         try {
@@ -153,10 +152,56 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                     }
                 }
 
+                // Detectar idioma
+                String language = detectLanguage(titulo + " " + citacao);
+
+                // Extrair palavras únicas da página
+                String texto = doc.text().toLowerCase();
+                Set<String> palavrasUnicas = new HashSet<>(
+                        Arrays.asList(texto.replaceAll("[^a-z0-9áéíóúãõâêôç\\s]", " ")
+                                .split("\\s+"))
+                );
+
+                // Registrar ocorrências de palavras
+                for (String palavra : palavrasUnicas) {
+                    if (!palavra.isEmpty() && palavra.length() > 2) { // Ignorar palavras muito curtas
+                        barrel.registerWordOccurrence(palavra, url, language);
+                    }
+                }// Indexar apenas palavras não stop
+                Set<String> currentStopWords = barrel.getStopWords(language);
+                for (String palavra : palavrasUnicas) {
+                    if (!currentStopWords.contains(palavra)) {
+                        gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
+                    }
+                }
+
+
+
             } catch (IOException e) {
                 System.out.println("Erro ao processar página: " + e.getMessage());
             }
         }
+    }
+
+    private String detectLanguage(String text) {
+        text = text.toLowerCase();
+
+        // Contar ocorrências de palavras típicas de cada idioma
+        int pt = countMatches(text, " o ", " a ", " os ", " as ", " de ", " do ", " da ");
+        int en = countMatches(text, " the ", " and ", " to ", " of ", " a ", " in ");
+        int es = countMatches(text, " el ", " la ", " los ", " las ", " de ", " en ");
+
+        if (pt > en && pt > es) return "pt";
+        if (es > en && es > pt) return "es";
+        return "en"; // padrão
+    }
+
+    private int countMatches(String text, String... words) {
+        int count = 0;
+        for (String word : words) {
+            if (text.contains(word)) count++;
+        }
+        return count;
     }
 
     /**
