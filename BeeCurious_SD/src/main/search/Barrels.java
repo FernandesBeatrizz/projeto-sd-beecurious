@@ -183,7 +183,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             try {
                 List<BarrelsINTER> outrosBarrels = gateway.getAllBarrels();
                 for (BarrelsINTER barrel : outrosBarrels) {
-                    if (!barrel.getName().equals(barrelPrincipal.getName())) {
+                    if (!barrel.getName().equals(this.getName())) {
                         // Envia a palavra para os outros barrels
                         barrel.mandarIndex(word, url, titulo, citacao, links);
                     }
@@ -318,7 +318,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     @Override
     public String getName() throws RemoteException {
-        return "";
+        return this.name;
     }
 
     private int pagina = 1;
