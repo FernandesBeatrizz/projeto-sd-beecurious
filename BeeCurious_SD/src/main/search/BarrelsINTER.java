@@ -49,10 +49,9 @@ public interface BarrelsINTER extends Remote {
 
     void mandarIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException;
 
-
-    /**
-     * Atualiza o índice de pesquisa com novas associações entre palavras e URLs.
-     */
+    void registerWordOccurrence(String word, String url, String language) throws RemoteException;
+    Set<String> getStopWords(String language) throws RemoteException;
+    void updateStopWords(String language, Set<String> stopWords) throws RemoteException;
 }
 
 
