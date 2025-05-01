@@ -1,4 +1,4 @@
-package main.search;
+package main.java.search;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
