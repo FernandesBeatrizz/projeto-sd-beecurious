@@ -188,7 +188,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 }
 
                 // Log de indexação no barrel principal
-                System.out.println("[Barrel Principal] Palavra indexada: " + word + " (URL: " + url + ")");
+                System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
                 salvar();
             }
 
@@ -225,7 +225,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             }
             indiceInvertido.get(word).add(pagina);
             salvar();
-            System.out.println("[Barrel] Palavra replicada: " + word + " (URL: " + url + ")");
+            System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
         }
     }
 
