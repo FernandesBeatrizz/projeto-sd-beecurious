@@ -52,6 +52,8 @@ public interface BarrelsINTER extends Remote {
     void registerWordOccurrence(String word, String url, String language) throws RemoteException;
     Set<String> getStopWords(String language) throws RemoteException;
     void updateStopWords(String language, Set<String> stopWords) throws RemoteException;
+    Map<String, Set<String>> getAllStopWords() throws RemoteException;
 }
+
 
 

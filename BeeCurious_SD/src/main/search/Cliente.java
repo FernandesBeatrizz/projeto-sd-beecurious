@@ -72,7 +72,8 @@ public class Cliente implements ClienteINTER {
                     consultarligacoespagina();
                     break;
                 case 4:
-                    //apontei q é p usar os downloaders
+                    Map<String, Set<String>> stopWords = gateway.getBarrel().getAllStopWords();
+                    System.out.println(stopWords);
                     break;
                 case 5:
                     exit = true;

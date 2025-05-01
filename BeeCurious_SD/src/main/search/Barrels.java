@@ -27,16 +27,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private static final Object fileLock = new Object();  // Lock estático compartilhado por todos os barrels
     // Mapeamento: idioma -> palavra -> conjunto de URLs onde aparece
     private final Map<String, Map<String, Set<String>>> wordPageOccurrences = new ConcurrentHashMap<>();
-
     // Contador total de páginas por idioma
     private final Map<String, AtomicInteger> totalPagesPerLanguage = new ConcurrentHashMap<>();
-
     // Lista de stop words por idioma
     private final Map<String, Set<String>> stopWords = new ConcurrentHashMap<>();
-
     // Constantes
     private static final double STOP_WORD_PERCENTAGE = 0.15; // 15%
-    private static final int UPDATE_THRESHOLD = 1000; // Atualizar a cada 1000 páginas
+    private static final int UPDATE_THRESHOLD = 20; // Atualizar a cada 1000 páginas
     /**
      * Construtor da classe Barrels.
      *
@@ -501,7 +498,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         Map<String, Set<String>> languageWords = wordPageOccurrences.get(language);
         languageWords.putIfAbsent(word, ConcurrentHashMap.newKeySet());
 
-        // Se a palavra ainda não foi registrada para esta URL
+        // Se a palavra ainda não foi registada para esta URL
         if (languageWords.get(word).add(url)) {
             totalPagesPerLanguage.get(language).incrementAndGet();
 
@@ -559,6 +556,10 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     @Override
     public void updateStopWords(String language, Set<String> stopWords) throws RemoteException {
         this.stopWords.put(language, new HashSet<>(stopWords));
+    }
+
+    public Map<String, Set<String>> getAllStopWords() throws RemoteException{
+        return stopWords;
     }
 
 }
