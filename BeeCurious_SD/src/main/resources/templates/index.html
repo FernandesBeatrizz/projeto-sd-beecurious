@@ -1,111 +1,111 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Googol - Motor de Pesquisa</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            background-color: #f8f9fa;
-            color: #333;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Googol - Motor de Pesquisa</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+      color: #333;
+    }
 
-        .container {
-            margin-top: 100px;
-        }
+    .container {
+      margin-top: 100px;
+    }
 
-        .logo {
-            font-size: 72px;
-            font-weight: 300;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            letter-spacing: -2px;
-        }
+    .logo {
+      font-size: 72px;
+      font-weight: 300;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      letter-spacing: -2px;
+    }
 
-        .logo-text {
-            font-weight: 600; /* Destaque sutil para o nome */
-        }
+    .logo-text {
+      font-weight: 600; /* Destaque sutil para o nome */
+    }
 
-        .logo-image {
-            margin-bottom: 30px;
-            max-width: 300px;
-            height: auto;
-            filter: grayscale(30%); /* Imagem ligeiramente dessaturada */
-        }
+    .logo-image {
+      margin-bottom: 30px;
+      max-width: 300px;
+      height: auto;
+      filter: grayscale(30%); /* Imagem ligeiramente dessaturada */
+    }
 
-        .search-container {
-            width: 580px;
-            margin: 0 auto;
-            position: relative;
-        }
+    .search-container {
+      width: 580px;
+      margin: 0 auto;
+      position: relative;
+    }
 
-        .search-box {
-            width: 100%;
-            padding: 12px 20px;
-            border: 1px solid #d1d5da;
-            border-radius: 24px;
-            font-size: 16px;
-            outline: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    .search-box {
+      width: 100%;
+      padding: 12px 20px;
+      border: 1px solid #d1d5da;
+      border-radius: 24px;
+      font-size: 16px;
+      outline: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-        .search-box:hover, .search-box:focus {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-color: #a0a4a8;
-        }
+    .search-box:hover, .search-box:focus {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-color: #a0a4a8;
+    }
 
-        .search-buttons {
-            margin-top: 20px;
-        }
+    .search-buttons {
+      margin-top: 20px;
+    }
 
-        .search-button {
-            background-color: #f8f9fa;
-            border: 1px solid #d1d5da;
-            border-radius: 4px;
-            color: #2c3e50;
-            margin: 11px 4px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            transition: all 0.2s ease;
-        }
+    .search-button {
+      background-color: #f8f9fa;
+      border: 1px solid #d1d5da;
+      border-radius: 4px;
+      color: #2c3e50;
+      margin: 11px 4px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: all 0.2s ease;
+    }
 
-        .search-button:hover {
-            border-color: #a0a4a8;
-            background-color: #e9ecef;
-            color: #212529;
-        }
-    </style>
+    .search-button:hover {
+      border-color: #a0a4a8;
+      background-color: #e9ecef;
+      color: #212529;
+    }
+  </style>
 </head>
 <body>
 <div class="container">
-    <!-- Logo "Googol" com design neutro -->
-    <div class="logo">
-        <span class="logo-text">Googol</span>
-    </div>
+  <!-- Logo "Googol" com design neutro -->
+  <div class="logo">
+    <span class="logo-text">Googol</span>
+  </div>
 
-    <!-- Imagem abaixo do logo -->
-    <div>
-        <img src="https://via.placeholder.com/300x100?text=Googol" alt="Googol Logo" class="logo-image">
-        <!-- Substitua pelo caminho da sua imagem, temos d meter dps a imagem na pasta de static images segundo o chat -->
-    </div>
+  <!-- Imagem abaixo do logo -->
+  <div>
+    <img src="https://via.placeholder.com/300x100?text=Googol" alt="Googol Logo" class="logo-image">
+    <!-- Substitua pelo caminho da sua imagem, temos d meter dps a imagem na pasta de static images segundo o chat -->
+  </div>
 
-    <!-- Barra de pesquisa -->
-    <div class="search-container">
-        <form action="/search" method="GET">
-            <input type="text" class="search-box" name="q" placeholder="Pesquise no Googol..." autofocus>
-            <div class="search-buttons">
-                <button type="submit" class="search-button">Pesquisar</button>
-                <button type="button" class="search-button">Estou com sorte</button>
-            </div>
-        </form>
-    </div>
+  <!-- Barra de pesquisa -->
+  <div class="search-container">
+    <form action="/search" method="GET">
+      <input type="text" class="search-box" name="q" placeholder="Pesquise no Googol..." autofocus>
+      <div class="search-buttons">
+        <button type="submit" class="search-button">Pesquisar</button>
+        <button type="button" class="search-button">Estou com sorte</button>
+      </div>
+    </form>
+  </div>
 </div>
 </body>
 </html>
