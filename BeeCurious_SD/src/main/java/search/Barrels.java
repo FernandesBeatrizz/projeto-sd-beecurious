@@ -24,16 +24,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private static String name;
     private HashMap<String, HashSet<String>> ponteiros;
     private static String ficheiroURLbarrels;
-    private static final Object fileLock = new Object();  // Lock estático compartilhado por todos os barrels
-    // Mapeamento: idioma -> palavra -> conjunto de URLs onde aparece
+    private static final Object fileLock = new Object();  // Lock estático partilhado por todos os barrels
     private final Map<String, Map<String, Set<String>>> wordPageOccurrences = new ConcurrentHashMap<>();
-    // Contador total de páginas por idioma
     private final Map<String, AtomicInteger> totalPagesPerLanguage = new ConcurrentHashMap<>();
-    // Lista de stop words por idioma
     private final Map<String, Set<String>> stopWords = new ConcurrentHashMap<>();
-    // Constantes
     private static final double STOP_WORD_PERCENTAGE = 0.15; // 15%
-    private static final int UPDATE_THRESHOLD = 20; // Atualizar a cada 1000 páginas
+    private static final int UPDATE_THRESHOLD = 1000; // Atualizar a cada 1000 páginas
     /**
      * Construtor da classe Barrels.
      *
@@ -243,87 +239,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
-
-    /**
-     * Pesquisa um termo no índice invertido.
-     *
-     * @param word Termo a ser pesquisado
-     * @return Lista de URLs que contêm o termo
-     */
-    /**
-     * Pesquisa uma palavra no índice e retorna todas as informações das páginas correspondentes.
-     * @param word Palavra ou termos de pesquisa (separados por espaços).
-     * @return Lista de arrays, onde cada array contém: [URL, título, citação, links].
-     */
-    @Override
-    public synchronized List<String[]> searchWord(String word) throws RemoteException {
-        List<String[]> resultados = new ArrayList<>();
-        String[] termos = word.toLowerCase().split("\\s+");
-
-        // Se nenhum termo for encontrado, retorna lista vazia
-        if (termos.length == 0) {
-            return resultados;
-        }
-
-        // Verifica se o primeiro termo existe no índice
-        if (!indiceInvertido.containsKey(termos[0])) {
-            return resultados; // Retorna vazio se o primeiro termo não existir
-        }
-
-        // Começa com as páginas do primeiro termo
-        List<String[]> paginasFiltradas = new ArrayList<>(indiceInvertido.get(termos[0]));
-
-        // Filtra para páginas que contêm TODOS os termos
-        for (int i = 1; i < termos.length; i++) {
-            String termo = termos[i];
-            if (!indiceInvertido.containsKey(termo)) {
-                return new ArrayList<>(); // Se algum termo não existir, retorna vazio
-            }
-            paginasFiltradas.removeIf(pagina ->
-                    !contemPagina(indiceInvertido.get(termo), pagina[0])
-            );
-        }
-
-        return paginasFiltradas;
-    }
-
-    // Método auxiliar para verificar se uma página está na lista de um termo
-    private boolean contemPagina(List<String[]> paginasTermo, String url) {
-        for (String[] pagina : paginasTermo) {
-            if (pagina[0].equals(url)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public void ping() throws RemoteException{
-    }
-
-    @Override
-    public void updateIndex(HashMap<String, ArrayList<String[]>> newIndex) throws RemoteException{
-        if (newIndex == null) return;
-
-        for (String word : newIndex.keySet()) {
-            ArrayList<String[]> page = newIndex.get(word);
-            if (!indiceInvertido.containsKey(word)) {
-                indiceInvertido.put(word, page);
-            }
-        }
-        salvar();
-    }
-
-    public void reviverBarrel() throws RemoteException {
-        Registry registry = LocateRegistry.getRegistry("localHost", 8183);
-        try {
-            this.gateway.unregisterBarrel(this);
-            registry.unbind(this.name);
-            System.out.println("Barrel " + this.name + " removido do RMI Registry.");
-            criarbarrel(name, 8183);
-        } catch (Exception e) {
-            System.out.println(" erro a reviver barrel");
-        }
-
     }
 
     @Override
@@ -331,11 +247,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         return this.name;
     }
 
-    private int pagina = 1;
-    private final Scanner sc = new Scanner(System.in);
-
     public List<String[]> top10(String termos) throws RemoteException {
-        Scanner sc = new Scanner(System.in);
         String[] palavras = termos.toLowerCase().split(" ");
         List<String[]> resultados = new ArrayList<>();
 

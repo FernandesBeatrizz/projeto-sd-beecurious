@@ -4,7 +4,7 @@ import main.java.search.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
+/*
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 
@@ -29,12 +29,13 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 /*marca esta classe como um controlador Spring MVC que processa requisições web */
+/*
 @Controller
 public class GreetingController {
 
     private static GatewayINTER gateway;
 
-    /* três instâncias da classe Number com diferentes escopos (request, sessão e aplicação)*/
+    //três instâncias da classe Number com diferentes escopos (request, sessão e aplicação)
     @Resource(name = "requestScopedNumberGenerator")
     private Number nRequest;
 
@@ -47,7 +48,7 @@ public class GreetingController {
 
     public GreetingController() {
         try {
-            Registry registry = LocateRegistry.getRegistry(/*depois meter a porta*/);
+            Registry registry = LocateRegistry.getRegistry(/*depois meter a porta*//*);
             gateway = (GatewayINTER) registry.lookup("Gateway");
         } catch (Exception e) {
             System.err.println("Couldn't find Gateway!");
@@ -59,7 +60,7 @@ public class GreetingController {
 Request: Nova instância a cada requisição HTTP
 Session: Mesma instância durante toda a sessão do usuário
 Application: Única instância para toda a aplicaçãoApplication: Única instância para toda a aplicação*/
-
+/*
     @Bean
     @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
     public Number requestScopedNumberGenerator() {
@@ -80,6 +81,7 @@ Application: Única instância para toda a aplicaçãoApplication: Única instâ
 
 
 /*redireciona p menu d aplicaçao*/
+/*
     @GetMapping("/")
     public String redirect() {
         return "redirect:/index";
@@ -135,4 +137,4 @@ Application: Única instância para toda a aplicaçãoApplication: Única instâ
         return "counter";
     }
 /*podemos fazer depois: @GetMapping e @PostMapping de addURL, @GetMapping e @PostMapping de searchWords, @GetMapping daquilo do top10, @GetMapping e @PostMapping de searchurl, @GetMapping de resultadodeurl. O nome dps que metermos temos de fazer um ficheiro html com isso, que vai ser a pagina */
-}
+//}

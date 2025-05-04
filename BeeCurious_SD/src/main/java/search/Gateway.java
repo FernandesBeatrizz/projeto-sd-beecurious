@@ -16,45 +16,43 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private final ArrayList<BarrelsINTER> barrels;
     private int currentBarrelIndex = 0;
     private int currentDownloaderIndex = 0;
-    private final Set<String> urlsIndexados= new HashSet<>();
+    private final Set<String> urlsIndexados = new HashSet<>();
     private QueueInterface urlQueue;
     private ArrayList<DownloaderINTER> downloaders;
+
     /**
      * Construtor da classe Gateway.
      * Inicializa a fila de URLs e configura um temporizador para sincronização periódica dos barrels.
-     *
-     *
      */
     public Gateway() throws RemoteException {
         super();
-        this.urlQueue=new URLqueue(1000);
+        this.urlQueue = new URLqueue(1000);
         barrels = new ArrayList<>();
         downloaders = new ArrayList<>();
     }
 
     /**
      * Metodo principal para iniciar o Gateway e registá-lo no RMI Registry.
-     *
      */
     public static void main(String[] args) {
-      try {
-        Gateway gateway = new Gateway();
-        String gatewayName = "Gateway";
-        String gatewayHost = "localHost";
-        int gatewayPort = 8183;
+        try {
+            Gateway gateway = new Gateway();
+            String gatewayName = "Gateway";
+            String gatewayHost = "localHost";
+            int gatewayPort = 8183;
 
-        System.setProperty("java.rmi.server.hostname", gatewayHost);
+            System.setProperty("java.rmi.server.hostname", gatewayHost);
 
-        Registry registry = LocateRegistry.createRegistry(gatewayPort);
-        registry.rebind(gatewayName, gateway);
+            Registry registry = LocateRegistry.createRegistry(gatewayPort);
+            registry.rebind(gatewayName, gateway);
 
-        System.out.println("gateway ready. Waiting for input...");
+            System.out.println("gateway ready. Waiting for input...");
 
-        Thread.sleep(5000);
+            Thread.sleep(5000);
 
-        System.out.println("coreeee");
+            System.out.println("coreeee");
 
-      } catch (Exception var3) {
+        } catch (Exception var3) {
             var3.printStackTrace();
         }
     }
@@ -69,6 +67,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     //CLIENTS  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
     /**
      * Realiza a pesquisa de uma palavra no índice invertido.
      *
@@ -77,20 +76,19 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      */
     @Override
     public List<String[]> searchWord(String words) throws RemoteException {
-        BarrelsINTER barrel = getBarrel();
-        List<String[]> barrelResults = null;
-        try {
-            barrelResults = barrel.top10(words);
-        } catch (RemoteException e) {
-            // Tratar barrel inativo
-        }
-        return barrelResults;
+            try {
+                BarrelsINTER barrel = getBarrel();
+                if (barrel!=null)
+                    return barrel.top10(words);
+            } catch (RemoteException e) {
+                System.out.print("Pesquisa nula");
+            }
+        return new ArrayList<>();
     }
-
 
     //BARRELS - - - - - - - - - - - - - - - - - - - - - - -
 
-    public List<String[]> top10(String termos) throws RemoteException{
+    public List<String[]> top10(String termos) throws RemoteException {
         return getBarrel().top10(termos);
     }
 
@@ -111,6 +109,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     //REGISTAR E SINCRONIZAR BARRELS
+
     /**
      * Regista um novo Barrel no Gateway.
      *
@@ -128,7 +127,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      * @param barrel O Barrel a ser removido.
      */
     @Override
-    public void unregisterBarrel(BarrelsINTER barrel) throws RemoteException{
+    public void unregisterBarrel(BarrelsINTER barrel) throws RemoteException {
         if (barrels.contains(barrel)) {
             barrels.remove(barrel);
             System.out.println("Barrel removido");
@@ -137,21 +136,49 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
-
     /**
      * Obtém um Barrel ativo do Gateway, alternando entre os disponíveis.
      *
      * @return Um objeto BarrelINTER ativo.
      */
-    public BarrelsINTER getBarrel() throws RemoteException{
-        try{
+    public BarrelsINTER getBarrel() throws RemoteException {
+        if (barrels.isEmpty()) {
+            throw new RemoteException("Nenhum barrel disponível");
+        }
+
+        int tentativas = 0;
+        while (tentativas < barrels.size()) {
             BarrelsINTER barrel = barrels.get(currentBarrelIndex);
             currentBarrelIndex = (currentBarrelIndex + 1) % barrels.size();
-        return barrel;
-        }catch (Exception e){
-            System.out.print("Erro"+ e.getMessage());
+
+            try {
+                barrel.ping();
+                return barrel;
+            } catch (RemoteException e) {
+                System.out.println("Barrel " + barrel.getName() + " inativo");
+                reviverBarrel(barrel);
+                tentativas++;
+            }
         }
-        return null;
+        throw new RemoteException("Todos os barrels estão indisponíveis");
+    }
+
+    public void reviverBarrel(BarrelsINTER barrel) throws RemoteException {
+        Registry registry = LocateRegistry.getRegistry("localHost", 8183);
+        try {
+            String barrel_nome = barrel.getName();
+            registry.unbind(barrel_nome);
+            unregisterBarrel(barrel);
+            System.out.println("Barrel " + barrel + " removido do RMI Registry.");
+        } catch (Exception e) {
+            System.out.println(" erro a reviver barrel");
+        }
+
+    }
+
+    @Override
+    public List<BarrelsINTER> getAllBarrels() {
+        return List.of();
     }
 
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -
@@ -161,7 +188,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      *
      * @param downloader O downloader a ser registado.
      */
-    public synchronized void registerDownloader (DownloaderINTER downloader){
+    public synchronized void registerDownloader(DownloaderINTER downloader) {
         this.downloaders.add(downloader);
         System.out.println("Downloader registado ");
     }
@@ -171,13 +198,13 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      *
      * @return Um objeto DownloaderINTER ativo.
      */
-    public synchronized DownloaderINTER getDownloader() throws RemoteException{
-        try{
+    public synchronized DownloaderINTER getDownloader() throws RemoteException {
+        try {
             DownloaderINTER downloader = downloaders.get(currentDownloaderIndex);
             currentDownloaderIndex = (currentDownloaderIndex + 1) % downloaders.size();
             return downloader;
-        }catch (Exception e){
-            System.out.print("Erro"+ e.getMessage());
+        } catch (Exception e) {
+            System.out.print("Erro" + e.getMessage());
         }
         return null;
     }
@@ -195,7 +222,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
                     urlsIndexados.add(url);
                     System.out.println("URL adicionado: " + url); // Log para verificação
 
-                }else{
+                } else {
                     System.out.println("Queue cheia");
                     //wait();
                 }
@@ -235,7 +262,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     @Override
-    public List<String> getCachedResults (String word) throws RemoteException {
+    public List<String> getCachedResults(String word) throws RemoteException {
         return List.of();
     }
 
@@ -258,10 +285,4 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         urlsIndexados.add(url); // Marca como processado
         return url;
     }
-
-    @Override
-    public List<BarrelsINTER> getAllBarrels() {
-        return List.of();
-    }
-
 }

@@ -2,7 +2,7 @@ package main.java.meta2;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-
+/*
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -15,9 +15,9 @@ import javax.servlet.http.HttpServletResponse;
         urlPatterns = {"/AnnotationExample"}
 )
 public class Example extends HttpServlet {
-    /**
+
      * Constructs a new Example servlet.
-     */
+
     public Example() {
     }
 
@@ -27,4 +27,6 @@ public class Example extends HttpServlet {
         PrintWriter out = response.getWriter();
         out.println("<p>Hello World!</p>");
     }
+
 }
+*/
