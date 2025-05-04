@@ -1,5 +1,6 @@
 package main.java.meta2;
 
+import main.java.search.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,8 +25,16 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+
+/*marca esta classe como um controlador Spring MVC que processa requisições web */
 @Controller
 public class GreetingController {
+
+    private static GatewayINTER gateway;
+
+    /* três instâncias da classe Number com diferentes escopos (request, sessão e aplicação)*/
     @Resource(name = "requestScopedNumberGenerator")
     private Number nRequest;
 
@@ -34,6 +43,22 @@ public class GreetingController {
 
     @Resource(name = "applicationScopedNumberGenerator")
     private Number nApplication;
+
+
+    public GreetingController() {
+        try {
+            Registry registry = LocateRegistry.getRegistry(/*depois meter a porta*/);
+            gateway = (GatewayINTER) registry.lookup("Gateway");
+        } catch (Exception e) {
+            System.err.println("Couldn't find Gateway!");
+            // Handle exception appropriately
+        }
+    }
+
+/*Define três beans Spring com diferentes escopos:
+Request: Nova instância a cada requisição HTTP
+Session: Mesma instância durante toda a sessão do usuário
+Application: Única instância para toda a aplicaçãoApplication: Única instância para toda a aplicação*/
 
     @Bean
     @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
@@ -53,9 +78,11 @@ public class GreetingController {
         return new Number();
     }
 
+
+/*redireciona p menu d aplicaçao*/
     @GetMapping("/")
     public String redirect() {
-        return "redirect:/greeting";
+        return "redirect:/index";
     }
 
     @GetMapping("/greeting")
@@ -107,5 +134,5 @@ public class GreetingController {
         model.addAttribute("applicationcounter2", this.nApplication.next());
         return "counter";
     }
-
+/*podemos fazer depois: @GetMapping e @PostMapping de addURL, @GetMapping e @PostMapping de searchWords, @GetMapping daquilo do top10, @GetMapping e @PostMapping de searchurl, @GetMapping de resultadodeurl. O nome dps que metermos temos de fazer um ficheiro html com isso, que vai ser a pagina */
 }

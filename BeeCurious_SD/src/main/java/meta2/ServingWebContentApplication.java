@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 public class ServingWebContentApplication {
 
     @Bean
-    public ServletRegistrationBean<ThymeleafServlet> thymeleafServletBean() {
+    public ServletRegistrationBean<ThymeleafServlet> ServletBean() {
         ServletRegistrationBean<ThymeleafServlet> bean = new ServletRegistrationBean<>(new ThymeleafServlet(), "/thymeleafServlet/*");
         bean.setLoadOnStartup(1);
         return bean;
