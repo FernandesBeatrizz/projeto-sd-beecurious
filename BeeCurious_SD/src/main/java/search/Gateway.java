@@ -77,8 +77,19 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      */
     @Override
     public List<String[]> searchWord(String words) throws RemoteException {
-
-    return new ArrayList<>();
+        try {
+            BarrelsINTER barrel = getBarrel();
+            if (barrel != null) {
+                return barrel.top10(words);
+            }
+        } catch (RemoteException e) {
+            if (e.getMessage().equals("Nenhum barrel disponível") || barrels.isEmpty()) {
+                System.out.println("Nenhum barrel disponivel");
+            } else {
+                System.out.println("Pesquisa nula");
+            }
+        }
+        return new ArrayList<>();
 }
 
     /**
@@ -139,9 +150,9 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         while (tentativas < barrels.size()) {
             BarrelsINTER barrel = barrels.get(currentBarrelIndex);
             currentBarrelIndex = (currentBarrelIndex + 1) % barrels.size();
-
             try {
                 barrel.ping();
+                System.out.println("barrel ativo");
                 return barrel;
             } catch (RemoteException e) {
                 System.out.println("Barrel " + barrel.getName() + " inativo");
