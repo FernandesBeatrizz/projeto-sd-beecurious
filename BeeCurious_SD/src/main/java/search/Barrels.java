@@ -247,6 +247,9 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         return this.name;
     }
 
+    // ---------------PESQUISA---------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------
+
     public List<String[]> top10(String termos) throws RemoteException {
         String[] palavras = termos.toLowerCase().split(" ");
         List<String[]> resultados = new ArrayList<>();
@@ -400,6 +403,9 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
         return false;
     }
+
+    // ----- STOP WORDS ---------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------
 
     @Override
     public synchronized void registerWordOccurrence(String word, String url, String language) throws RemoteException {

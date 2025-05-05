@@ -1,5 +1,6 @@
 package main.java.search;
 
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -76,21 +77,9 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      */
     @Override
     public List<String[]> searchWord(String words) throws RemoteException {
-            try {
-                BarrelsINTER barrel = getBarrel();
-                if (barrel!=null)
-                    return barrel.top10(words);
-            } catch (RemoteException e) {
-                System.out.print("Pesquisa nula");
-            }
-        return new ArrayList<>();
-    }
 
-    //BARRELS - - - - - - - - - - - - - - - - - - - - - - -
-
-    public List<String[]> top10(String termos) throws RemoteException {
-        return getBarrel().top10(termos);
-    }
+    return new ArrayList<>();
+}
 
     /**
      * Obtém as páginas que apontam para um determinado URL.
@@ -156,14 +145,15 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
                 return barrel;
             } catch (RemoteException e) {
                 System.out.println("Barrel " + barrel.getName() + " inativo");
-                reviverBarrel(barrel);
+                matarBarrel(barrel);
+                System.out.println("Barrel " + barrel + " removido do RMI Registry.");
                 tentativas++;
             }
         }
         throw new RemoteException("Todos os barrels estão indisponíveis");
     }
 
-    public void reviverBarrel(BarrelsINTER barrel) throws RemoteException {
+    public void matarBarrel(BarrelsINTER barrel) throws RemoteException {
         Registry registry = LocateRegistry.getRegistry("localHost", 8183);
         try {
             String barrel_nome = barrel.getName();
@@ -255,18 +245,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
-    //CACHING - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    @Override
-    public void cacheSearchResults(String word, List<String> results) throws RemoteException {
-
-    }
-
-    @Override
-    public List<String> getCachedResults(String word) throws RemoteException {
-        return List.of();
-    }
-
-    //RANDOM - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //QUEUE - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     /**
      * Retorna a fila de URLs do sistema.

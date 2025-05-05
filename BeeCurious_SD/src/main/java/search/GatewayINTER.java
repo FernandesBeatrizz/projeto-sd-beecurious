@@ -20,18 +20,14 @@ public interface GatewayINTER extends Remote {
 
     // ========== BARRELS ==========
 
+    List<BarrelsINTER> getAllBarrels() throws RemoteException;
+
     public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException;
     /**
      * Registra um novo barrel (módulo de indexação) no sistema.
      *
      */
     void registerBarrel(BarrelsINTER barrel) throws RemoteException;
-
-    /**
-     * Obtém a interface da fila de URLs para controle de downloads e indexação.
-     *
-     */
-    QueueInterface getQueue() throws RemoteException;
 
     /**
      * Remove um barrel previamente registrado no sistema.
@@ -44,12 +40,6 @@ public interface GatewayINTER extends Remote {
      *
      */
     BarrelsINTER getBarrel() throws RemoteException;
-
-    /**
-     * Obtém os 10 principais resultados para um termo de pesquisa.
-     *
-     */
-    List<String[]> top10(String termos) throws RemoteException;
 
     /**
      * Retorna uma lista de páginas que apontam para uma URL específica.
@@ -71,15 +61,6 @@ public interface GatewayINTER extends Remote {
      */
     void registerDownloader(DownloaderINTER downloader) throws RemoteException;
 
-
-    // ========== CACHING ==========
-
-
-    void cacheSearchResults(String word, List<String> results) throws RemoteException;
-
-
-    List<String> getCachedResults(String word) throws RemoteException;
-
     // ========== QUEUE ==========
 
     /**
@@ -90,5 +71,9 @@ public interface GatewayINTER extends Remote {
 
     String getNextURL() throws InterruptedException, RemoteException;
 
-    List<BarrelsINTER> getAllBarrels() throws RemoteException;
+    /**
+     * Obtém a interface da fila de URLs para controle de downloads e indexação.
+     *
+     */
+    QueueInterface getQueue() throws RemoteException;
 }
