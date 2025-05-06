@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados da Pesquisa - Googol</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            margin-right: 30px;
+        }
+
+        .search-container {
+            flex-grow: 1;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .results-info {
+            color: #70757a;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .result-item {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .result-title {
+            font-size: 18px;
+            color: #1a0dab;
+            margin-bottom: 5px;
+        }
+
+        .result-url {
+            color: #006621;
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .result-snippet {
+            color: #545454;
+            font-size: 14px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .page-button {
+            margin: 0 5px;
+            padding: 8px 12px;
+            border: 1px solid #d1d5da;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 3px;
+            text-decoration: none;
+            color: #2c3e50;
+        }
+
+        .page-button.active {
+            background-color: #4285f4;
+            color: white;
+            border-color: #4285f4;
+        }
+
+        .page-button:hover:not(.active) {
+            background-color: #f1f1f1;
+        }
+
+        .no-results {
+            text-align: center;
+            margin-top: 50px;
+            color: #70757a;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<!-- Cabeçalho com barra de pesquisa -->
+<div class="header">
+    <div class="header-container">
+        <a href="/" class="logo">Googol</a>
+        <div class="search-container">
+            <form action="/search" method="GET">
+                <input type="text" class="search-box" name="q"
+                       th:value="${query}"
+                       placeholder="Pesquise no Googol..." autofocus>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Container principal -->
+<div class="container">
+    <!-- Informações sobre os resultados -->
+    <div class="results-info" th:if="${results != null and !#lists.isEmpty(results)}">
+        Aproximadamente <span th:text="${totalResults}"></span> resultados encontrados
+    </div>
+
+    <!-- Resultados da pesquisa -->
+    <div th:if="${results != null}">
+        <div th:if="${#lists.isEmpty(results)}" class="no-results">
+            Nenhum resultado encontrado para "<span th:text="${query}"></span>"
+        </div>
+
+        <div th:each="result : ${results}" class="result-item">
+            <h3 class="result-title" th:text="${result[1]}">Título da página</h3>
+            <a th:href="${result[0]}" class="result-url" th:text="${result[0]}">URL da página</a>
+            <p class="result-snippet" th:text="${result[2]}">Trecho do conteúdo da página...</p>
+        </div>
+
+        <!-- Paginação -->
+        <div class="pagination" th:if="${!#lists.isEmpty(results)}">
+            <a th:if="${currentPage > 1}"
+               th:href="@{/search(q=${query}, page=${currentPage - 1})}"
+               class="page-button">Anterior</a>
+
+            <span th:each="i : ${#numbers.sequence(1, totalPages)}">
+          <a th:if="${i != currentPage}"
+             th:href="@{/search(q=${query}, page=${i})}"
+             class="page-button" th:text="${i}">1</a>
+          <span th:if="${i == currentPage}"
+                class="page-button active" th:text="${i}">1</span>
+        </span>
+
+            <a th:if="${currentPage < totalPages}"
+               th:href="@{/search(q=${query}, page=${currentPage + 1})}"
+               class="page-button">Próxima</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

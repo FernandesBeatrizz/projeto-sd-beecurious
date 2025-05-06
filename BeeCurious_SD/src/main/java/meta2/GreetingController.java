@@ -19,6 +19,9 @@ import org.springframework.context.annotation.ScopedProxyMode;*/
 /*deixar estes por enquanto*/
 import main.java.search.*;
 
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,8 +36,21 @@ import org.springframework.web.context.request.ServletRequestAttributes;*/
 
 @Controller
 public class GreetingController {
+    private static GatewayINTER gateway;
+
+    public GreetingController() {
+        try {
+            Registry registry = LocateRegistry.getRegistry(8183);
+            gateway = (GatewayINTER) registry.lookup("Gateway");
+        } catch (Exception e) {
+            System.err.println("Couldn't find Gateway!");
+            // Handle exception appropriately
+        }
+    }
 
     /*
+
+
     @Resource(name = "requestScopedNumberGenerator")
     private Number nRequest;
 
@@ -67,14 +83,82 @@ public class GreetingController {
         model.addAttribute("message", "Bem-vindo");
         return "index";
     }
-/*
-    @GetMapping("/greeting")
-    public String greeting(@RequestParam(name="name", required=false, defaultValue="World") String name, Model model) {
-        model.addAttribute("name", name);
-        model.addAttribute("othername", "SD");
-        return "greeting";
+
+    @GetMapping("/search")
+    public String search(@RequestParam(name = "q", required = false) String query,
+                         @RequestParam(name = "page", defaultValue = "1") int page,
+                         Model model) {
+        if (query == null || query.trim().isEmpty()) {
+            return "index"; // redireciona para a página principal se a query estiver vazia
+        }
+
+        try {
+            int resultsPerPage = 10;
+
+            // Usa o método searchWord que já tens na Gateway
+            List<String[]> allResults = gateway.searchWord(query); // lista de [url, título, snippet]
+
+            int totalResults = allResults.size();
+            int totalPages = (int) Math.ceil((double) totalResults / resultsPerPage);
+
+            int start = (page - 1) * resultsPerPage;
+            int end = Math.min(start + resultsPerPage, totalResults);
+            List<String[]> paginatedResults = allResults.subList(start, end);
+
+            model.addAttribute("query", query);
+            model.addAttribute("results", paginatedResults);
+            model.addAttribute("totalResults", totalResults);
+            model.addAttribute("totalPages", totalPages);
+            model.addAttribute("currentPage", page);
+
+            return "search_results";
+        } catch (Exception e) {
+            model.addAttribute("query", query);
+            model.addAttribute("results", new ArrayList<>());
+            model.addAttribute("totalResults", 0);
+            model.addAttribute("totalPages", 0);
+            model.addAttribute("currentPage", 1);
+            return "search_results";
+        }
     }
 
+
+    @GetMapping("/link")
+    public String linkForm() {
+        return "link"; // Mostra o formulário para introduzir URL
+    }
+
+    @GetMapping("/link_result")
+    public String linkResult(@RequestParam("url") String url, Model model) {
+        try {
+            // Verifica se há páginas que apontam para esta URL
+            List<String> ligacoes = gateway.obterPaginasApontamPara(url);
+
+            boolean foiIndexado = ligacoes != null && !ligacoes.isEmpty();
+
+            model.addAttribute("encontrado", foiIndexado);
+            model.addAttribute("url", url);
+
+            if (foiIndexado) {
+                // Não temos título nem excerto porque o Gateway não fornece isso diretamente
+                model.addAttribute("titulo", "Título não disponível");
+                model.addAttribute("excerto", "Excerto não disponível");
+            }
+
+        } catch (Exception e) {
+            model.addAttribute("encontrado", false);
+            model.addAttribute("url", url);
+        }
+
+        return "link_result";
+    }
+
+
+
+
+
+
+/*
     @GetMapping("/givemeatable")
     public String atable(Model model) {
         Employee [] theEmployees = { new Employee(1, "José", "9199999", 1890), new Employee(2, "Marisa", "9488444", 2120), new Employee(3, "Hélio", "93434444", 2500)};

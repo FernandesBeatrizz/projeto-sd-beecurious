@@ -78,19 +78,17 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     @Override
     public List<String[]> searchWord(String words) throws RemoteException {
         try {
-            BarrelsINTER barrel = getBarrel();
+            BarrelsINTER barrel = getBarrel(); // Vai tentar pingar e retornar
             if (barrel != null) {
-                return barrel.top10(words);
+                return barrel.top10(words); // Pode lançar RemoteException
             }
         } catch (RemoteException e) {
-            if (e.getMessage().equals("Nenhum barrel disponível") || barrels.isEmpty()) {
-                System.out.println("Nenhum barrel disponivel");
-            } else {
-                System.out.println("Pesquisa nula");
-            }
+            System.out.println("Erro na pesquisa: " + e.getMessage());
+            e.printStackTrace(); // Mostra onde a exceção foi realmente lançada
         }
         return new ArrayList<>();
-}
+    }
+
 
     /**
      * Obtém as páginas que apontam para um determinado URL.
@@ -151,18 +149,23 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             BarrelsINTER barrel = barrels.get(currentBarrelIndex);
             currentBarrelIndex = (currentBarrelIndex + 1) % barrels.size();
             try {
-                barrel.ping();
-                System.out.println("barrel ativo");
+                System.out.println("a ir ao ping do barrel: " + barrel.getName());
+                barrel.ping(); // Deve lançar RemoteException se o processo morreu
+                System.out.println("Barrel ativo: " + barrel.getName());
                 return barrel;
             } catch (RemoteException e) {
-                System.out.println("Barrel " + barrel.getName() + " inativo");
-                matarBarrel(barrel);
-                System.out.println("Barrel " + barrel + " removido do RMI Registry.");
+                System.out.println("Barrel " + barrel + " inativo");
+                try {
+                    matarBarrel(barrel);
+                } catch (Exception ex) {
+                    System.out.println("Erro ao remover barrel: " + ex.getMessage());
+                }
                 tentativas++;
             }
         }
         throw new RemoteException("Todos os barrels estão indisponíveis");
     }
+
 
     public void matarBarrel(BarrelsINTER barrel) throws RemoteException {
         Registry registry = LocateRegistry.getRegistry("localHost", 8183);
@@ -192,22 +195,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     public synchronized void registerDownloader(DownloaderINTER downloader) {
         this.downloaders.add(downloader);
         System.out.println("Downloader registado ");
-    }
-
-    /**
-     * Obtém um downloader disponível.
-     *
-     * @return Um objeto DownloaderINTER ativo.
-     */
-    public synchronized DownloaderINTER getDownloader() throws RemoteException {
-        try {
-            DownloaderINTER downloader = downloaders.get(currentDownloaderIndex);
-            currentDownloaderIndex = (currentDownloaderIndex + 1) % downloaders.size();
-            return downloader;
-        } catch (Exception e) {
-            System.out.print("Erro" + e.getMessage());
-        }
-        return null;
     }
 
     /**

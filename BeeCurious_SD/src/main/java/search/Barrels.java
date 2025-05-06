@@ -239,8 +239,10 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
-    public void ping() throws RemoteException{
+    public void ping() throws RemoteException {
+        getName();
     }
+
 
     @Override
     public String getName() throws RemoteException {
@@ -409,18 +411,15 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     @Override
     public synchronized void registerWordOccurrence(String word, String url, String language) throws RemoteException {
-        // Inicializa estruturas se necessário
         wordPageOccurrences.putIfAbsent(language, new ConcurrentHashMap<>());
         totalPagesPerLanguage.putIfAbsent(language, new AtomicInteger(0));
 
         Map<String, Set<String>> languageWords = wordPageOccurrences.get(language);
         languageWords.putIfAbsent(word, ConcurrentHashMap.newKeySet());
 
-        // Se a palavra ainda não foi registada para esta URL
         if (languageWords.get(word).add(url)) {
             totalPagesPerLanguage.get(language).incrementAndGet();
 
-            // Verifica se precisa recalcular stop words
             if (totalPagesPerLanguage.get(language).get() % UPDATE_THRESHOLD == 0) {
                 recalculateStopWords(language);
             }

@@ -1,0 +1,54 @@
+<!-- link_result.html -->
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultado da Verificação</title>
+    <style>
+        body { font-family: sans-serif; padding: 50px; background-color: #fefefe; }
+        .result {
+            max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px;
+            border: 1px solid #ddd; border-radius: 10px;
+        }
+        h2 { color: #2c3e50; }
+    </style>
+    <script>
+        // Simulação: lista de links "indexados"
+        const indexados = [
+            "https://example.com",
+            "https://openai.com",
+            "https://googol.com/teste"
+        ];
+
+        window.onload = function () {
+            const params = new URLSearchParams(window.location.search);
+            const url = params.get('url');
+            const resultDiv = document.getElementById('resultado');
+
+            if (!url) {
+                resultDiv.innerHTML = "<p>Nenhum URL foi fornecido.</p>";
+                return;
+            }
+
+            if (indexados.includes(url)) {
+                resultDiv.innerHTML = `
+          <h2>Link Encontrado!</h2>
+          <p><strong>URL:</strong> ${url}</p>
+          <p><strong>Título:</strong> Exemplo de Título</p>
+          <p><strong>Excerto:</strong> Este é um excerto do conteúdo indexado...</p>
+        `;
+            } else {
+                resultDiv.innerHTML = `
+          <h2>Link não encontrado</h2>
+          <p>O link <strong>${url}</strong> ainda não foi indexado ou está a ser processado.</p>
+        `;
+            }
+        };
+    </script>
+</head>
+<body>
+<div class="result" id="resultado">
+    <!-- Conteúdo será preenchido via JavaScript -->
+</div>
+</body>
+</html>
