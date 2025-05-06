@@ -97,15 +97,21 @@
   </div>
 
   <!-- Barra de pesquisa -->
+  <!-- Barra de pesquisa principal -->
   <div class="search-container">
+    <!-- Formulário para buscar -->
     <form action="/search" method="GET">
       <input type="text" class="search-box" name="q" placeholder="Pesquise no Googol..." autofocus>
+    </form>
+
+    <!-- Formulário para indexar -->
+    <form action="/pesquisarURL" method="GET">
       <div class="search-buttons">
-        <button type="submit" class="search-button">Linked</button>
-        <button type="button" class="search-button">Seed URL</button>
+        <button type="submit" class="search-button">Mandar um link</button>
       </div>
     </form>
   </div>
+
 </div>
 </body>
 </html>

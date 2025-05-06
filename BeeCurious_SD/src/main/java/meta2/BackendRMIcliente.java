@@ -17,8 +17,8 @@ public class BackendRMIcliente {
         this.gateway = (GatewayINTER) registry.lookup("Gateway");
     }
 
-    public LinkedHashMap<String, String[]> search(String termos) throws RemoteException {
-        return (LinkedHashMap<String, String[]>) gateway.searchWord(termos);
+    public List<String[]> search(String termos) throws RemoteException {
+        return gateway.searchWord(termos);
         /*List<String[]> results = gateway.searchWord(query);
         LinkedHashMap<String, String[]> formattedResults = new LinkedHashMap<>();
 

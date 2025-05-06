@@ -1,0 +1,37 @@
+<!-- link_result.html -->
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultado </title>
+    <style>
+        body { font-family: sans-serif; padding: 50px; background-color: #fefefe; }
+        .result {
+            max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px;
+            border: 1px solid #ddd; border-radius: 10px;
+        }
+        h2 { color: #2c3e50; }
+    </style>
+</head>
+<body>
+<div class="result" id="resultado">
+    <h2>Resultado para: <span th:text="${url}"></span></h2>
+
+    <div th:if="${encontrado}">
+        <h3>Link Encontrado!</h3>
+        <ul>
+            <li th:each="link : ${ligacoes}" th:text="${link}"></li>
+        </ul>
+    </div>
+
+    <div th:if="${!encontrado}">
+        <h3>Link não encontrado</h3>
+        <p>O link <span th:text="${url}"></span> não foi encontrado ou ainda está a ser processado.</p>
+    </div>
+
+    <div th:if="${mensagem}">
+        <p th:text="${mensagem}"></p>
+    </div>
+</div>
+</body>
+</html>
