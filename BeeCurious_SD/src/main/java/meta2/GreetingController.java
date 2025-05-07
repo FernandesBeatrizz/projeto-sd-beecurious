@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class GreetingController {
     private final BackendRMIcliente backend;
 
+
     public GreetingController() throws NotBoundException, RemoteException {
         this.backend=new BackendRMIcliente();
     }
@@ -51,6 +52,7 @@ public class GreetingController {
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", totalPages);
 
+
         } catch (Exception e) {
             model.addAttribute("results", new ArrayList<>());
         }
@@ -58,27 +60,14 @@ public class GreetingController {
     }
 
 
+
+    //mandam um url para ver os resultados disso
     @GetMapping("/pesquisarURL")
     public String linkForm() {
         return "pesquisarURL"; // Mostra o formulário para introduzir URL
     }
 
-    @PostMapping("/indexarURL")
-    public String indexarURL(@RequestParam("url") String url, Model model) {
-        try {
-            // Envia a URL para o backend para ser indexada
-            String urlIndexada = backend.indexarURL(url);
-
-            // Mensagem de sucesso
-            model.addAttribute("mensagem", "URL indexada com sucesso: " + urlIndexada);
-            return "redirect:/results_url?url=" + url;
-        } catch (Exception e) {
-            // Caso haja erro, mostra uma mensagem de erro
-            model.addAttribute("mensagem", "Erro ao indexar a URL: " + e.getMessage());
-            return "pesquisarURL"; // Retorna ao formulário com mensagem de erro
-        }
-    }
-
+    //resultados da url
     @GetMapping("/results_url")
     public String linkResult(@RequestParam("url") String url, Model model) {
         try {
@@ -110,6 +99,9 @@ public class GreetingController {
         return "results_url";
     }
 
+
+
+    //stopwords
     @GetMapping("/stopwords")
     public String verStopWords(Model model) {
         try {
@@ -122,6 +114,27 @@ public class GreetingController {
     }
 
 
+    //para mandar um url p indexar
+    @GetMapping("/indexarURL")
+    public String indexarURLForm(Model model) {
+        return "indexarURL"; // Exibe o formulário de indexação de URL
+    }
 
 
+    //devia estar a mandar o url da funçao de cima p ser indexado
+    @PostMapping("/indexarURL")
+    public String indexarURL(@RequestParam("url") String url, Model model) {
+        try {
+            // Envia a URL para o backend para ser indexada
+            String urlIndexada = backend.indexarURL(url);
+
+            // Mensagem de sucesso
+            model.addAttribute("mensagem", "URL indexada com sucesso: " + urlIndexada);
+            return "indexarURL";
+        } catch (Exception e) {
+            // Caso haja erro, mostra uma mensagem de erro
+            model.addAttribute("mensagem", "Erro ao indexar a URL: " + e.getMessage());
+            return "indexarURL"; // Retorna ao formulário com mensagem de erro
+        }
+    }
 }

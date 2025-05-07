@@ -171,6 +171,14 @@
                th:href="@{/search(q=${query}, page=${currentPage + 1})}"
                class="page-button">Próxima</a>
         </div>
+
+        <!-- Análise com OpenAI -->
+        <div th:if="${analise}" style="margin-top: 40px;">
+            <h2 style="color: #B36036;">Análise com OpenAI</h2>
+            <div style="background-color:#f9f9f9; padding:15px; border-left:4px solid #B36036; border-radius:8px;">
+                <p th:text="${analise}">Aqui aparecerá a análise contextual gerada com IA baseada nos resultados da pesquisa.</p>
+            </div>
+        </div>
     </div>
 </div>
 </body>
