@@ -110,4 +110,18 @@ public class GreetingController {
         return "results_url";
     }
 
+    @GetMapping("/stopwords")
+    public String verStopWords(Model model) {
+        try {
+            String stopWords = backend.getStopWords();
+            model.addAttribute("stopwords", stopWords);
+        } catch (Exception e) {
+            model.addAttribute("stopwords", "Erro ao obter stop words: " + e.getMessage());
+        }
+        return "checkStopwords.html";
+    }
+
+
+
+
 }

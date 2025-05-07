@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Stop Words</title>
+  <style>
+    body {
+      text-align: center; /* Centraliza todo o conteúdo */
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #FFFF99; /* Amarelo mais forte */
+      text-shadow:
+              -1px -1px 0 #000,
+              1px -1px 0 #000,
+              -1px 1px 0 #000,
+              1px 1px 0 #000;
+      font-size: 2.5em; /* Título maior */
+      margin-bottom: 30px;
+    }
+
+    p {
+      color: #fffacd; /* Amarelo pastel */
+      text-shadow:
+              -1px -1px 0 #000,
+              1px -1px 0 #000,
+              -1px 1px 0 #000,
+              1px 1px 0 #000;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 15px;
+      border-radius: 5px;
+      display: inline-block;
+      max-width: 80%;
+      margin: 0 auto 40px; /* Espaço extra abaixo */
+    }
+
+    a {
+      display: block; /* Faz o botão ocupar a linha toda */
+      width: fit-content; /* Largura ajustada ao texto */
+      margin: 40px auto 0; /* Margem superior grande para descer o botão */
+      color: #333;
+      text-decoration: none;
+      padding: 10px 20px;
+      background-color: #fffacd;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+      font-weight: bold;
+      border: 1px solid #000; /* Borda preta para destacar */
+    }
+
+    a:hover {
+      background-color: #FFFF99; /* Amarelo mais forte ao passar o mouse */
+    }
+  </style>
+</head>
+<body>
+<h1>Lista de Stop Words</h1>
+<p th:text="${stopwords}">[Consulta das stop words]</p>
+<a href="/">Voltar à página principal</a>
+</body>
+</html>
