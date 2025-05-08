@@ -30,6 +30,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private final Map<String, Set<String>> stopWords = new ConcurrentHashMap<>();
     private static final double STOP_WORD_PERCENTAGE = 0.10;
     private static final int UPDATE_THRESHOLD = 1000; // Atualizar a cada 1000 páginas
+    private final String ficheiroStopWords;
     /**
      * Construtor da classe Barrels.
      *
@@ -37,6 +38,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      */
     public Barrels(String name) throws RemoteException {
         super();
+        this.ficheiroStopWords = "stopWords" + name + ".obj";
         this.indiceInvertido = new HashMap<>();
         this.name = name;
         this.ponteiros = new HashMap<>();
@@ -93,8 +95,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     /**
      * Carrega o índice invertido a partir do ficheiro, se existir.
-     *
-    **/
+     */
+    @SuppressWarnings("unchecked")
     private void carregarIndice() {
         File file = new File(ficheiroURLbarrels);
         System.out.println("[DEBUG] Caminho do ficheiro: " + file.getAbsolutePath());
@@ -109,46 +111,41 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             Object obj = input.readObject();
             System.out.println("[DEBUG] Objeto desserializado: " + obj.getClass().getName());
 
-            // Caso 1: É o novo formato com ambos os dados
             if (obj instanceof HashMap) {
-                try {
-                    Map<String, Object> dadosCarregados = (HashMap<String, Object>) obj;
-
-                    // Carrega índice invertido
-                    if (dadosCarregados.containsKey("indiceInvertido")) {
-                        indiceInvertido = (HashMap<String, ArrayList<String[]>>) dadosCarregados.get("indiceInvertido");
-                        System.out.println("[DEBUG] Índice carregado com " + indiceInvertido.size() + " termos.");
-                    }
-
-                    // Carrega stop words
-                    if (dadosCarregados.containsKey("stopWords")) {
-                        stopWords.putAll((Map<String, Set<String>>) dadosCarregados.get("stopWords"));
-                        System.out.println("[DEBUG] Stop words carregadas para " + stopWords.size() + " línguas.");
-                    }
-                } catch (ClassCastException e) {
-                    System.err.println("Erro: Formato inválido dos dados no HashMap.");
-                    file.delete();
-                    return;
-                }
-            }
-            // Caso 2: É o formato antigo (apenas índice invertido)
-            else if (obj instanceof HashMap<?,?>) {
                 indiceInvertido = (HashMap<String, ArrayList<String[]>>) obj;
-                System.out.println("[DEBUG] Índice carregado (formato antigo) com " + indiceInvertido.size() + " termos.");
+                System.out.println("[DEBUG] Índice carregado com " + indiceInvertido.size() + " termos.");
+                reconstruirPonteiros();
+            } else {
+                System.err.println("Erro: Formato inválido do ficheiro.");
             }
-            else {
-                System.err.println("Erro: Formato de arquivo desconhecido.");
-                file.delete();
-                return;
-            }
-
-            reconstruirPonteiros();
         } catch (EOFException e) {
             System.err.println("Erro: Ficheiro corrompido (EOF inesperado). Criando novo índice.");
-            file.delete();
+            file.delete(); // Remove o ficheiro inválido
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Erro ao carregar o índice: " + e.getMessage());
             e.printStackTrace();
+        }
+
+        // === Carrega stopWords ===
+        File swFile = new File(ficheiroStopWords);
+        if (!swFile.exists() || swFile.length() == 0) {
+            System.out.println("Ficheiro de stopWords não existe ou está vazio. Iniciando vazio.");
+        } else {
+            try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(swFile))) {
+                Object obj = input.readObject();
+                System.out.println("[DEBUG] Objeto desserializado (stopWords): " + obj.getClass().getName());
+
+                if (obj instanceof Map) {
+                    stopWords.clear();
+                    stopWords.putAll((Map<String, Set<String>>) obj);
+                    System.out.println("[DEBUG] StopWords carregado com " + stopWords.size() + " entradas.");
+                } else {
+                    System.err.println("Erro: Formato inválido do ficheiro de stopWords.");
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                System.err.println("Erro ao carregar as stopWords: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -392,19 +389,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     /**
      * Salva o índice invertido em um arquivo.
      */
-
     private void salvar() {
         synchronized (fileLock) {  // Bloqueio a nível de classe
             File tempFile = new File(ficheiroURLbarrels + ".tmp");
             try {
                 // Passo 1: Escreve em arquivo temporário
                 try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempFile))) {
-                    // Criar um mapa para armazenar todos os dados que queremos salvar
-                    Map<String, Object> dadosParaSalvar = new HashMap<>();
-                    dadosParaSalvar.put("indiceInvertido", indiceInvertido);
-                    dadosParaSalvar.put("stopWords", stopWords);
-
-                    output.writeObject(dadosParaSalvar);
+                    output.writeObject(indiceInvertido);
                 }
 
                 // Passo 2: Substitui o arquivo principal atomicamente
@@ -418,6 +409,22 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             } finally {
                 if (tempFile.exists()) tempFile.delete();  // Limpeza
             }
+        }
+
+        File tempSWFile = new File(ficheiroStopWords + ".tmp");
+        try {
+            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempSWFile))) {
+                output.writeObject(stopWords);
+            }
+            Files.move(
+                    tempSWFile.toPath(),
+                    new File(ficheiroStopWords).toPath(),
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar stopWords: " + e.getMessage());
+        } finally {
+            if (tempSWFile.exists()) tempSWFile.delete();
         }
     }
 

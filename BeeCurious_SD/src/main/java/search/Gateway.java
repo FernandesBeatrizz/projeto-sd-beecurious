@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private final ArrayList<BarrelsINTER> barrels;
     private int currentBarrelIndex = 0;
-    private int currentDownloaderIndex = 0;
     private final Set<String> urlsIndexados = new HashSet<>();
     private QueueInterface urlQueue;
     private ArrayList<DownloaderINTER> downloaders;
