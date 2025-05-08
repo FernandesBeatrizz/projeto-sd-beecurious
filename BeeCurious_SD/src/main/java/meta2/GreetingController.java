@@ -17,10 +17,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 @Controller
 public class GreetingController {
     private final BackendRMIcliente backend;
+    private static final Logger log = LoggerFactory.getLogger(GreetingController.class);
+
 
 
     public GreetingController() throws NotBoundException, RemoteException {
@@ -136,5 +145,59 @@ public class GreetingController {
             model.addAttribute("mensagem", "Erro ao indexar a URL: " + e.getMessage());
             return "indexarURL"; // Retorna ao formulário com mensagem de erro
         }
+    }
+
+
+
+
+    //----CONTROLLER PARA O HACKER NEWS----//
+
+    @GetMapping("/solicitarIndexacaoTopStories")
+    public String solicitarIndexacaoTopStories(@RequestParam("search") String searchTerm, Model model) {
+        // Exibe a página de confirmação para indexação
+        model.addAttribute("searchTerm", searchTerm);
+        return "solicitarIndexacaoTopStories";  // Página de solicitação (html)
+    }
+
+
+
+    @GetMapping("/hackernewstopstories")
+    @ResponseBody
+    private List<HackerNews> hackerNewsTopStories(@RequestParam(name="search", required = false) String search) {
+        String topStoriesEndpoint = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty";
+
+        RestTemplate restTemplate = new RestTemplate();
+        List hackerNewsNewTopStories = restTemplate.getForObject(topStoriesEndpoint, List.class);
+
+        assert hackerNewsNewTopStories != null;
+        log.info("hackerNewsNewStories: " + hackerNewsNewTopStories);
+        log.info("hackerNewsNewStories: " + hackerNewsNewTopStories.size()); // Up to 500 top stories
+
+        List<HackerNews> hackerNewsItemRecordList = new ArrayList<>();
+        for (int i = 0; i <= 5; i++) { // Iterate only through 50 of them...
+            Integer storyId = (Integer) hackerNewsNewTopStories.get(i);
+
+            String storyItemDetailsEndpoint = String.format("https://hacker-news.firebaseio.com/v0/item/%s.json?print=pretty", storyId);
+            HackerNews hackerNewsItemRecord = restTemplate.getForObject(storyItemDetailsEndpoint, HackerNews.class);
+
+            if (hackerNewsItemRecord == null) {
+                log.error("Item " + storyId + " is null");
+                continue;
+            }
+
+            log.info("hackerNewsNewStories (details of " + storyId + "): " + hackerNewsItemRecord);
+
+            if (search != null) {
+                log.info("search: " + search);
+                List<String> searchTermsList = List.of(search.toLowerCase().split(" "));
+                if (searchTermsList.stream().anyMatch(hackerNewsItemRecord.title().toLowerCase()::contains))
+                    hackerNewsItemRecordList.add(hackerNewsItemRecord);
+            } else {
+                System.out.println("No search terms");
+                hackerNewsItemRecordList.add(hackerNewsItemRecord);
+            }
+        }
+
+        return hackerNewsItemRecordList;
     }
 }

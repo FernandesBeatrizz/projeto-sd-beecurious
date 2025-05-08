@@ -28,7 +28,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private final Map<String, Map<String, Set<String>>> wordPageOccurrences = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> totalPagesPerLanguage = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> stopWords = new ConcurrentHashMap<>();
-    private static final double STOP_WORD_PERCENTAGE = 0.15; // 15%
+    private static final double STOP_WORD_PERCENTAGE = 0.10;
     private static final int UPDATE_THRESHOLD = 1000; // Atualizar a cada 1000 páginas
     /**
      * Construtor da classe Barrels.
@@ -93,8 +93,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     /**
      * Carrega o índice invertido a partir do ficheiro, se existir.
-     */
-    @SuppressWarnings("unchecked")
+     *
+    **/
     private void carregarIndice() {
         File file = new File(ficheiroURLbarrels);
         System.out.println("[DEBUG] Caminho do ficheiro: " + file.getAbsolutePath());
@@ -109,16 +109,43 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             Object obj = input.readObject();
             System.out.println("[DEBUG] Objeto desserializado: " + obj.getClass().getName());
 
+            // Caso 1: É o novo formato com ambos os dados
             if (obj instanceof HashMap) {
-                indiceInvertido = (HashMap<String, ArrayList<String[]>>) obj;
-                System.out.println("[DEBUG] Índice carregado com " + indiceInvertido.size() + " termos.");
-                reconstruirPonteiros();
-            } else {
-                System.err.println("Erro: Formato inválido do ficheiro.");
+                try {
+                    Map<String, Object> dadosCarregados = (HashMap<String, Object>) obj;
+
+                    // Carrega índice invertido
+                    if (dadosCarregados.containsKey("indiceInvertido")) {
+                        indiceInvertido = (HashMap<String, ArrayList<String[]>>) dadosCarregados.get("indiceInvertido");
+                        System.out.println("[DEBUG] Índice carregado com " + indiceInvertido.size() + " termos.");
+                    }
+
+                    // Carrega stop words
+                    if (dadosCarregados.containsKey("stopWords")) {
+                        stopWords.putAll((Map<String, Set<String>>) dadosCarregados.get("stopWords"));
+                        System.out.println("[DEBUG] Stop words carregadas para " + stopWords.size() + " línguas.");
+                    }
+                } catch (ClassCastException e) {
+                    System.err.println("Erro: Formato inválido dos dados no HashMap.");
+                    file.delete();
+                    return;
+                }
             }
+            // Caso 2: É o formato antigo (apenas índice invertido)
+            else if (obj instanceof HashMap<?,?>) {
+                indiceInvertido = (HashMap<String, ArrayList<String[]>>) obj;
+                System.out.println("[DEBUG] Índice carregado (formato antigo) com " + indiceInvertido.size() + " termos.");
+            }
+            else {
+                System.err.println("Erro: Formato de arquivo desconhecido.");
+                file.delete();
+                return;
+            }
+
+            reconstruirPonteiros();
         } catch (EOFException e) {
             System.err.println("Erro: Ficheiro corrompido (EOF inesperado). Criando novo índice.");
-            file.delete(); // Remove o ficheiro inválido
+            file.delete();
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Erro ao carregar o índice: " + e.getMessage());
             e.printStackTrace();
@@ -372,7 +399,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             try {
                 // Passo 1: Escreve em arquivo temporário
                 try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempFile))) {
-                    output.writeObject(indiceInvertido);
+                    // Criar um mapa para armazenar todos os dados que queremos salvar
+                    Map<String, Object> dadosParaSalvar = new HashMap<>();
+                    dadosParaSalvar.put("indiceInvertido", indiceInvertido);
+                    dadosParaSalvar.put("stopWords", stopWords);
+
+                    output.writeObject(dadosParaSalvar);
                 }
 
                 // Passo 2: Substitui o arquivo principal atomicamente
