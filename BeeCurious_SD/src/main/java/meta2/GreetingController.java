@@ -25,25 +25,60 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+
+
+/**
+ * Controlador responsável pelas interações entre o frontend e o backend da aplicação.
+ */
 @Controller
 public class GreetingController {
     private final BackendRMIcliente backend;
     private static final Logger log = LoggerFactory.getLogger(GreetingController.class);
 
 
-
+    /**
+     * Construtor do controlador. Inicializa o cliente backend para a comunicação via RMI.
+     *
+     * @throws NotBoundException Se o serviço não estiver disponível no registo RMI.
+     * @throws RemoteException Se ocorrer uma falha de comunicação com o backend via RMI.
+     */
     public GreetingController() throws NotBoundException, RemoteException {
         this.backend=new BackendRMIcliente();
     }
 
-    //pagina inicial
+
+    /**
+     * Metodo para exibir a página inicial da aplicação.
+     *
+     * @param model Modelo que será usado para passar atributos para a view.
+     * @return O nome da view para renderizar a página inicial.
+     */
     @GetMapping("/")
     public String index (Model model) {
         model.addAttribute("message", "Bem-vindo");
         return "index";
     }
 
-    //pesquisa oq escrevermos
+
+
+
+    // ----- Pesquisar páginas ---------------------------------------------------------------------------------------------//
+    //----------------------------------------------------------------------------------------------------------------------//
+
+    //DEPOIS VER OQ METER AQUI
+    @GetMapping("/pesquisarURL")
+    public String linkForm() {
+        return "pesquisarURL";
+    }
+
+
+    /**
+     * Metodo para realizar a pesquisa de uma palavra.
+     *
+     * @param query O termo de pesquisa.
+     * @param page O número da página para a paginação dos resultados.
+     * @param model Modelo que será usado para passar atributos para a view.
+     */
     @GetMapping("/search")
     public String search(@RequestParam("q") String query,
                          @RequestParam(value = "page", defaultValue = "1") int page,
@@ -71,36 +106,29 @@ public class GreetingController {
     }
 
 
-
-    //mandam um url para ver os resultados disso
-    @GetMapping("/pesquisarURL")
-    public String linkForm() {
-        return "pesquisarURL"; // Mostra o formulário para introduzir URL
-    }
-
-    //resultados da url
+    /**
+     * Exibe os resultados de pesquisa de links que apontam para uma URL específica.
+     *
+     * @param url A URL a ser pesquisada.
+     * @param model Modelo que será usado para passar atributos para a view.
+     */
     @GetMapping("/results_url")
     public String linkResult(@RequestParam("url") String url, Model model) {
         try {
             // Verifica se há páginas que apontam para esta URL
             List<String> ligacoes = backend.consultarLinks(url);
-
             // Determina se encontrou páginas apontando para a URL
             boolean foiIndexado = ligacoes != null && !ligacoes.isEmpty();
-
             // Adiciona os atributos necessários para exibir na página de resultados
             model.addAttribute("encontrado", foiIndexado);
             model.addAttribute("url", url);
-
             if (foiIndexado) {
                 // Não temos título nem excerto porque o Gateway não fornece isso diretamente
                 model.addAttribute("titulo", "Título não disponível");
                 model.addAttribute("excerto", "Excerto não disponível");
             }
-
             // Adiciona os links encontrados (se houver) na resposta
             model.addAttribute("ligacoes", ligacoes);
-
         } catch (Exception e) {
             // Caso ocorra algum erro durante o processo, mostra uma mensagem de erro
             model.addAttribute("encontrado", false);
@@ -112,7 +140,14 @@ public class GreetingController {
 
 
 
-    //stopwords
+
+    // ----- STOP WORDS ----------------------------------------------------------------------------------------------------//
+    //----------------------------------------------------------------------------------------------------------------------//
+    /**
+     * Exibe as stop words.
+     *
+     * @param model Modelo que será usado para passar atributos para a view.
+     */
     @GetMapping("/stopwords")
     public String verStopWords(Model model) {
         try {
@@ -125,20 +160,31 @@ public class GreetingController {
     }
 
 
-    //para mandar um url p indexar
+
+    // ----- INDEXAR URL ---------------------------------------------------------------------------------------------------//
+    //----------------------------------------------------------------------------------------------------------------------//
+    /**
+     * Exibe o sítio para enviar uma URL para indexação.
+     *
+     * @param model Modelo que será usado para passar atributos para a view.
+     */
     @GetMapping("/indexarURL")
     public String indexarURLForm(Model model) {
         return "indexarURL"; // Exibe o formulário de indexação de URL
     }
 
 
-    //devia estar a mandar o url da funçao de cima p ser indexado
+    /**
+     * Realiza a indexação de uma URL fornecida.
+     *
+     * @param url A URL a ser indexada.
+     * @param model Modelo que será usado para passar atributos para a view.
+     */
     @PostMapping("/indexarURL")
     public String indexarURL(@RequestParam("url") String url, Model model) {
         try {
             // Envia a URL para o backend para ser indexada
             String urlIndexada = backend.indexarURL(url);
-
             // Mensagem de sucesso
             model.addAttribute("mensagem", "URL indexada com sucesso: " + urlIndexada);
             return "indexarURL";
@@ -152,8 +198,15 @@ public class GreetingController {
 
 
 
-    //----CONTROLLER PARA O HACKER NEWS----//
 
+    // ----- CONTROLLER PARA O HACKER NEWS ---------------------------------------------------------------------------------//
+    //----------------------------------------------------------------------------------------------------------------------//
+
+    /**
+     * Obtém as top stories do Hacker News, podendo realizar uma pesquisa nas histórias.
+     *
+     * @param search Termos de pesquisa para filtrar as stories.
+     */
     @GetMapping("/hackernewstopstories")
     @ResponseBody
     private List<HackerNews> hackerNewsTopStories(@RequestParam(name="search", required = false) String search) {
@@ -194,6 +247,14 @@ public class GreetingController {
         return hackerNewsItemRecordList;
     }
 
+
+    /**
+     * Solicita a indexação das top stories do Hacker News, baseando-se na pesquisa feita.
+     *
+     * @param search Termos de pesquisa para filtrar as histórias.
+     * @param confirm Confirmação para a indexação.
+     * @param model Modelo que será usado para passar atributos para a view.
+     */
     @GetMapping("/solicitarIndexacaoTopStories")
     public String indexarTopStories(@RequestParam("search") String search,
                                     @RequestParam("confirm") String confirm,
@@ -221,5 +282,4 @@ public class GreetingController {
 
         return "TopStoriesResultado";
     }
-
 }

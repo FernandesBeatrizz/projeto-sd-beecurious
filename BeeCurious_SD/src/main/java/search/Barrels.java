@@ -322,47 +322,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             }
         });
         return resultados;
-/*
-        int resultadospag = 10;
-        int totalPaginas = (int) Math.ceil((double) resultados.size() / resultadospag);
-        boolean sair = false;
-
-
-        while (pagina <= totalPaginas && !sair) {
-            int inicio = (pagina - 1) * resultadospag; // Página começa a contar de 1
-            int fim = Math.min(inicio + resultadospag, resultados.size());
-
-            // Exibe os resultados da página atual
-            List<String[]> resultadosDaPagina = resultados.subList(inicio, fim);
-
-            System.out.println("\nResultados da pesquisa para: " + termos + " - Página " + pagina);
-            for (String[] resultado : resultadosDaPagina) {
-                System.out.println("Título: " + resultado[1]);
-                System.out.println("URL: " + resultado[0]);
-                System.out.println("Citação: " + resultado[2]);
-                System.out.println("---------------------------");
-            }
-
-            // Aumenta a página para a próxima chamada
-            //pagina++;
-
-            if (pagina <= totalPaginas) {
-
-                System.out.println("Pressione Enter para ver a próxima página ou digite 'sair' para voltar ao menu...");
-                String entrada = sc.nextLine();
-                if (entrada.equalsIgnoreCase("sair")) {
-                    sair = true;
-                } else {
-                    pagina++;
-                }
-            } else {
-                System.out.println("Fim dos resultados. Pressione Enter para voltar ao menu.");
-                sc.nextLine();
-                sair = true;
-            }
-        }
-
-        return resultados;*/
     }
 
     private int contarTermosNaPagina(String[] pagina, String[] termos) {

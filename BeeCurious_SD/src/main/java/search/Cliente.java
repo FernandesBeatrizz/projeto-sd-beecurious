@@ -101,15 +101,7 @@ public class Cliente implements ClienteINTER {
         // Imprime os resultados formatados
         if (resultados.isEmpty()) {
             System.out.println("Nenhum resultado encontrado para: '" + input + "'");
-        } /*else {
-            System.out.println("\n=== Resultados para '" + input + "' ===");
-            for (String[] pagina : resultados) {
-                System.out.println("\nURL: " + pagina[0]);
-                System.out.println("Título: " + pagina[1]);
-                System.out.println("Citação: " + pagina[2]);
-                System.out.println("----------------------------");
-            }
-        }*/
+        }
         int pagina = 1;
         int resultadospag = 10;
         int totalPaginas = (int) Math.ceil((double) resultados.size() / resultadospag);
