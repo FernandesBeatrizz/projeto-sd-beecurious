@@ -36,12 +36,14 @@ public class GreetingController {
         this.backend=new BackendRMIcliente();
     }
 
+    //pagina inicial
     @GetMapping("/")
     public String index (Model model) {
         model.addAttribute("message", "Bem-vindo");
         return "index";
     }
 
+    //pesquisa oq escrevermos
     @GetMapping("/search")
     public String search(@RequestParam("q") String query,
                          @RequestParam(value = "page", defaultValue = "1") int page,
@@ -152,15 +154,6 @@ public class GreetingController {
 
     //----CONTROLLER PARA O HACKER NEWS----//
 
-    @GetMapping("/solicitarIndexacaoTopStories")
-    public String solicitarIndexacaoTopStories(@RequestParam("search") String searchTerm, Model model) {
-        // Exibe a página de confirmação para indexação
-        model.addAttribute("searchTerm", searchTerm);
-        return "solicitarIndexacaoTopStories";  // Página de solicitação (html)
-    }
-
-
-
     @GetMapping("/hackernewstopstories")
     @ResponseBody
     private List<HackerNews> hackerNewsTopStories(@RequestParam(name="search", required = false) String search) {
@@ -200,4 +193,33 @@ public class GreetingController {
 
         return hackerNewsItemRecordList;
     }
+
+    @GetMapping("/solicitarIndexacaoTopStories")
+    public String indexarTopStories(@RequestParam("search") String search,
+                                    @RequestParam("confirm") String confirm,
+                                    Model model) {
+        if (!"sim".equalsIgnoreCase(confirm)) {
+            model.addAttribute("mensagem", "Indexação cancelada.");
+            return "TopStoriesResultado";
+        }
+
+        try {
+            List<HackerNews> stories = hackerNewsTopStories(search); // Usa o mesmo método de antes
+
+            int count = 0;
+            for (HackerNews story : stories) {
+                if (story.url() != null && !story.url().isEmpty()) {
+                    backend.indexarURL(story.url());  // Envia para indexação
+                    count++;
+                }
+            }
+
+            model.addAttribute("mensagem", "Foram indexadas " + count + " histórias do Hacker News.");
+        } catch (Exception e) {
+            model.addAttribute("mensagem", "Erro ao indexar histórias: " + e.getMessage());
+        }
+
+        return "TopStoriesResultado";
+    }
+
 }

@@ -103,7 +103,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         System.out.println("[DEBUG] Tamanho do ficheiro: " + file.length() + " bytes");
 
         if (!file.exists() || file.length() == 0) {
-            System.out.println("Ficheiro não existe ou está vazio. Criando novo índice.");
+            System.out.println("Ficheiro não existe ou está vazio. A criar novo índice.");
             return;
         }
 
@@ -475,7 +475,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
                 .collect(Collectors.toList());
 
-        // 2. Selecionar as 15% mais comuns
+        // 2. Selecionar as 10% mais comuns
         int stopWordsCount = (int) (wordCounts.size() * STOP_WORD_PERCENTAGE);
         Set<String> newStopWords = wordCounts.stream()
                 .limit(stopWordsCount)

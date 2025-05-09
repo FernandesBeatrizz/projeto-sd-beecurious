@@ -129,7 +129,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             barrels.remove(barrel);
             System.out.println("Barrel removido");
         } else {
-            System.out.println("Erro a remover barrel");
+            System.out.println("Erro a matar barrel");
         }
     }
 
@@ -181,7 +181,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     @Override
     public List<BarrelsINTER> getAllBarrels() {
-        return List.of();
+
+        return barrels;
     }
 
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -

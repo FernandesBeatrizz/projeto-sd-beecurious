@@ -1,4 +1,4 @@
-/*package main.java.meta2;
+package main.java.meta2;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
