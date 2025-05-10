@@ -34,6 +34,7 @@ import org.springframework.web.client.RestTemplate;
 public class GreetingController {
     private final BackendRMIcliente backend;
     private static final Logger log = LoggerFactory.getLogger(GreetingController.class);
+    private OpenRouterAPI openRouterAPI;
 
 
     /**
@@ -98,6 +99,13 @@ public class GreetingController {
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", totalPages);
 
+            // Gerar análise contextualizada com OpenAI
+            List<String> snippets = new ArrayList<>();
+            for (String[] result : paginated) {
+                snippets.add(result[2]); // Supondo que o excerto esteja no índice 2
+            }
+            String analise = OpenRouterAPI.gerarAnaliseContextual(query, snippets);
+            model.addAttribute("analise", analise);
 
         } catch (Exception e) {
             model.addAttribute("results", new ArrayList<>());
