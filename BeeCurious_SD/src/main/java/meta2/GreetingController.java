@@ -98,6 +98,7 @@ public class GreetingController {
             model.addAttribute("results", paginated);
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", totalPages);
+            model.addAttribute("totalResults", total);
 
             // Gerar análise contextualizada com OpenAI
             List<String> snippets = new ArrayList<>();

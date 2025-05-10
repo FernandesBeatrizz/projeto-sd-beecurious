@@ -2,13 +2,9 @@ package main.java.meta2;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-//import com.konghq.unirest.core.HttpResponse;
-//import com.konghq.unirest.core.Unirest;
-//import com.konghq.unirest.core.exceptions.UnirestException;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import java.util.List;
 
@@ -63,43 +59,46 @@ public class OpenRouterAPI {
     private static final String API_KEY = "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";
     private static final String MODEL = "nousresearch/deephermes-3-mistral-24b-preview";
 
+
     public static String gerarAnaliseContextual(String termosPesquisa, List<String> snippets) throws UnirestException {
         Gson gson = new Gson();
 
         // Criar mensagem
         StringBuilder messageText = new StringBuilder();
-        messageText.append("Gere uma análise textual baseada nos seguintes termos de pesquisa e excertos dos resultados:\n");
-        messageText.append("Termos de pesquisa: ").append(termosPesquisa).append("\n");
-        messageText.append("Excerto dos resultados:\n");
+        messageText.append("Baseado na pesquisa por: ").append(termosPesquisa).append("\n");
+        messageText.append("E nos seguintes excertos de páginas:\n");
         for (String snippet : snippets) {
             messageText.append("- ").append(snippet).append("\n");
         }
+        messageText.append("Gere uma análise breve e contextual sobre o conteúdo encontrado.");
+
 
         // Montar JSON com GSON
-        JsonObject payload = new JsonObject();
-        payload.addProperty("model", MODEL);
-
-        JsonArray messages = new JsonArray();
         JsonObject message = new JsonObject();
         message.addProperty("role", "user");
         message.addProperty("content", messageText.toString());
-        messages.add(message);
-        payload.add("messages", messages);
 
-        // Enviar requisição
+        JsonObject payload = new JsonObject();
+        payload.addProperty("model", MODEL);
+        payload.add("messages", gson.toJsonTree(new JsonObject[]{message}));
+
+
+            // Fazer a requisição HTTP
         HttpResponse<String> response = Unirest.post(API_URL)
                 .header("Authorization", "Bearer " + API_KEY)
                 .header("Content-Type", "application/json")
-                .header("HTTP-Referer", "https://googol.ai")
-                .header("X-Title", "Googol Search")
+                //.header("HTTP-Referer", "https://googol.ai")
+                //.header("X-Title", "Googol Search")
                 .body(payload.toString())
                 .asString();
 
+            // Log para debug
         JsonObject jsonResponse = gson.fromJson(response.getBody(), JsonObject.class);
         return jsonResponse.getAsJsonArray("choices")
                 .get(0).getAsJsonObject()
                 .getAsJsonObject("message")
                 .get("content").getAsString();
+
     }
 }
 
