@@ -34,7 +34,7 @@ import org.springframework.web.client.RestTemplate;
 public class GreetingController {
     private final BackendRMIcliente backend;
     private static final Logger log = LoggerFactory.getLogger(GreetingController.class);
-    private OpenRouterAPI openRouterAPI;
+    //private OpenRouterAPI openRouterAPI;
 
 
     /**
@@ -98,7 +98,7 @@ public class GreetingController {
             model.addAttribute("results", paginated);
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", totalPages);
-            model.addAttribute("totalResults", total);
+            /*model.addAttribute("totalResults", total);
 
             // Gerar análise contextualizada com OpenAI
             List<String> snippets = new ArrayList<>();
@@ -106,7 +106,7 @@ public class GreetingController {
                 snippets.add(result[2]); // Supondo que o excerto esteja no índice 2
             }
             String analise = OpenRouterAPI.gerarAnaliseContextual(query, snippets);
-            model.addAttribute("analise", analise);
+            model.addAttribute("analise", analise);*/
 
         } catch (Exception e) {
             model.addAttribute("results", new ArrayList<>());
@@ -291,4 +291,30 @@ public class GreetingController {
 
         return "TopStoriesResultado";
     }
+
+
+
+    // ----- OPEN ROUTER AI-------------------------------------------------------------------------------------------------//
+    //----------------------------------------------------------------------------------------------------------------------//
+    @GetMapping("/chat_completions")
+    public String gerarAnaliseComIA(@RequestParam("search") String search, Model model) {
+        try {
+            List<String[]> resultados = backend.search(search);
+
+            // Gerar excertos em formato simples para IA
+            List<String> linhas = new ArrayList<>();
+            for (String[] r : resultados) {
+                linhas.add(r[1] + " - " + r[0]); // título + URL
+            }
+
+            // Chamada à API da OpenAI
+            String analise = OpenRouterAPI.gerarAnaliseContextual(search, linhas);
+            //model.addAttribute("query", search);
+            model.addAttribute("analise", analise);
+        } catch (Exception e) {
+            model.addAttribute("analise", "Erro ao gerar análise: " + e.getMessage());
+        }
+        return "chat_completions";
+    }
+
 }

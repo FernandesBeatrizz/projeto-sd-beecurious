@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Análise com IA - Googol</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #B36036;
+            font-size: 2.5em;  /* Tamanho maior para título */
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        p {
+            font-size: 1.1em;  /* Tamanho de texto um pouco maior */
+            margin-bottom: 20px;
+        }
+        .analysis-box {
+            background-color: #fefefe;
+            padding: 25px;
+            border-left: 5px solid #B36036;
+            margin-top: 30px;
+            font-size: 1.2em;  /* Fonte maior dentro da caixa de análise */
+            color: #444;  /* Contraste melhor com o fundo */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);  /* Sombra sutil para destacar */
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            text-decoration: none;
+            color: #4285f4;
+            font-size: 1.2em;  /* Aumentando o tamanho do link */
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Análise da IA com base na sua pesquisa</h1>
+    <p>Com base no termo pesquisado, a IA gerou a seguinte análise contextualizada:</p>
+
+    <div class="analysis-box" th:utext="${analise}">
+        A resposta da IA será exibida aqui.
+    </div>
+
+    <a th:href="@{/search(q=${query})}" class="back-link">&#8592; Voltar para a pesquisa</a>
+</div>
+</body>
+</html>

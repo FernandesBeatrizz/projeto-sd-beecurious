@@ -177,13 +177,9 @@
             <a th:href="@{/solicitarIndexacaoTopStories(search=${query}, confirm='sim')}" class="btn btn-primary">Solicitar a indexação dos URLs das “top stories” do Hacker News</a>
         </div>
 
-
-        <!-- Análise com OpenAI-->
-        <div th:if="${analise}" style="margin-top: 40px;">
-            <h2 style="color: #B36036;">Análise com OpenAI</h2>
-            <div style="background-color:#f9f9f9; padding:15px; border-left:4px solid #B36036; border-radius:8px;">
-                <p th:text="${analise}">Aqui aparecerá a análise contextual gerada com IA baseada nos resultados da pesquisa.</p>
-            </div>
+        <!-- Link para serviço de chat completions -->
+        <div style="margin-top: 15px;">
+            <a th:href="@{/chat_completions(search=${query})}" class="btn btn-secondary">Serviço de “chat completions”</a>
         </div>
 
 
