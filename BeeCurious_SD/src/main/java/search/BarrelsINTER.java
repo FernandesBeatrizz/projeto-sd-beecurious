@@ -40,6 +40,8 @@ public interface BarrelsINTER extends Remote {
     Set<String> getStopWords(String language) throws RemoteException;
     void updateStopWords(String language, Set<String> stopWords) throws RemoteException;
     Map<String, Set<String>> getAllStopWords() throws RemoteException;
+    void carregarDados(Map<String, ArrayList<String[]>> indice, Map<String, Set<String>> stopWords) throws RemoteException;
+    Map<String, ArrayList<String[]>> getIndiceInvertido() throws RemoteException;
 }
 
 

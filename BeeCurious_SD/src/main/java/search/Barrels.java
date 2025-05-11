@@ -27,7 +27,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private static final Object fileLock = new Object();  // Lock estático partilhado por todos os barrels
     private final Map<String, Map<String, Set<String>>> wordPageOccurrences = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> totalPagesPerLanguage = new ConcurrentHashMap<>();
-    private final Map<String, Set<String>> stopWords = new ConcurrentHashMap<>();
+    private Map<String, Set<String>> stopWords = new ConcurrentHashMap<>();
     private static final double STOP_WORD_PERCENTAGE = 0.10;
     private static final int UPDATE_THRESHOLD = 1000; // Atualizar a cada 1000 páginas
     private final String ficheiroStopWords;
@@ -475,6 +475,22 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     public Map<String, Set<String>> getAllStopWords() throws RemoteException{
         return stopWords;
+    }
+
+    @Override
+    public void carregarDados(Map<String, ArrayList<String[]>> indice, Map<String, Set<String>> stopWords) throws RemoteException {
+        synchronized (indiceInvertido) {
+            this.indiceInvertido = new HashMap<>(indice);
+            this.stopWords = new ConcurrentHashMap<>(stopWords);
+            reconstruirPonteiros(); // Reconstruir ponteiros após carregar o índice
+            salvar(); // Persistir no disco
+            System.out.println("Dados sincronizados com sucesso.");
+        }
+    }
+
+    @Override
+    public Map<String, ArrayList<String[]>> getIndiceInvertido() throws RemoteException {
+        return new HashMap<>(indiceInvertido);
     }
 
 }

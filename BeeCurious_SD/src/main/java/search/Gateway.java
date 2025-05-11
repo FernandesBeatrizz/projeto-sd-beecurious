@@ -19,6 +19,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     private final Set<String> urlsIndexados = new HashSet<>();
     private QueueInterface urlQueue;
     private ArrayList<DownloaderINTER> downloaders;
+    private Map<BarrelsINTER, String> barrelNames = new HashMap<>();
 
     /**
      * Construtor da classe Gateway.
@@ -115,7 +116,33 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     @Override
     public void registerBarrel(BarrelsINTER barrel) throws RemoteException {
         this.barrels.add(barrel);
-        System.out.println("Barrel registado ");
+        barrelNames.put(barrel, barrel.getName());
+        System.out.println("Barrel registado: " + barrel.getName());
+
+        // Se houver outros Barrels ativos, sincroniza o novo Barrel com um existente
+        if (barrels.size() > 1) {
+            try {
+                // Escolhe um Barrel ativo (excluindo o recém-registado)
+                BarrelsINTER barrelAtivo = barrels.stream()
+                        .filter(b -> !b.equals(barrel))
+                        .findFirst()
+                        .orElse(null);
+
+                if (barrelAtivo != null) {
+                    System.out.println("A sincronizar o novo Barrel " + barrel.getName() + " com " + barrelAtivo.getName());
+
+                    // Obtém o índice e as stop words do Barrel ativo
+                    Map<String, ArrayList<String[]>> indice = barrelAtivo.getIndiceInvertido();
+                    Map<String, Set<String>> stopWords = barrelAtivo.getAllStopWords();
+
+                    // Envia para o novo Barrel
+                    barrel.carregarDados(indice, stopWords);
+                    System.out.println("Sincronização concluída.");
+                }
+            } catch (RemoteException e) {
+                System.err.println("Erro ao sincronizar o novo Barrel: " + e.getMessage());
+            }
+        }
     }
 
     /**
@@ -153,7 +180,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
                 System.out.println("Barrel ativo: " + barrel.getName());
                 return barrel;
             } catch (RemoteException e) {
-                System.out.println("Barrel " + barrel + " inativo");
+                System.out.println("Barrel inativo");
                 try {
                     matarBarrel(barrel);
                 } catch (Exception ex) {
@@ -165,18 +192,25 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         throw new RemoteException("Todos os barrels estão indisponíveis");
     }
 
-
     public void matarBarrel(BarrelsINTER barrel) throws RemoteException {
         Registry registry = LocateRegistry.getRegistry("localHost", 8183);
         try {
-            String barrel_nome = barrel.getName();
-            registry.unbind(barrel_nome);
-            unregisterBarrel(barrel);
-            System.out.println("Barrel " + barrel + " removido do RMI Registry.");
-        } catch (Exception e) {
-            System.out.println(" erro a reviver barrel");
+            String barrel_nome = barrelNames.get(barrel);
+            if (barrel_nome != null) {
+                try {
+                    registry.unbind(barrel_nome);
+                } catch (NotBoundException e) {
+                    System.out.println("Barrel já não estava registado: " + barrel_nome);
+                }
+                unregisterBarrel(barrel);
+                barrelNames.remove(barrel);
+                System.out.println("Barrel " + barrel_nome + " removido do RMI Registry.");
+            } else {
+                System.out.println("Nome do barrel não encontrado para: " + barrel);
+            }
+        } catch (RemoteException e) {
+            System.out.println("Erro ao aceder ao RMI Registry: " + e.getMessage());
         }
-
     }
 
     @Override
