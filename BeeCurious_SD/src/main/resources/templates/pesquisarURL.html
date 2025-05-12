@@ -4,16 +4,52 @@
   <meta charset="UTF-8">
   <title>Verificar Link</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f0f2f5; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 50px;
+      background-color: #f0f2f5;
+    }
+    h1 {
+      color: #B36036; /* Castanho para o título */
+      margin-bottom: 30px;
+    }
     input[type="url"] {
-      width: 60%; padding: 10px; font-size: 16px; border-radius: 5px;
-      border: 1px solid #ccc;
+      width: 60%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #d4a373; /* Borda em tom de castanho claro */
+      outline: none;
+      transition: border 0.3s;
+    }
+    input[type="url"]:focus {
+      border: 2px solid #B36036; /* Castanho quando em foco */
     }
     button {
-      padding: 10px 20px; font-size: 16px; margin-left: 10px; border-radius: 5px;
-      border: none; background-color: #2c3e50; color: white; cursor: pointer;
+      padding: 12px 25px;
+      font-size: 16px;
+      margin-left: 10px;
+      border-radius: 5px;
+      border: none;
+      background-color: #FFFF99; /* Amarelo a 100% de opacidade */
+      color: #B36036; /* Texto em castanho */
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
     }
-    button:hover { background-color: #34495e; }
+    button:hover {
+      background-color: #f5e769; /* Amarelo mais escuro no hover */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    form {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
   </style>
 </head>
 <body>

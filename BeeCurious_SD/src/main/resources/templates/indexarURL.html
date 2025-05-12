@@ -24,7 +24,7 @@
         }
 
         h1 {
-            color: #2c3e50;
+            color: #B36036; /* Castanho para o título */
             text-align: center;
             margin-bottom: 30px;
             font-size: 24px;
@@ -38,51 +38,56 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
+            color: #B36036; /* Castanho para os labels */
         }
 
         input[type="url"] {
             width: 100%;
             padding: 12px 15px;
-            border: 1px solid #d1d5da;
+            border: 1px solid #d4a373; /* Borda castanha clara */
             border-radius: 4px;
             font-size: 16px;
             box-sizing: border-box;
         }
 
         input[type="url"]:focus {
-            border-color: #4285f4;
+            border-color: #B36036; /* Castanho quando em foco */
             outline: none;
-            box-shadow: 0 0 0 2px rgba(66,133,244,0.2);
+            box-shadow: 0 0 0 2px rgba(179, 96, 54, 0.2); /* Sombra castanha */
         }
 
         .submit-btn {
-            background-color: #4285f4;
-            color: white;
+            background-color: #FFFF99; /* Amarelo a 100% de opacidade */
+            color: #B36036; /* Texto em castanho */
             border: none;
             padding: 12px 20px;
             font-size: 16px;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
             width: 100%;
             font-weight: 600;
         }
 
         .submit-btn:hover {
-            background-color: #3367d6;
+            background-color: #f5e769; /* Amarelo mais escuro no hover */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .back-link {
             display: block;
             margin-top: 20px;
-            color: #4285f4;
+            color: #B36036; /* Castanho para o link */
             text-decoration: none;
             text-align: center;
             font-size: 14px;
+            transition: color 0.2s;
         }
 
         .back-link:hover {
             text-decoration: underline;
+            color: #8c4b2a; /* Castanho mais escuro no hover */
         }
     </style>
 </head>
@@ -99,7 +104,7 @@
         <button type="submit" class="submit-btn">Indexar URL</button>
     </form>
 
-    <a href="/">Voltar à página principal</a>
+    <a href="/" class="back-link">Voltar à página principal</a>
 </div>
 </body>
 </html>

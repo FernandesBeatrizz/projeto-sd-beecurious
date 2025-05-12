@@ -29,7 +29,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private final Map<String, AtomicInteger> totalPagesPerLanguage = new ConcurrentHashMap<>();
     private Map<String, Set<String>> stopWords = new ConcurrentHashMap<>();
     private static final double STOP_WORD_PERCENTAGE = 0.10;
-    private static final int UPDATE_THRESHOLD = 1000; // Atualizar a cada 1000 páginas
+    private static final int UPDATE_THRESHOLD = 30; // Atualizar a cada 1000 páginas
     private final String ficheiroStopWords;
     /**
      * Construtor da classe Barrels.

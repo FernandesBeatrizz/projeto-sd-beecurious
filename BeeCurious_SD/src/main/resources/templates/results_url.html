@@ -2,34 +2,69 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Resultado </title>
+    <title>Resultado</title>
     <style>
-        body { font-family: sans-serif; padding: 50px; background-color: #fefefe; }
-        .result {
-            max-width: 600px; margin: auto; background: #f9f9f9; padding: 20px;
-            border: 1px solid #ddd; border-radius: 10px;
+        body {
+            font-family: sans-serif;
+            padding: 50px;
+            background-color: #fefefe;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
         }
-        h2 { color: #2c3e50; }
+        .result-container {
+            background-color: rgba(255, 153, 255, 0.5); /* FFFF99FF com 50% opacidade */
+            padding: 30px;
+            border-radius: 15px;
+            width: fit-content;
+            max-width: 80%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .result-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        h2, h3 {
+            color: #B36036FF; /* Cor B36036FF para títulos */
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        p {
+            color: #333;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
-<div class="result" id="resultado">
-    <h2>Resultado para: <span th:text="${url}"></span></h2>
+<div class="result-container">
+    <div class="result-content" id="resultado">
+        <h2>Resultado para: <span th:text="${url}"></span></h2>
 
-    <div th:if="${encontrado}">
-        <h3>Link Encontrado!</h3>
-        <ul>
-            <li th:each="link : ${ligacoes}" th:text="${link}"></li>
-        </ul>
-    </div>
+        <div th:if="${encontrado}">
+            <h3>Link Encontrado!</h3>
+            <ul>
+                <li th:each="link : ${ligacoes}" th:text="${link}"></li>
+            </ul>
+        </div>
 
-    <div th:if="${!encontrado}">
-        <h3>Link não encontrado</h3>
-        <p>O link <span th:text="${url}"></span> não foi encontrado ou ainda está a ser processado.</p>
-    </div>
+        <div th:if="${!encontrado}">
+            <h3>Link não encontrado</h3>
+            <p>O link <span th:text="${url}"></span> não foi encontrado ou ainda está a ser processado.</p>
+        </div>
 
-    <div th:if="${mensagem}">
-        <p th:text="${mensagem}"></p>
+        <div th:if="${mensagem}">
+            <p th:text="${mensagem}"></p>
+        </div>
     </div>
 </div>
 </body>
