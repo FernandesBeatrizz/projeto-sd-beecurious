@@ -4,6 +4,10 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 
+
+/**
+ * Interface remota para a comunicação entre o cliente e o servidor.
+ */
 public interface ClienteINTER extends Remote {
 }
 

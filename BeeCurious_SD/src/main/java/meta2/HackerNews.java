@@ -3,6 +3,11 @@ package main.java.meta2;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+
+/**
+ * Representa um item do Hacker News.
+ *
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record HackerNews(
         Integer id, // The item's unique id.

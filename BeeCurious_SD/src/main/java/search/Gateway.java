@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * Classe que implementa o Gateway para comunicar entre clientes, barrels e downloaders.
+ * Classe que implementa a Gateway para comunicar entre clientes, barrels e downloaders.
  *
  */
 public class Gateway extends UnicastRemoteObject implements GatewayINTER {
@@ -24,6 +24,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     /**
      * Construtor da classe Gateway.
      * Inicializa a fila de URLs e configura um temporizador para sincronização periódica dos barrels.
+     *
+     * @throws RemoteException se ocorrer erro de comunicação RMI.
      */
     public Gateway() throws RemoteException {
         super();
@@ -34,6 +36,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
     /**
      * Metodo principal para iniciar o Gateway e registá-lo no RMI Registry.
+     *
+     * @param args argumentos de linha de comando (não utilizados).
      */
     public static void main(String[] args) {
         try {
@@ -62,6 +66,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      * Regista uma fila de URLs para a Gateway.
      *
      * @param queue A fila de URLs a ser registada.
+     * @throws RemoteException se houver erro remoto.
      */
     public void registerQueue(QueueInterface queue) throws RemoteException {
         this.urlQueue = queue;
@@ -74,6 +79,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      *
      * @param words Palavra a ser pesquisada.
      * @return Lista de URLs relacionadas à palavra pesquisada.
+     * @throws RemoteException se houver falha na comunicação.
      */
     @Override
     public List<String[]> searchWord(String words) throws RemoteException {
@@ -95,6 +101,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      *
      * @param url O URL de interesse.
      * @return Lista de URLs que apontam para o URL fornecido.
+     * @throws RemoteException se ocorrer falha de comunicação.
      */
     public List<String> obterPaginasApontamPara(String url) throws RemoteException {
         List<String> paginasApontam = new ArrayList<>();
@@ -106,12 +113,16 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         return paginasApontam;
     }
 
-    //REGISTAR E SINCRONIZAR BARRELS
+
+
+
+    //REGISTAR E SINCRONIZAR BARRELS------------------------------------------------------
 
     /**
-     * Regista um novo Barrel no Gateway.
+     * Regista um novo Barrel e sincroniza com dados existentes, se necessário.
      *
      * @param barrel O Barrel a ser registado.
+     * @throws RemoteException se houver erro remoto.
      */
     @Override
     public void registerBarrel(BarrelsINTER barrel) throws RemoteException {
@@ -145,10 +156,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
+
     /**
-     * Remove um Barrel do Gateway.
+     * Remove um Barrel do sistema e do RMI Registry.
      *
      * @param barrel O Barrel a ser removido.
+     * @throws RemoteException se houver falha de comunicação.
      */
     @Override
     public void unregisterBarrel(BarrelsINTER barrel) throws RemoteException {
@@ -161,9 +174,10 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     }
 
     /**
-     * Obtém um Barrel ativo do Gateway, alternando entre os disponíveis.
+     * Obtém um Barrel ativo para operações.
      *
-     * @return Um objeto BarrelINTER ativo.
+     * @return Um barrel funcional.
+     * @throws RemoteException se nenhum barrel estiver disponível.
      */
     public BarrelsINTER getBarrel() throws RemoteException {
         if (barrels.isEmpty()) {
@@ -192,6 +206,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         throw new RemoteException("Todos os barrels estão indisponíveis");
     }
 
+
+
+    /**
+     * Remove o registo de um barrel do sistema e do RMI Registry.
+     *
+     * @param barrel barrel a matar.
+     * @throws RemoteException se ocorrer erro remoto.
+     */
     public void matarBarrel(BarrelsINTER barrel) throws RemoteException {
         Registry registry = LocateRegistry.getRegistry("localHost", 8183);
         try {
@@ -213,6 +235,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
+
+    /**
+     * Retorna todos os barrels atualmente registados.
+     *
+     * @return lista de barrels.
+     */
     @Override
     public List<BarrelsINTER> getAllBarrels() {
 
@@ -222,7 +250,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     //DOWNLOADRES - - - - - - - - - - - - - - - - - - -
 
     /**
-     * Registra um downloader para processamento de URLs.
+     * Regista um downloader para processamento de URLs.
      *
      * @param downloader O downloader a ser registado.
      */
@@ -231,10 +259,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         System.out.println("Downloader registado ");
     }
 
+
     /**
-     * Adiciona uma nova URL para indexação.
+     * Adiciona um novo URL à fila, se ainda não tiver sido processada.
      *
-     * @param url A URL a ser adicionada.
+     * @param url URL a ser adicionado.
+     * @throws RemoteException se der erro de comunicação.
      */
     public synchronized void putNew(String url) throws RemoteException {
         try {
@@ -262,6 +292,10 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      *
      * @param word A palavra a ser indexada.
      * @param url  A URL associada à palavra.
+     * @param titulo título da página.
+     * @param citacao trecho do conteúdo.
+     * @param links lista de links da página.
+     * @throws RemoteException se falha na comunicação.
      */
     @Override
     public void addToIndex(String word, String url, String titulo, String citacao, List<String> links)
@@ -283,11 +317,20 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      * Retorna a fila de URLs do sistema.
      *
      * @return A interface da fila de URLs.
+     * @throws RemoteException se falha de comunicação.
      */
     public QueueInterface getQueue() throws RemoteException {
         return this.urlQueue;
     }
 
+
+    /**
+     * Retorna o próximo URL da fila para processamento.
+     *
+     * @return próxima URL ou null se fila vazia.
+     * @throws InterruptedException se houver interrupção.
+     * @throws RemoteException se falha na fila.
+     */
     public synchronized String getNextURL() throws InterruptedException, RemoteException {
         if (urlQueue.getQueueSize() == 0) {
             return null; // Fila vazia

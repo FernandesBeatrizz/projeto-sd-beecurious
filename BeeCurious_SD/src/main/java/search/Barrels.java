@@ -13,10 +13,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
- * Classe que implementa o servidor Barrel para armazenamento dos dados.
+ * Classe que representa um servidor Barrel, responsável por armazenar uma parte do índice invertido,
+ * responder a consultas e colaborar com outros Barrels para manter a consistência.
  *
- * <p>Esta classe é responsável por armazenar parte do índice invertido e fornecer funcionalidades de pesquisa. Opera como um servidor RMI que pode ser replicado
- * para garantir tolerância a falhas.</p>-- NAO SEI SE É NECESSARIO
  */
 public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private HashMap<String, ArrayList<String []>> indiceInvertido;
@@ -31,10 +30,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private static final double STOP_WORD_PERCENTAGE = 0.10;
     private static final int UPDATE_THRESHOLD = 30; // Atualizar a cada 1000 páginas
     private final String ficheiroStopWords;
+
+
     /**
      * Construtor da classe Barrels.
      *
      * @param name Nome do barrel
+     * @throws RemoteException Exceção remota.
      */
     public Barrels(String name) throws RemoteException {
         super();
@@ -59,6 +61,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      *
      * @param barrel_nome Nome do barrel
      * @param gateway_port Porta do gateway
+     * @return Instância do Barrel criado.
      */
     public static Barrels criarbarrel(String barrel_nome, int gateway_port) {
         try {
@@ -74,6 +77,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             return null;
         }
     }
+
 
     /**
      * Metodo principal para iniciar um barrel.
@@ -94,7 +98,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     }
 
     /**
-     * Carrega o índice invertido a partir do ficheiro, se existir.
+     * Carrega o índice invertido e stopWords.
      */
     @SuppressWarnings("unchecked")
     private void carregarIndice() {
@@ -149,6 +153,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
+
     /**
      * Reconstrói o mapa de ponteiros a partir do índice invertido carregado.
      */
@@ -169,14 +174,16 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
+
     /**
      * Adiciona um termo ao índice invertido.
      *
-     * @param word Termo a ser indexado
-     * @param url URL associada ao termo
+     * @param word Palavra a ser indexada
+     * @param url URL associada à página
      * @param titulo Título da página
      * @param citacao Citação de texto
      * @param links Lista de links relacionados
+     * @throws RemoteException Exceção remota.
      */
     @Override
     public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException {
@@ -227,6 +234,16 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     }
 
 
+
+    /**
+     * Recebe dados.
+     *
+     * @param word    Palavra.
+     * @param url     URL.
+     * @param titulo  Título.
+     * @param citacao Citação.
+     * @param links   Links.
+     */
     public void mandarIndex(String word, String url, String titulo, String citacao, List<String> links) {
         String[] pagina = {url, titulo, citacao, String.join(",", links)};
         synchronized (indiceInvertido) {
@@ -248,7 +265,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
 
     /**
-     * Obtém a lista de páginas que apontam para um determinado URL.
+     * Obtém a lista de URLs que apontam para um determinado URL.
      *
      * @param url O URL de interesse.
      * @return Lista de URLs que apontam para o URL fornecido.
@@ -263,11 +280,21 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
+    /**
+     * Método de verificação para saber se o Barrel está ativo.
+     *
+     * @throws RemoteException Exceção remota.
+     */
     public void ping() throws RemoteException {
         getName();
     }
 
-
+    /**
+     * Retorna o nome do Barrel.
+     *
+     * @return Nome do barrel.
+     * @throws RemoteException Exceção remota.
+     */
     @Override
     public String getName() throws RemoteException {
         return this.name;
@@ -276,6 +303,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     // ---------------PESQUISA---------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------------------
 
+    /**
+     * Compara e ordena as páginas mais relevantes para os termos fornecidos, por ordem de revelância.
+     *
+     * @param termos Termos de busca.
+     * @return Lista de resultados.
+     * @throws RemoteException Exceção remota.
+     */
     public List<String[]> top10(String termos) throws RemoteException {
         String[] palavras = termos.toLowerCase().split(" ");
         List<String[]> resultados = new ArrayList<>();
@@ -324,6 +358,14 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         return resultados;
     }
 
+
+    /**
+     * Conta quantos termos aparecem no conteúdo de uma página.
+     *
+     * @param pagina Array que contem os dados da página (posição 1 = título, posição 2 = citação).
+     * @param termos Array de termos de busca.
+     * @return Número de termos encontrados no conteúdo da página.
+     */
     private int contarTermosNaPagina(String[] pagina, String[] termos) {
         int count = 0;
         String conteudo = pagina[1] + " " + pagina[2]; // Título + citação
@@ -337,6 +379,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         return count;
     }
 
+
+    /**
+     * Retorna o número de páginas que referenciam a URL.
+     *
+     * @param url URL a verificar.
+     * @return Número de referências.
+     */
     public int obterrelevancia(String url) {
         //basicamente vamos contar os ponteiros
         if (ponteiros.containsKey(url)) {
@@ -346,7 +395,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     }
 
     /**
-     * Salva o índice invertido em um arquivo.
+     * Guarda o índice invertido e as stopWords em arquivos.
      */
     private void salvar() {
         synchronized (fileLock) {  // Bloqueio a nível de classe
@@ -390,7 +439,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     /**
      * Verifica se um URL está contido no índice.
      *
-     * @param url URL a ser verificada
+     * @param url URL a ser verificado
      * @return true se o URL está contido, false caso contrário
      */
     public boolean containsURL(String url) {
@@ -407,6 +456,14 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     // ----- STOP WORDS ---------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------------
 
+    /**
+     * Regista a ocorrência de uma palavra em um URL para uma determinada linguagem.
+     *
+     * @param word     Palavra registrada.
+     * @param url      URL onde foi encontrada.
+     * @param language Idioma da página.
+     * @throws RemoteException Exceção remota.
+     */
     @Override
     public synchronized void registerWordOccurrence(String word, String url, String language) throws RemoteException {
         wordPageOccurrences.putIfAbsent(language, new ConcurrentHashMap<>());
@@ -424,6 +481,15 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
+
+    /**
+     * Recalcula a lista de stop words para uma determinada linguagem.
+     *
+     * <p>As stop words são definidas como as palavras mais comuns (10% do total) entre as páginas processadas
+     * da linguagem especificada. Após o cálculo, a lista é atualizada localmente e sincronizada com outros barrels.</p>
+     *
+     * @param language Código da linguagem
+     */
     private synchronized void recalculateStopWords(String language) {
         Map<String, Set<String>> languageWords = wordPageOccurrences.get(language);
         if (languageWords == null || languageWords.isEmpty()) return;
@@ -450,11 +516,25 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         syncStopWordsWithOtherBarrels(language, newStopWords);
     }
 
+    /**
+     * Retorna a lista de stopWords para um idioma.
+     *
+     * @param language Idioma.
+     * @return Conjunto de palavras irrelevantes.
+     * @throws RemoteException Exceção remota.
+     */
     @Override
     public Set<String> getStopWords(String language) throws RemoteException {
         return stopWords.getOrDefault(language, Collections.emptySet());
     }
 
+
+    /**
+     * Sincroniza a lista de stop words atualizada com todos os outros barrels do sistema.
+     *
+     * @param language Código da linguagem associada às stop words.
+     * @param newStopWords Conjunto de novas stop words calculadas.
+     */
     private void syncStopWordsWithOtherBarrels(String language, Set<String> newStopWords) {
         try {
             List<BarrelsINTER> allBarrels = gateway.getAllBarrels();
@@ -468,15 +548,36 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
+    /**
+     * Atualiza as stopWords para um idioma específico.
+     *
+     * @param language  Idioma.
+     * @param stopWords Palavras irrelevantes.
+     * @throws RemoteException Exceção remota.
+     */
     @Override
     public void updateStopWords(String language, Set<String> stopWords) throws RemoteException {
         this.stopWords.put(language, new HashSet<>(stopWords));
     }
 
+    /**
+     * Retorna todas as stopWords de todos os idiomas.
+     *
+     * @return Mapa de stopWords por idioma.
+     * @throws RemoteException Exceção remota.
+     */
     public Map<String, Set<String>> getAllStopWords() throws RemoteException{
         return stopWords;
     }
 
+
+    /**
+     * Carrega um novo índice invertido e lista de stopWords.
+     *
+     * @param indice    Novo índice.
+     * @param stopWords Novas stopWords.
+     * @throws RemoteException Exceção remota.
+     */
     @Override
     public void carregarDados(Map<String, ArrayList<String[]>> indice, Map<String, Set<String>> stopWords) throws RemoteException {
         synchronized (indiceInvertido) {
@@ -488,9 +589,15 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
+
+    /**
+     * Retorna o índice invertido atual.
+     *
+     * @return Índice invertido.
+     * @throws RemoteException Exceção remota.
+     */
     @Override
     public Map<String, ArrayList<String[]>> getIndiceInvertido() throws RemoteException {
         return new HashMap<>(indiceInvertido);
     }
-
 }

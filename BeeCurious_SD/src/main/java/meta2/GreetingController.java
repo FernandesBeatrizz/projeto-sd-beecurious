@@ -34,7 +34,6 @@ import org.springframework.web.client.RestTemplate;
 public class GreetingController {
     private final BackendRMIcliente backend;
     private static final Logger log = LoggerFactory.getLogger(GreetingController.class);
-    //private OpenRouterAPI openRouterAPI;
 
 
     /**
@@ -49,7 +48,7 @@ public class GreetingController {
 
 
     /**
-     * Metodo para exibir a página inicial da aplicação.
+     * Metodo para exibir a página inicial da googol.
      *
      * @param model Modelo que será usado para passar atributos para a view.
      * @return O nome da view para renderizar a página inicial.
@@ -66,7 +65,12 @@ public class GreetingController {
     // ----- Pesquisar páginas ---------------------------------------------------------------------------------------------//
     //----------------------------------------------------------------------------------------------------------------------//
 
-    //DEPOIS VER OQ METER AQUI
+    /**
+     * Mapeia a requisição HTTP GET para o endpoint "/pesquisarURL".
+     * Este método é responsável por retornar o nome da página ou a visualização "pesquisarURL".
+     *
+     * @return Apresenta a "pesquisarURL".
+     */
     @GetMapping("/pesquisarURL")
     public String linkForm() {
         return "pesquisarURL";
@@ -98,15 +102,6 @@ public class GreetingController {
             model.addAttribute("results", paginated);
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", totalPages);
-            /*model.addAttribute("totalResults", total);
-
-            // Gerar análise contextualizada com OpenAI
-            List<String> snippets = new ArrayList<>();
-            for (String[] result : paginated) {
-                snippets.add(result[2]); // Supondo que o excerto esteja no índice 2
-            }
-            String analise = OpenRouterAPI.gerarAnaliseContextual(query, snippets);
-            model.addAttribute("analise", analise);*/
 
         } catch (Exception e) {
             model.addAttribute("results", new ArrayList<>());
@@ -173,7 +168,7 @@ public class GreetingController {
     // ----- INDEXAR URL ---------------------------------------------------------------------------------------------------//
     //----------------------------------------------------------------------------------------------------------------------//
     /**
-     * Exibe o sítio para enviar uma URL para indexação.
+     * Exibe o sítio para enviar um URL para indexação.
      *
      * @param model Modelo que será usado para passar atributos para a view.
      */
@@ -184,9 +179,9 @@ public class GreetingController {
 
 
     /**
-     * Realiza a indexação de uma URL fornecida.
+     * Realiza a indexação do URL fornecido.
      *
-     * @param url A URL a ser indexada.
+     * @param url O URL a ser indexado.
      * @param model Modelo que será usado para passar atributos para a view.
      */
     @PostMapping("/indexarURL")
@@ -212,8 +207,10 @@ public class GreetingController {
     //----------------------------------------------------------------------------------------------------------------------//
 
     /**
-     * Obtém as top stories do Hacker News, podendo realizar uma pesquisa nas histórias.
+     * Obtém as top stories do Hacker News.
      *
+     * Este método é mapeado para o endpoint "/hackernewstopstories", e recebe um parâmetro de pesquisa
+     * via query string. O método filtra as histórias com base nos termos de pesquisa no título das mesmas.
      * @param search Termos de pesquisa para filtrar as stories.
      */
     @GetMapping("/hackernewstopstories")
@@ -258,7 +255,7 @@ public class GreetingController {
 
 
     /**
-     * Solicita a indexação das top stories do Hacker News, baseando-se na pesquisa feita.
+     * Solicita a indexação das top stories do Hacker News, com base na pesquisa feita.
      *
      * @param search Termos de pesquisa para filtrar as histórias.
      * @param confirm Confirmação para a indexação.
@@ -296,6 +293,20 @@ public class GreetingController {
 
     // ----- OPEN ROUTER AI-------------------------------------------------------------------------------------------------//
     //----------------------------------------------------------------------------------------------------------------------//
+
+    /**
+     * Gera uma análise contextual utilizando a API da OpenAI com base nos termos de pesquisa fornecidos.
+     *
+     * Este método realiza a pesquisa de dados relacionados ao termo fornecido, gera excertos de histórias
+     * a partir dos resultados e, em seguida, chama a API da OpenAI para gerar uma análise contextual sobre
+     * os resultados obtidos. A análise gerada é então passada para a view para ser exibida ao usuário.
+     *
+     *
+     * @param search O termo de pesquisa que será utilizado para buscar os dados relevantes no sistema.
+     * @param model O modelo utilizado para passar os atributos, incluindo a análise gerada ou mensagem de erro.
+     *
+     * @return A análise gerada.
+     */
     @GetMapping("/chat_completions")
     public String gerarAnaliseComIA(@RequestParam("search") String search, Model model) {
         try {

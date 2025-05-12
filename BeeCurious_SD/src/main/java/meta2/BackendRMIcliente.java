@@ -12,18 +12,19 @@ import java.util.List;
 
 /**
  * Esta classe funciona como intermediária.
- * Classe que implementa o cliente RMI (Remote Method Invocation) para interação com o backend.
- * Este cliente conecta-se a um servidor remoto via RMI para realizar pesquisas, indexação de URLs e consulta de links relacionados.
+ * Representa uma entidade que interage com o backend gateway remotamente por meio de RMI
  */
 public class BackendRMIcliente {
 
     private final GatewayINTER gateway;
+
+
     /**
      * Construtor da classe BackendRMIcliente.
      * Estabelece uma ligação com o servidor RMI e obtém uma referência para a gateway.
      *
      * @throws RemoteException Se ocorrer uma falha na comunicação RMI.
-     * @throws NotBoundException Se o nome "Gateway" não estiver vinculado no registo RMI.
+     * @throws NotBoundException Se houver algum erro.
      * */
      public BackendRMIcliente() throws RemoteException, NotBoundException {
          // Conexão com o registo RMI na máquina local na porta 8183
@@ -36,6 +37,7 @@ public class BackendRMIcliente {
      * Excuta uma pesquisa no sistema utilizando as palavras que forem fornecidas
      *
      * @param termos O termo que será pesquisado.
+     * @return Uma lista de resultados da pesquisa.
      * @throws RemoteException Se ocorrer uma falha na comunicação RMI.
      */
     public List<String[]> search(String termos) throws RemoteException {
@@ -45,7 +47,9 @@ public class BackendRMIcliente {
 
     /**
      * Indexa um novo URL
+     *
      * @param url A URL a ser indexada.
+     * @return A URL que foi indexada.
      * @throws RemoteException Se ocorrer uma falha na comunicação RMI.
      */
     public String indexarURL(String url) throws RemoteException {
@@ -58,6 +62,7 @@ public class BackendRMIcliente {
      * Consulta todos os links que apontam para uma URL específica.
      *
      * @param url A URL da consulta.
+     * @return Uma lista de URLs que apontam para a URL fornecida.
      * @throws RemoteException Se ocorrer uma falha na comunicação RMI.
      */
     public ArrayList<String> consultarLinks(String url) throws RemoteException {
@@ -68,6 +73,7 @@ public class BackendRMIcliente {
     /**
      * Obtém todas as stopwords do sistema.
      *
+     * @return Uma string representando todas as stopwords do sistema.
      * @throws RemoteException Se ocorrer uma falha na comunicação RMI.
      */
     public String getStopWords() throws RemoteException {

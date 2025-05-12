@@ -8,6 +8,7 @@ import java.rmi.RemoteException;
  *
  * Essa interface define os métodos que permitem adicionar, recuperar e gerenciar URLs. Como esta interface estende {@link Remote},
  * os seus métodos podem ser chamados remotamente via RMI.
+ * Por estender {@link Remote}, seus métodos podem ser invocados remotamente via RMI.
  *
  */
 public interface QueueInterface extends Remote {
@@ -16,13 +17,17 @@ public interface QueueInterface extends Remote {
      * Adiciona uma URL à fila.Este metodo permite que clientes remotos adicionem uma URL à queue para processamento posterior.
      *
      * @param url A URL a ser adicionada à fila.
+     * @throws RemoteException Em caso de erro de comunicação remota.
      */
     void putURL(String url) throws RemoteException;
+
 
     /**
      * Obtém e remove a próxima URL disponível na queue.
      *
      * @return A próxima URL disponível na fila.
+     * @throws RemoteException Em caso de erro de comunicação remota.
+     * @throws InterruptedException Se a thread for interrompida durante a espera.
      */
     String getURL() throws RemoteException, InterruptedException;
 
@@ -31,6 +36,8 @@ public interface QueueInterface extends Remote {
      * Retorna o número de URLs presentes atualmente na fila.
      *
      * @return O tamanho da fila de URLs.
+     * @throws RemoteException Em caso de erro de comunicação remota.
+     * @throws InterruptedException Se a thread for interrompida durante a espera.
      */
     int getQueueSize() throws RemoteException, InterruptedException;
 
@@ -38,6 +45,8 @@ public interface QueueInterface extends Remote {
      * Retorna o tamanho máximo permitido para a fila.
      *
      * @return O tamanho máximo da fila.
+     * @throws RemoteException Em caso de erro de comunicação remota.
+     * @throws InterruptedException Se a thread for interrompida durante a espera.
      */
     int getMaxSize() throws RemoteException, InterruptedException;
 
