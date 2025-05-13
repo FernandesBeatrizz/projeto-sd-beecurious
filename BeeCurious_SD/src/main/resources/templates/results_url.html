@@ -7,7 +7,7 @@
         body {
             font-family: sans-serif;
             padding: 50px;
-            background-color: #fefefe;
+            background-color: #f8f9fa;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -15,7 +15,7 @@
             margin: 0;
         }
         .result-container {
-            background-color: rgba(255, 153, 255, 0.5); /* FFFF99FF com 50% opacidade */
+            background-color: #FFFF99;
             padding: 30px;
             border-radius: 15px;
             width: fit-content;
@@ -24,6 +24,7 @@
         }
         .result-content {
             background-color: white;
+            word-break: break-all;
             padding: 25px;
             border-radius: 10px;
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
@@ -59,7 +60,7 @@
 
         <div th:if="${!encontrado}">
             <h3>Link não encontrado</h3>
-            <p>O link <span th:text="${url}"></span> não foi encontrado ou ainda está a ser processado.</p>
+            <p>O link <span th:text="${url}"></span> não tem páginas a apontar para ele.</p>
         </div>
 
         <div th:if="${mensagem}">

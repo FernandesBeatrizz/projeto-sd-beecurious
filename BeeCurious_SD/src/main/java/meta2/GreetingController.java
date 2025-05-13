@@ -4,12 +4,7 @@ package main.java.meta2;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import main.java.search.*;
-
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,10 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 

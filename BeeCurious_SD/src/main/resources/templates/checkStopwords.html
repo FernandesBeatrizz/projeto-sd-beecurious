@@ -9,6 +9,10 @@
       font-family: Arial, sans-serif;
       background-color: #f5f5f5;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     h1 {
@@ -38,17 +42,16 @@
     }
 
     a {
-      display: block; /* Faz o botão ocupar a linha toda */
-      width: fit-content; /* Largura ajustada ao texto */
-      margin: 40px auto 0; /* Margem superior grande para descer o botão */
-      color: #333;
-      text-decoration: none;
-      padding: 10px 20px;
-      background-color: #fffacd;
+      background-color: #FFFF99;
+      border: 1px solid #d1d5da;
       border-radius: 4px;
-      transition: background-color 0.3s;
-      font-weight: bold;
-      border: 1px solid #000; /* Borda preta para destacar */
+      max-width: 200px;
+      color: #2c3e50;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
     }
 
     a:hover {
