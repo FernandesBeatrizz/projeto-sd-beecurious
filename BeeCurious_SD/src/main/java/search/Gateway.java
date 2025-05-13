@@ -180,11 +180,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         if (barrels.isEmpty()) {
             throw new RemoteException("Nenhum barrel disponível");
         }
-
+        int size_inicial = barrels.size();
         int tentativas = 0;
-        while (tentativas < barrels.size()) {
-            BarrelsINTER barrel = barrels.get(currentBarrelIndex);
+        while (tentativas < size_inicial && !barrels.isEmpty()) {
+            System.out.println("entrou no while");
+            System.out.println("o indice agora é :"+ currentBarrelIndex);
+            System.out.println ("total: " + barrels.size());
             currentBarrelIndex = (currentBarrelIndex + 1) % barrels.size();
+            BarrelsINTER barrel = barrels.get(currentBarrelIndex);
             try {
                 System.out.println("a ir ao ping do barrel: " + barrel.getName());
                 barrel.ping(); // Deve lançar RemoteException se o processo morreu
@@ -203,14 +206,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         throw new RemoteException("Todos os barrels estão indisponíveis");
     }
 
-
-
-    /**
-     * Remove o registo de um barrel do sistema e do RMI Registry.
-     *
-     * @param barrel barrel a matar.
-     * @throws RemoteException se ocorrer erro remoto.
-     */
     public void matarBarrel(BarrelsINTER barrel) throws RemoteException {
         Registry registry = LocateRegistry.getRegistry("localHost", 8183);
         try {

@@ -1,1 +1,0 @@
-/*vao ser os sockets p atualizar os status*/
