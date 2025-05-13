@@ -1,5 +1,6 @@
 package main.java.meta2;
 
+
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -112,16 +113,20 @@ public class GreetingController {
         try {
             // Verifica se há páginas que apontam para esta URL
             List<String> ligacoes = backend.consultarLinks(url);
-            // Determina se encontrou páginas que apontam para a URL
+            // Determina se encontrou páginas apontando para a URL
             boolean foiIndexado = ligacoes != null && !ligacoes.isEmpty();
+            // Adiciona os atributos necessários para exibir na página de resultados
             model.addAttribute("encontrado", foiIndexado);
             model.addAttribute("url", url);
             if (foiIndexado) {
+                // Não temos título nem excerto porque o Gateway não fornece isso diretamente
                 model.addAttribute("titulo", "Título não disponível");
                 model.addAttribute("excerto", "Excerto não disponível");
             }
+            // Adiciona os links encontrados (se houver) na resposta
             model.addAttribute("ligacoes", ligacoes);
         } catch (Exception e) {
+            // Caso ocorra algum erro durante o processo, mostra uma mensagem de erro
             model.addAttribute("encontrado", false);
             model.addAttribute("url", url);
             model.addAttribute("mensagem", "Erro ao indexar a URL: " + e.getMessage());
@@ -161,7 +166,7 @@ public class GreetingController {
      */
     @GetMapping("/indexarURL")
     public String indexarURLForm(Model model) {
-        return "indexarURL";
+        return "indexarURL"; // Exibe o formulário de indexação de URL
     }
 
 
@@ -174,12 +179,15 @@ public class GreetingController {
     @PostMapping("/indexarURL")
     public String indexarURL(@RequestParam("url") String url, Model model) {
         try {
+            // Envia a URL para o backend para ser indexada
             String urlIndexada = backend.indexarURL(url);
+            // Mensagem de sucesso
             model.addAttribute("mensagem", "URL indexada com sucesso: " + urlIndexada);
             return "indexarURL";
         } catch (Exception e) {
+            // Caso haja erro, mostra uma mensagem de erro
             model.addAttribute("mensagem", "Erro ao indexar a URL: " + e.getMessage());
-            return "indexarURL";
+            return "indexarURL"; // Retorna ao formulário com mensagem de erro
         }
     }
 
@@ -207,11 +215,11 @@ public class GreetingController {
 
         assert hackerNewsNewTopStories != null;
         log.info("hackerNewsNewStories: " + hackerNewsNewTopStories);
-        log.info("hackerNewsNewStories: " + hackerNewsNewTopStories.size());
+        log.info("hackerNewsNewStories: " + hackerNewsNewTopStories.size()); // Up to 500 top stories
 
         List<HackerNews> hackerNewsItemRecordList = new ArrayList<>();
-        for (int i = 0; i <= 5; i++) {
-            Integer storyId = (Integer) hackerNewsNewTopStories.get(i);
+        for (Object obj: hackerNewsNewTopStories) {
+            Integer storyId = (Integer) obj;
 
             String storyItemDetailsEndpoint = String.format("https://hacker-news.firebaseio.com/v0/item/%s.json?print=pretty", storyId);
             HackerNews hackerNewsItemRecord = restTemplate.getForObject(storyItemDetailsEndpoint, HackerNews.class);
@@ -223,11 +231,13 @@ public class GreetingController {
 
             log.info("hackerNewsNewStories (details of " + storyId + "): " + hackerNewsItemRecord);
 
-            if (search != null) {
+            if (search != null && hackerNewsItemRecord.text() != null && hackerNewsItemRecord.url() != null) {
                 log.info("search: " + search);
                 List<String> searchTermsList = List.of(search.toLowerCase().split(" "));
-                if (searchTermsList.stream().anyMatch(hackerNewsItemRecord.title().toLowerCase()::contains))
+                String lowerText = hackerNewsItemRecord.text().toLowerCase();
+                if (searchTermsList.stream().anyMatch(lowerText::contains)) {
                     hackerNewsItemRecordList.add(hackerNewsItemRecord);
+                }
             } else {
                 System.out.println("No search terms");
                 hackerNewsItemRecordList.add(hackerNewsItemRecord);
@@ -253,16 +263,18 @@ public class GreetingController {
             model.addAttribute("mensagem", "Indexação cancelada.");
             return "TopStoriesResultado";
         }
+
         try {
-            List<HackerNews> stories = hackerNewsTopStories(search);
+            List<HackerNews> stories = hackerNewsTopStories(search); // Usa o mesmo método de antes
 
             int count = 0;
             for (HackerNews story : stories) {
                 if (story.url() != null && !story.url().isEmpty()) {
-                    backend.indexarURL(story.url());
+                    backend.indexarURL(story.url());  // Envia para indexação
                     count++;
                 }
             }
+
             model.addAttribute("mensagem", "Foram indexadas " + count + " histórias do Hacker News.");
         } catch (Exception e) {
             model.addAttribute("mensagem", "Erro ao indexar histórias: " + e.getMessage());
@@ -293,11 +305,16 @@ public class GreetingController {
     public String gerarAnaliseComIA(@RequestParam("search") String search, Model model) {
         try {
             List<String[]> resultados = backend.search(search);
+
+            // Gerar excertos em formato simples para IA
             List<String> linhas = new ArrayList<>();
             for (String[] r : resultados) {
                 linhas.add(r[1] + " - " + r[0]); // título + URL
             }
+
+            // Chamada à API da OpenAI
             String analise = OpenRouterAPI.gerarAnaliseContextual(search, linhas);
+            //model.addAttribute("query", search);
             model.addAttribute("analise", analise);
         } catch (Exception e) {
             model.addAttribute("analise", "Erro ao gerar análise: " + e.getMessage());
