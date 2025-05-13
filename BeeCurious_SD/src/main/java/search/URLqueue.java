@@ -1,6 +1,5 @@
 package main.java.search;
 
-import java.io.*;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -38,9 +37,9 @@ public class URLqueue extends UnicastRemoteObject implements QueueInterface {
     }
 
     /**
-     * Adiciona uma URL à fila.
+     * Adiciona um URL à fila.
      *
-     * Se a queue não estiver cheia, o URL será adicionada à fila. Após adicionar a URL, a queue é salva.
+     * Se a queue não estiver cheia, o URL será adicionada à fila. Após adicionar o URL, a queue é salva.
      *
      * @param url URL a ser adicionada à fila.
      * @throws RemoteException Se ocorrer um erro de comunicação remota.

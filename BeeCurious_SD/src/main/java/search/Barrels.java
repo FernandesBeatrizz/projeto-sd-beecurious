@@ -50,11 +50,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Executando shutdown seguro...");
             if (!new File(ficheiroURLbarrels).exists()) {
-                salvar(); // Garante salvamento final
+                salvar();
             }
         }));
 
     }
+
+
 
     /**
      * Metodo para criar um novo barrel e registá-lo no gateway.
@@ -82,7 +84,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     /**
      * Metodo principal para iniciar um barrel.
      *
-     * @param args Argumentos de entrada: nome do barrel e porta do gateway
+     * @param args Argumentos de entrada: nome do barrel e porta da gateway
      */
     public static void main(String[] args) {
         try {
@@ -96,6 +98,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             e.printStackTrace();
         }
     }
+
+
 
     /**
      * Carrega o índice invertido e stopWords.
@@ -251,7 +255,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 indiceInvertido.put(word, new ArrayList<>());
             }
 
-            // Verifica se a URL já foi indexada para a palavra
+            // Verifica se URL já foi indexado para a palavra
             for (String[] pagina_indice : indiceInvertido.get(word)) {
                 if (pagina_indice[0].equals(url)) {
                     return;  // Não indexa novamente se a URL já estiver presente
@@ -271,7 +275,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      * @return Lista de URLs que apontam para o URL fornecido.
      */
     public List<String> obterpaginaurlponteiros(String url) {
-        //primeiro verificamos se a url existe
+        //primeiro verificamos se url existe
         if (ponteiros.containsKey(url)) {
             return new ArrayList<>(ponteiros.get(url));
         } else {
@@ -289,6 +293,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         getName();
     }
 
+
+
     /**
      * Retorna o nome do Barrel.
      *
@@ -299,6 +305,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     public String getName() throws RemoteException {
         return this.name;
     }
+
+
 
     // ---------------PESQUISA---------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------------------
@@ -318,7 +326,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         for (String palavra : palavras) {
             if (!indiceInvertido.containsKey(palavra)) {
                 System.out.println("palavra não encontrada");
-                return resultados; //s nao encontrar nd retorna lista vazia
+                return resultados;
             }
         }
         resultados.addAll(indiceInvertido.get(palavras[0])); //todas as paginas q contêm o primeiro termo
@@ -328,7 +336,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             List<String[]> tempResultados = new ArrayList<>();
             Set<String> urlsExistentes = new HashSet<>();
 
-            // Armazena as URLs atuais
+            // Armazena URLs atuais
             for (String[] pagina : resultados) {
                 urlsExistentes.add(pagina[0]);
             }
@@ -375,7 +383,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 count++;
             }
         }
-
         return count;
     }
 
@@ -583,8 +590,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         synchronized (indiceInvertido) {
             this.indiceInvertido = new HashMap<>(indice);
             this.stopWords = new ConcurrentHashMap<>(stopWords);
-            reconstruirPonteiros(); // Reconstruir ponteiros após carregar o índice
-            salvar(); // Persistir no disco
+            reconstruirPonteiros();
+            salvar();
             System.out.println("Dados sincronizados com sucesso.");
         }
     }

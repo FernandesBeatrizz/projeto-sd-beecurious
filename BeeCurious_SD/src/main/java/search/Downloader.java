@@ -64,7 +64,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
     /**
      * Inicia o ciclo de execução, vai procurar e processar URLs continuamente.
      *
-     * <p>O metodo aguarda URLs disponíveis na fila e processa cada um. Encerra até
+     * <p>O método aguarda URLs disponíveis na fila e processa cada um. Encerra até
      * que a fila esteja vazia por muito tempo.</p>
      *
      * @throws RemoteException Se ocorrer erro de comunicação remota.
@@ -90,9 +90,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
                     url = transformarUrlAbsoluta("http://" + new URI(url).getHost(), url);
                 }
-
                 processarPagina(url);
-
                 Thread.sleep(1000);
             }
         } catch (Exception e) {
@@ -100,12 +98,14 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
         }
     }
 
+
+
     /**
      * Processa uma página web especificada pela URL.
      *
      * <p>Este método extrai informações relevantes da página. </p>
      *
-     * @param url A URL da página a ser processada.
+     * @param url URL da página a ser processado.
      * @throws RemoteException Se ocorrer erro de comunicação remota.
      */
     public void processarPagina(String url) throws RemoteException {
@@ -113,11 +113,9 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
         if (!barrel.containsURL(url)) {
             try {
                 Document doc = Jsoup.connect(url).get();
-
                 // Extrair título
                 String titulo = doc.title();
                 System.out.println(titulo);
-
                 // Extrair citação
                 String citacao = "";
                 Element primeiroparagrafo = doc.select("p").first();
@@ -133,12 +131,10 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                     }
                 }
                 System.out.println("Citação: " + citacao);
-
                 // Extrair links
                 Elements anchors = doc.select("a");
                 String baseUrl = doc.baseUri();
                 List<String> listaLinks = new ArrayList<>();
-
                 for (Element anchor : anchors) {
                     String href = anchor.attr("href");
                     if (href.isEmpty() || href.startsWith("#")) {
@@ -151,29 +147,24 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                         System.out.println("Link extraído: " + absoluteUrl);
                     }
                 }
-
                 // Extrair palavras
                 String textoCompleto = doc.text().toLowerCase();
                 // Remove pontuação e divide em palavras
                 String[] palavras = textoCompleto.replaceAll("[^a-z0-9áéíóúãõâêôç\\s]", " ")
                         .split("\\s+");
-
                 for (String palavra : palavras) {
                     if (!palavra.isEmpty()) {
                         gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
                     }
                 }
-
                 // Detectar idioma
                 String language = detectLanguage(titulo + " " + citacao);
-
                 // Extrair palavras únicas da página
                 String texto = doc.text().toLowerCase();
                 Set<String> palavrasUnicas = new HashSet<>(
                         Arrays.asList(texto.replaceAll("[^a-z0-9áéíóúãõâêôç\\s]", " ")
                                 .split("\\s+"))
                 );
-
                 // Registrar ocorrências de palavras
                 for (String palavra : palavrasUnicas) {
                     if (!palavra.isEmpty() && palavra.length() > 2) { // Ignorar palavras muito curtas
@@ -186,9 +177,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                         gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
                     }
                 }
-
-
-
             } catch (IOException e) {
                 System.out.println("Erro ao processar página: " + e.getMessage());
             }
@@ -196,15 +184,15 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
     }
 
 
+
     /**
      * Detecta o idioma principal de um texto com base em palavras frequentes.
      *
      * @param text Texto a ser analisado.
-     * @return Código do idioma detectado ("pt", "en", ou "es").
+     * @return Código do idioma detetado ("pt", "en", ou "es").
      */
     private String detectLanguage(String text) {
         text = text.toLowerCase();
-
         // Contar ocorrências de palavras típicas de cada idioma
         int pt = countMatches(text, " o ", " a ", " os ", " as ", " de ", " do ", " da ");
         int en = countMatches(text, " the ", " and ", " to ", " of ", " a ", " in ");
@@ -256,10 +244,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
         }
     }
 
-   /*
-    public void put_url(String url) throws RemoteException {
-        gateway.putNew(url);
-    }*/
+
 
     /**
      * Metodo principal que inicializa o downloader.
@@ -281,7 +266,5 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
         } catch (Exception e) {
             System.out.println("Erro ao executar downloader: " + e.getMessage());
         }
-
     }
-
 }

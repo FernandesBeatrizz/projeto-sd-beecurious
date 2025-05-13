@@ -33,8 +33,6 @@ public class Cliente implements ClienteINTER {
         try {
             Cliente cliente = new Cliente();
             cliente.exibirMenu();
-
-
         } catch (RemoteException | NotBoundException e) {
             e.printStackTrace();
         }
@@ -64,11 +62,9 @@ public class Cliente implements ClienteINTER {
                     solicitarURL();
                     break;
                 case 2:
-                    //aqui meter a dar gateway, barrels e cliente
                     pesquisarconjtermos();
                     break;
                 case 3:
-                    //gateway, barrels e cliente
                     consultarligacoespagina();
                     break;
                 case 4:
@@ -95,7 +91,6 @@ public class Cliente implements ClienteINTER {
     public void pesquisarconjtermos() throws RemoteException {
         System.out.println("Digite o(s) termo(s) de pesquisa:");
         String input = sc.nextLine().trim();
-
         // Obtém os resultados do Barrel via Gateway
         List<String[]> resultados = gateway.searchWord(input);
         // Imprime os resultados formatados
@@ -107,14 +102,11 @@ public class Cliente implements ClienteINTER {
         int totalPaginas = (int) Math.ceil((double) resultados.size() / resultadospag);
         boolean sair = false;
 
-
         while (pagina <= totalPaginas && !sair) {
             int inicio = (pagina - 1) * resultadospag; // Página começa a contar de 1
             int fim = Math.min(inicio + resultadospag, resultados.size());
-
             // Exibe os resultados da página atual
             List<String[]> resultadosDaPagina = resultados.subList(inicio, fim);
-
             System.out.println("\nResultados da pesquisa para: " + input + " - Página " + pagina);
             for (String[] resultado : resultadosDaPagina) {
                 System.out.println("Título: " + resultado[1]);
@@ -122,10 +114,8 @@ public class Cliente implements ClienteINTER {
                 System.out.println("Citação: " + resultado[2]);
                 System.out.println("---------------------------");
             }
-
             // Aumenta a página para a próxima chamada
             //pagina++;
-
             if (pagina <= totalPaginas) {
 
                 System.out.println("Pressione Enter para ver a próxima página ou digite 'sair' para voltar ao menu...");

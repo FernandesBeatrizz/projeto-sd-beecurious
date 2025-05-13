@@ -6,8 +6,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Classe que implementa a Gateway para comunicar entre clientes, barrels e downloaders.
@@ -90,7 +88,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
             }
         } catch (RemoteException e) {
             System.out.println("Erro na pesquisa: " + e.getMessage());
-            e.printStackTrace(); // Mostra onde a exceção foi realmente lançada
+            e.printStackTrace();
         }
         return new ArrayList<>();
     }
@@ -109,7 +107,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         for (BarrelsINTER barrel : barrels) {
             paginasApontam.addAll(barrel.obterpaginaurlponteiros(url));
         }
-
         return paginasApontam;
     }
 
@@ -243,7 +240,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      */
     @Override
     public List<BarrelsINTER> getAllBarrels() {
-
         return barrels;
     }
 
@@ -261,7 +257,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
 
     /**
-     * Adiciona um novo URL à fila, se ainda não tiver sido processada.
+     * Adiciona um novo URL à fila, se ainda não tiver sido processado.
      *
      * @param url URL a ser adicionado.
      * @throws RemoteException se der erro de comunicação.
@@ -287,6 +283,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         }
     }
 
+
+
     /**
      * Adiciona uma palavra e o URL correspondente ao índice invertido.
      *
@@ -298,13 +296,9 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
      * @throws RemoteException se falha na comunicação.
      */
     @Override
-    public void addToIndex(String word, String url, String titulo, String citacao, List<String> links)
-            throws RemoteException {
-
-        // Obtém um Barrel disponível
+    public void addToIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException {
         BarrelsINTER barrel = getBarrel();
         if (barrel != null) {
-            // Envia diretamente para o Barrel
             barrel.addToIndex(word, url, titulo, citacao, links);
         } else {
             System.err.println("Nenhum Barrel disponível para indexação!");
