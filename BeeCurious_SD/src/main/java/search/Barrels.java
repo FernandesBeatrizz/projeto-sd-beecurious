@@ -216,7 +216,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 }
 
                 // Log de indexação no barrel principal
-                System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
+                System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
                 salvar();
             }
 

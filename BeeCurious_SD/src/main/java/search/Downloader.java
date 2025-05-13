@@ -194,9 +194,9 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
     private String detectLanguage(String text) {
         text = text.toLowerCase();
         // Contar ocorrências de palavras típicas de cada idioma
-        int pt = countMatches(text, " o ", " a ", " os ", " as ", " de ", " do ", " da ");
-        int en = countMatches(text, " the ", " and ", " to ", " of ", " a ", " in ");
-        int es = countMatches(text, " el ", " la ", " los ", " las ", " de ", " en ");
+        int pt = countMatches(text, " o ", " a ", " os ", " as ", " de ", " do ", " da ", "em", "entre", "para", "um", "ou", "com", "onde");
+        int en = countMatches(text, " the ", " and ", " to ", " of ", " a ", " in ", "for", "one", "on", "with", "that", "this", "where");
+        int es = countMatches(text, " el ", " la ", " los ", " las ", " de ", " en ", "uno", "cierto", "donde", "hoy", "pero", "si", "y", "una");
 
         if (pt > en && pt > es) return "pt";
         if (es > en && es > pt) return "es";
