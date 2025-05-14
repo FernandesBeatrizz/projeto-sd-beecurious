@@ -24,11 +24,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private HashMap<String, HashSet<String>> ponteiros;
     private static String ficheiroURLbarrels;
     private static final Object fileLock = new Object();  // Lock estático partilhado por todos os barrels
-    private final Map<String, Map<String, Set<String>>> wordPageOccurrences = new ConcurrentHashMap<>();
-    private final Map<String, AtomicInteger> totalPagesPerLanguage = new ConcurrentHashMap<>();
-    private Map<String, Set<String>> stopWords = new ConcurrentHashMap<>();
-    private static final double STOP_WORD_PERCENTAGE = 0.10;
-    private static final int UPDATE_THRESHOLD = 30; // Atualizar a cada 1000 páginas
+
+    private final Map<String, AtomicInteger> wordPageOccurrences = new HashMap<>();
+    private final Integer totalPages = 0 ;
+    private Set<String> stopWords = new HashSet<>();
+    private static final double STOP_WORD_PERCENTAGE = 0.05;
+    private static final int UPDATE_THRESHOLD = 20; // Atualizar a cada 1000 páginas
     private final String ficheiroStopWords;
 
 
@@ -49,6 +50,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         System.out.println("[DEBUG] Índice após carregar: " + indiceInvertido);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Executando shutdown seguro...");
+            try {
+                gateway.unregisterBarrel(this);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
             if (!new File(ficheiroURLbarrels).exists()) {
                 salvar();
             }
@@ -145,7 +151,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
                 if (obj instanceof Map) {
                     stopWords.clear();
-                    stopWords.putAll((Map<String, Set<String>>) obj);
+                    stopWords.addAll((Set<String>) obj);
                     System.out.println("[DEBUG] StopWords carregado com " + stopWords.size() + " entradas.");
                 } else {
                     System.err.println("Erro: Formato inválido do ficheiro de stopWords.");
@@ -427,10 +433,8 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
 
         File tempSWFile = new File(ficheiroStopWords + ".tmp");
-        try {
-            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempSWFile))) {
-                output.writeObject(stopWords);
-            }
+        try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempSWFile))) {
+            output.writeObject(stopWords);
             Files.move(
                     tempSWFile.toPath(),
                     new File(ficheiroStopWords).toPath(),
@@ -441,6 +445,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         } finally {
             if (tempSWFile.exists()) tempSWFile.delete();
         }
+
     }
 
     /**
@@ -468,23 +473,15 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      *
      * @param word     Palavra registrada.
      * @param url      URL onde foi encontrada.
-     * @param language Idioma da página.
      * @throws RemoteException Exceção remota.
      */
     @Override
-    public synchronized void registerWordOccurrence(String word, String url, String language) throws RemoteException {
-        wordPageOccurrences.putIfAbsent(language, new ConcurrentHashMap<>());
-        totalPagesPerLanguage.putIfAbsent(language, new AtomicInteger(0));
+    public synchronized void registerWordOccurrence(String word, String url) throws RemoteException {
+        wordPageOccurrences.putIfAbsent(word, new AtomicInteger(0));
+        wordPageOccurrences.get(word).incrementAndGet();
 
-        Map<String, Set<String>> languageWords = wordPageOccurrences.get(language);
-        languageWords.putIfAbsent(word, ConcurrentHashMap.newKeySet());
-
-        if (languageWords.get(word).add(url)) {
-            totalPagesPerLanguage.get(language).incrementAndGet();
-
-            if (totalPagesPerLanguage.get(language).get() % UPDATE_THRESHOLD == 0) {
-                recalculateStopWords(language);
-            }
+        if (wordPageOccurrences.size() % UPDATE_THRESHOLD == 0) {
+            recalculateStopWords();
         }
     }
 
@@ -494,60 +491,58 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      *
      * <p>As stop words são definidas como as palavras mais comuns (10% do total) entre as páginas processadas
      * da linguagem especificada. Após o cálculo, a lista é atualizada localmente e sincronizada com outros barrels.</p>
-     *
-     * @param language Código da linguagem
      */
-    private synchronized void recalculateStopWords(String language) {
-        Map<String, Set<String>> languageWords = wordPageOccurrences.get(language);
-        if (languageWords == null || languageWords.isEmpty()) return;
+    private synchronized void recalculateStopWords() {
+        if (wordPageOccurrences.isEmpty()) return;
 
-        // 1. Contar em quantas páginas cada palavra aparece
-        List<Map.Entry<String, Integer>> wordCounts = languageWords.entrySet().stream()
-                .map(e -> Map.entry(e.getKey(), e.getValue().size()))
-                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+        List<Map.Entry<String, AtomicInteger>> wordCounts = wordPageOccurrences.entrySet().stream()
+                .sorted((e1, e2) -> Integer.compare(e2.getValue().get(), e1.getValue().get()))
                 .collect(Collectors.toList());
 
-        // 2. Selecionar as 10% mais comuns
         int stopWordsCount = (int) (wordCounts.size() * STOP_WORD_PERCENTAGE);
         Set<String> newStopWords = wordCounts.stream()
                 .limit(stopWordsCount)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
 
-        // 3. Atualizar lista de stop words
-        stopWords.put(language, newStopWords);
-        System.out.printf("[Barrel] Stop words atualizadas para %s: %d palavras (de %d)%n",
-                language, stopWordsCount, wordCounts.size());
+        stopWords.clear();
+        stopWords.addAll(newStopWords);
 
-        // 4. Sincronizar com outros barrels
-        syncStopWordsWithOtherBarrels(language, newStopWords);
+        System.out.printf("[Barrel] Stop words recalculadas: %d palavras removidas do índice.%n", stopWordsCount);
+
+        removeStopWordsFromIndex();
+        syncStopWordsWithOtherBarrels(newStopWords);
+    }
+
+    private synchronized void removeStopWordsFromIndex() {
+        for (String stopWord : stopWords) {
+            indiceInvertido.remove(stopWord);
+        }
     }
 
     /**
      * Retorna a lista de stopWords para um idioma.
      *
-     * @param language Idioma.
      * @return Conjunto de palavras irrelevantes.
      * @throws RemoteException Exceção remota.
      */
     @Override
-    public Set<String> getStopWords(String language) throws RemoteException {
-        return stopWords.getOrDefault(language, Collections.emptySet());
+    public Set<String> getStopWords() throws RemoteException {
+        return Collections.unmodifiableSet(stopWords);
     }
 
 
     /**
      * Sincroniza a lista de stop words atualizada com todos os outros barrels do sistema.
      *
-     * @param language Código da linguagem associada às stop words.
      * @param newStopWords Conjunto de novas stop words calculadas.
      */
-    private void syncStopWordsWithOtherBarrels(String language, Set<String> newStopWords) {
+    private void syncStopWordsWithOtherBarrels(Set<String> newStopWords) {
         try {
             List<BarrelsINTER> allBarrels = gateway.getAllBarrels();
             for (BarrelsINTER barrel : allBarrels) {
                 if (!barrel.equals(this)) {
-                    barrel.updateStopWords(language, newStopWords);
+                    barrel.updateStopWords(newStopWords);
                 }
             }
         } catch (RemoteException e) {
@@ -558,23 +553,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     /**
      * Atualiza as stopWords para um idioma específico.
      *
-     * @param language  Idioma.
-     * @param stopWords Palavras irrelevantes.
-     * @throws RemoteException Exceção remota.
      */
-    @Override
-    public void updateStopWords(String language, Set<String> stopWords) throws RemoteException {
-        this.stopWords.put(language, new HashSet<>(stopWords));
-    }
-
-    /**
-     * Retorna todas as stopWords de todos os idiomas.
-     *
-     * @return Mapa de stopWords por idioma.
-     * @throws RemoteException Exceção remota.
-     */
-    public Map<String, Set<String>> getAllStopWords() throws RemoteException{
-        return stopWords;
+    public void updateStopWords(Set<String> newStopWords) throws RemoteException {
+        stopWords.clear();
+        stopWords.addAll(newStopWords);
+        removeStopWordsFromIndex();
     }
 
 
@@ -586,14 +569,27 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      * @throws RemoteException Exceção remota.
      */
     @Override
-    public void carregarDados(Map<String, ArrayList<String[]>> indice, Map<String, Set<String>> stopWords) throws RemoteException {
+    public void carregarDados(Map<String, ArrayList<String[]>> indice, Set<String> stopWords) throws RemoteException {
         synchronized (indiceInvertido) {
             this.indiceInvertido = new HashMap<>(indice);
-            this.stopWords = new ConcurrentHashMap<>(stopWords);
             reconstruirPonteiros();
             salvar();
             System.out.println("Dados sincronizados com sucesso.");
         }
+        File swFile = new File(ficheiroStopWords);
+        if (swFile.exists() && swFile.length() > 0) {
+            try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(swFile))) {
+                Object obj = input.readObject();
+                if (obj instanceof Set) {
+                    this.stopWords.clear();
+                    this.stopWords.addAll((Set<String>) obj);
+                    System.out.println("[DEBUG] StopWords carregadas: " + this.stopWords.size());
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                System.err.println("Erro ao carregar as stopWords: " + e.getMessage());
+            }
+        }
+
     }
 
 

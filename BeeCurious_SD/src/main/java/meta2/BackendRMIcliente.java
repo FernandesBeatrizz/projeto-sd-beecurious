@@ -77,6 +77,6 @@ public class BackendRMIcliente {
      * @throws RemoteException Se ocorrer uma falha na comunicação RMI.
      */
     public String getStopWords() throws RemoteException {
-        return gateway.getBarrel().getAllStopWords().toString();
+        return gateway.getBarrel().getStopWords().toString();
     }
 }

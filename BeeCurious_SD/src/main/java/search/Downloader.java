@@ -157,8 +157,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                         gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
                     }
                 }
-                // Detectar idioma
-                String language = detectLanguage(titulo + " " + citacao);
                 // Extrair palavras únicas da página
                 String texto = doc.text().toLowerCase();
                 Set<String> palavrasUnicas = new HashSet<>(
@@ -168,10 +166,10 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                 // Registrar ocorrências de palavras
                 for (String palavra : palavrasUnicas) {
                     if (!palavra.isEmpty() && palavra.length() > 2) { // Ignorar palavras muito curtas
-                        barrel.registerWordOccurrence(palavra, url, language);
+                        barrel.registerWordOccurrence(palavra, url);
                     }
                 }// Indexar apenas palavras não stop
-                Set<String> currentStopWords = barrel.getStopWords(language);
+                Set<String> currentStopWords = barrel.getStopWords();
                 for (String palavra : palavrasUnicas) {
                     if (!currentStopWords.contains(palavra)) {
                         gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
@@ -181,42 +179,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                 System.out.println("Erro ao processar página: " + e.getMessage());
             }
         }
-    }
-
-
-
-    /**
-     * Detecta o idioma principal de um texto com base em palavras frequentes.
-     *
-     * @param text Texto a ser analisado.
-     * @return Código do idioma detetado ("pt", "en", ou "es").
-     */
-    private String detectLanguage(String text) {
-        text = text.toLowerCase();
-        // Contar ocorrências de palavras típicas de cada idioma
-        int pt = countMatches(text, " o ", " a ", " os ", " as ", " de ", " do ", " da ", "em", "entre", "para", "um", "ou", "com", "onde");
-        int en = countMatches(text, " the ", " and ", " to ", " of ", " a ", " in ", "for", "one", "on", "with", "that", "this", "where");
-        int es = countMatches(text, " el ", " la ", " los ", " las ", " de ", " en ", "uno", "cierto", "donde", "hoy", "pero", "si", "y", "una");
-
-        if (pt > en && pt > es) return "pt";
-        if (es > en && es > pt) return "es";
-        return "en"; // padrão
-    }
-
-
-    /**
-     * Conta quantas palavras de um conjunto aparecem no texto.
-     *
-     * @param text Texto a ser analisado.
-     * @param words Palavras a contar.
-     * @return Número de ocorrências das palavras no texto.
-     */
-    private int countMatches(String text, String... words) {
-        int count = 0;
-        for (String word : words) {
-            if (text.contains(word)) count++;
-        }
-        return count;
     }
 
     /**
@@ -243,7 +205,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
             return null;
         }
     }
-
 
 
     /**

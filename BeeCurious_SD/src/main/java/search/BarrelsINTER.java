@@ -81,50 +81,21 @@ public interface BarrelsINTER extends Remote {
     void mandarIndex(String word, String url, String titulo, String citacao, List<String> links) throws RemoteException;
 
     /**
-     * Registra uma ocorrência de palavra em uma URL, associando-a a um idioma.
-     *
-     * @param word A palavra que ocorreu.
-     * @param url A URL associada à palavra.
-     * @param language O idioma associado à palavra.
-     * @throws RemoteException Se houver um erro de comunicação remota.
-     */
-    void registerWordOccurrence(String word, String url, String language) throws RemoteException;
-
-    /**
      * Retorna o conjunto de stop words (palavras de parada) para um idioma específico.
      *
-     * @param language O idioma para o qual as stop words devem ser retornadas.
      * @return Um conjunto de stop words para o idioma.
      * @throws RemoteException Se houver um erro de comunicação remota.
      */
-    Set<String> getStopWords(String language) throws RemoteException;
+    Set<String> getStopWords() throws RemoteException;
 
 
     /**
      * Atualiza a lista de stop words para um idioma específico.
-     *
-     * @param language O idioma cujas stop words devem ser atualizadas.
-     * @param stopWords O novo conjunto de stop words.
      * @throws RemoteException Se houver um erro de comunicação remota.
      */
-    void updateStopWords(String language, Set<String> stopWords) throws RemoteException;
+    void registerWordOccurrence(String word, String url) throws RemoteException;
 
-    /**
-     * Retorna todas as stop words de todos os idiomas.
-     *
-     * @return Um mapa com idiomas e seus respectivos conjuntos de stop words.
-     * @throws RemoteException Se houver um erro de comunicação remota.
-     */
-    Map<String, Set<String>> getAllStopWords() throws RemoteException;
-
-    /**
-     * Carrega os dados de índice e stop words para o barrel.
-     *
-     * @param indice O índice a ser carregado.
-     * @param stopWords As stop words a serem carregadas.
-     * @throws RemoteException Se houver um erro de comunicação remota.
-     */
-    void carregarDados(Map<String, ArrayList<String[]>> indice, Map<String, Set<String>> stopWords) throws RemoteException;
+    void carregarDados(Map<String, ArrayList<String[]>> indice, Set<String>stopWords) throws RemoteException;
 
 
     /**
@@ -134,6 +105,8 @@ public interface BarrelsINTER extends Remote {
      * @throws RemoteException Se houver um erro de comunicação remota.
      */
     Map<String, ArrayList<String[]>> getIndiceInvertido() throws RemoteException;
+
+    void updateStopWords(Set<String> newStopWords) throws RemoteException;
 }
 
 

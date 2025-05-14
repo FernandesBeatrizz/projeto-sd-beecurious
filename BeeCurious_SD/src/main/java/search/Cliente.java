@@ -68,7 +68,7 @@ public class Cliente implements ClienteINTER {
                     consultarligacoespagina();
                     break;
                 case 4:
-                    Map<String, Set<String>> stopWords = gateway.getBarrel().getAllStopWords();
+                    Set<String> stopWords = gateway.getBarrel().getStopWords();
                     System.out.println(stopWords);
                     break;
                 case 5:
