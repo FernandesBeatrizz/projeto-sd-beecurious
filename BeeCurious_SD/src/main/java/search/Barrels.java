@@ -51,11 +51,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             System.out.println("Executando shutdown seguro...");
             try {
                 gateway.unregisterBarrel(this);
+                System.out.print("conseguiu tirar o registo");
             } catch (RemoteException e) {
-                throw new RuntimeException(e);
+                System.out.print("nao se conseguiu desregistar");
             }
             if (!new File(ficheiroURLbarrels).exists()) {
                 salvar();
+                System.out.println("Dados salvos nos ficheiros");
             }
         }));
 
@@ -109,7 +111,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     /**
      * Carrega o índice invertido e stopWords.
      */
-    @SuppressWarnings("unchecked")
     private void carregarIndice() {
         File file = new File(ficheiroURLbarrels);
         System.out.println("[DEBUG] Caminho do ficheiro: " + file.getAbsolutePath());
@@ -139,26 +140,32 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             e.printStackTrace();
         }
 
-        // === Carrega stopWords ===
-        File swFile = new File(ficheiroStopWords);
-        if (!swFile.exists() || swFile.length() == 0) {
-            System.out.println("Ficheiro de stopWords não existe ou está vazio. Iniciando vazio.");
-        } else {
-            try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(swFile))) {
-                Object obj = input.readObject();
-                System.out.println("[DEBUG] Objeto desserializado (stopWords): " + obj.getClass().getName());
+        File sWfile = new File(ficheiroStopWords);
+        System.out.println("[DEBUG] Caminho do ficheiro: " + sWfile.getAbsolutePath());
+        System.out.println("[DEBUG] Tamanho do ficheiro: " + sWfile.length() + " bytes");
 
-                if (obj instanceof Map) {
-                    stopWords.clear();
-                    stopWords.addAll((Set<String>) obj);
-                    System.out.println("[DEBUG] StopWords carregado com " + stopWords.size() + " entradas.");
-                } else {
-                    System.err.println("Erro: Formato inválido do ficheiro de stopWords.");
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                System.err.println("Erro ao carregar as stopWords: " + e.getMessage());
-                e.printStackTrace();
+        if (!sWfile.exists() || sWfile.length() == 0) {
+            System.out.println("Ficheiro não existe ou está vazio. A criar novo para as stop words.");
+            return;
+        }
+
+        try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(sWfile))) {
+            Object obj = input.readObject();
+            System.out.println("[DEBUG] Objeto desserializado: " + obj.getClass().getName());
+
+            if (obj instanceof Set) {
+                stopWords=(Set <String>) obj;
+                System.out.println("[DEBUG] Stop words carregados com " + stopWords.size() + " termos.");
+                reconstruirPonteiros();
+            } else {
+                System.err.println("Erro: Formato inválido do ficheiro.");
             }
+        } catch (EOFException e) {
+            System.err.println("Erro: Ficheiro corrompido (EOF inesperado). Siga criar outro para as stop words.");
+            sWfile.delete(); // Remove o ficheiro inválido
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Erro ao carregar o índice: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -221,7 +228,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 }
 
                 // Log de indexação no barrel principal
-                System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
+                //System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
                 salvar();
             }
 
@@ -268,7 +275,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             }
             indiceInvertido.get(word).add(pagina);
             salvar();
-            System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
+            //System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
         }
     }
 
@@ -417,7 +424,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempFile))) {
                     output.writeObject(indiceInvertido);
                 }
-
                 // Passo 2: Substitui o arquivo principal atomicamente
                 Files.move(
                         tempFile.toPath(),

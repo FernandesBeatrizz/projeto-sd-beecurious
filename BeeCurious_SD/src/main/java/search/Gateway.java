@@ -114,6 +114,30 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
 
 
     //REGISTAR E SINCRONIZAR BARRELS------------------------------------------------------
+    public void passarDadosParaBarrelNovo(BarrelsINTER barrel) throws RemoteException {
+        try {
+            BarrelsINTER barrelParaEnviar = getBarrel();
+            if (barrelNames.get(barrelParaEnviar).equals(barrelNames.get(barrel))) {
+                barrelParaEnviar =getBarrel();
+            }
+
+            System.out.println("ha um barrel para atualizar o novo");
+
+            if (barrelParaEnviar != null) {
+                System.out.println("A sincronizar o novo Barrel " + barrel.getName() + " com " + barrelParaEnviar.getName());
+
+                // Obtém o índice e as stop words do Barrel ativo
+                Map<String, ArrayList<String[]>> indice = barrelParaEnviar.getIndiceInvertido();
+                Set<String> stopWords = barrelParaEnviar.getStopWords();
+
+                // Envia para o novo Barrel
+                barrel.carregarDados(indice,stopWords);
+                System.out.println("Sincronização concluída.");
+            }
+        } catch (RemoteException e) {
+            System.err.println("Erro ao sincronizar o novo Barrel: " + e.getMessage());
+        }
+    }
 
     /**
      * Regista um novo Barrel e sincroniza com dados existentes, se necessário.
@@ -124,28 +148,13 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
     @Override
     public void registerBarrel(BarrelsINTER barrel) throws RemoteException {
 
-        BarrelsINTER barrelParaEnviar = getBarrel();
         this.barrels.add(barrel);
         barrelNames.put(barrel, barrel.getName());
         System.out.println("Barrel registado: " + barrel.getName());
 
         // Se houver outros Barrels ativos, sincroniza o novo Barrel com um existente
         if (barrels.size() > 1) {
-            try {
-                if (barrelParaEnviar != null) {
-                    System.out.println("A sincronizar o novo Barrel " + barrel.getName() + " com " + barrelParaEnviar.getName());
-
-                    // Obtém o índice e as stop words do Barrel ativo
-                    Map<String, ArrayList<String[]>> indice = barrelParaEnviar.getIndiceInvertido();
-                    Set<String> stopWords = barrelParaEnviar.getStopWords();
-
-                    // Envia para o novo Barrel
-                    barrel.carregarDados(indice,stopWords);
-                    System.out.println("Sincronização concluída.");
-                }
-            } catch (RemoteException e) {
-                System.err.println("Erro ao sincronizar o novo Barrel: " + e.getMessage());
-            }
+            passarDadosParaBarrelNovo(barrel);
         }
     }
 

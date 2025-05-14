@@ -147,7 +147,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                     if (absoluteUrl != null) {
                         gateway.putNew(absoluteUrl);
                         listaLinks.add(absoluteUrl);  // Adiciona à lista de links
-                        System.out.println("Link extraído: " + absoluteUrl);
+                        //System.out.println("Link extraído: " + absoluteUrl);
                     }
                 }
                 // Extrair palavras
@@ -162,11 +162,11 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                         if (!palavraJaContada.contains(palavra)) {
                             localWordCount.computeIfAbsent(palavra, k -> new AtomicInteger(0)).incrementAndGet();
                         }
+                        System.out.println("o dicionario da frequencia de palavras ja vai com :"+ localWordCount.size()+" palavras");
+                        if (localWordCount.size() % 10 == 0) {
+                            enviarEstatisticasParaBarrels();
+                        }
                     }
-                }
-
-                if (localWordCount.size() % 10 == 0) {
-                    enviarEstatisticasParaBarrels();
                 }
 
             } catch (IOException e) {
