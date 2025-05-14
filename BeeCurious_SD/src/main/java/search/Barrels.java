@@ -25,12 +25,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private static String ficheiroURLbarrels;
     private static final Object fileLock = new Object();  // Lock estático partilhado por todos os barrels
 
-    private final Map<String, AtomicInteger> wordPageOccurrences = new HashMap<>();
-    private final Integer totalPages = 0 ;
     private Set<String> stopWords = new HashSet<>();
     private static final double STOP_WORD_PERCENTAGE = 0.05;
     private static final int UPDATE_THRESHOLD = 20; // Atualizar a cada 1000 páginas
     private final String ficheiroStopWords;
+    private Map<String, AtomicInteger> globalWordCount = new HashMap<>();
 
 
     /**
@@ -467,24 +466,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     // ----- STOP WORDS ---------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------------
-
-    /**
-     * Regista a ocorrência de uma palavra em um URL para uma determinada linguagem.
-     *
-     * @param word     Palavra registrada.
-     * @param url      URL onde foi encontrada.
-     * @throws RemoteException Exceção remota.
-     */
-    @Override
-    public synchronized void registerWordOccurrence(String word, String url) throws RemoteException {
-        wordPageOccurrences.putIfAbsent(word, new AtomicInteger(0));
-        wordPageOccurrences.get(word).incrementAndGet();
-
-        if (wordPageOccurrences.size() % UPDATE_THRESHOLD == 0) {
-            recalculateStopWords();
-        }
-    }
-
 
     /**
      * Recalcula a lista de stop words para uma determinada linguagem.

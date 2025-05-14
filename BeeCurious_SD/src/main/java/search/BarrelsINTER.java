@@ -2,6 +2,7 @@ package main.java.search;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Interface remota para a interação com os Barrels.
@@ -107,6 +108,8 @@ public interface BarrelsINTER extends Remote {
     Map<String, ArrayList<String[]>> getIndiceInvertido() throws RemoteException;
 
     void updateStopWords(Set<String> newStopWords) throws RemoteException;
+
+    void receberContagemPalavras(Map<String, AtomicInteger> contagens) throws RemoteException;
 }
 
 

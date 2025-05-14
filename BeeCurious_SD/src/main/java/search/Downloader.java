@@ -14,6 +14,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Classe responsável por baixar e processar páginas da web.
@@ -26,6 +27,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
     GatewayINTER gateway;
     String downloader_name;
     QueueInterface urlQueue;
+    private Map<String, AtomicInteger> localWordCount = new HashMap<>();
 
 
     /**
@@ -155,25 +157,13 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                 for (String palavra : palavras) {
                     if (!palavra.isEmpty()) {
                         gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
+                        localWordCount.computeIfAbsent(palavra, k -> new AtomicInteger(0)).incrementAndGet();
                     }
                 }
-                // Extrair palavras únicas da página
-                String texto = doc.text().toLowerCase();
-                Set<String> palavrasUnicas = new HashSet<>(
-                        Arrays.asList(texto.replaceAll("[^a-z0-9áéíóúãõâêôç\\s]", " ")
-                                .split("\\s+"))
-                );
-                // Registrar ocorrências de palavras
-                for (String palavra : palavrasUnicas) {
-                    if (!palavra.isEmpty() && palavra.length() > 2) { // Ignorar palavras muito curtas
-                        barrel.registerWordOccurrence(palavra, url);
-                    }
-                }// Indexar apenas palavras não stop
-                Set<String> currentStopWords = barrel.getStopWords();
-                for (String palavra : palavrasUnicas) {
-                    if (!currentStopWords.contains(palavra)) {
-                        gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
-                    }
+
+                // Envia estatísticas periodicamente (ex: a cada 10 URLs processadas)
+                if (localWordCount.size() >= 10) {
+                    enviarEstatisticasParaBarrels();
                 }
             } catch (IOException e) {
                 System.out.println("Erro ao processar página: " + e.getMessage());
@@ -181,6 +171,12 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
         }
     }
 
+    private void enviarEstatisticasParaBarrels() throws RemoteException {
+        BarrelsINTER barrel = gateway.getBarrel();
+        barrel.receberContagemPalavras(new HashMap<>(localWordCount));
+        localWordCount.clear();
+    }
+}
     /**
      * Converte um URL relativa em um URL absoluta, com base num URL base.
      *

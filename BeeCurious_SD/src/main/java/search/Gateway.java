@@ -132,7 +132,6 @@ public class Gateway extends UnicastRemoteObject implements GatewayINTER {
         // Se houver outros Barrels ativos, sincroniza o novo Barrel com um existente
         if (barrels.size() > 1) {
             try {
-
                 if (barrelParaEnviar != null) {
                     System.out.println("A sincronizar o novo Barrel " + barrel.getName() + " com " + barrelParaEnviar.getName());
 
