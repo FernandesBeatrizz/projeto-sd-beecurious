@@ -29,7 +29,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     private static final double STOP_WORD_PERCENTAGE = 0.05;
     private static final int UPDATE_THRESHOLD = 20; // Atualizar a cada 1000 páginas
     private final String ficheiroStopWords;
-    private Map<String, AtomicInteger> globalWordCount = new HashMap<>();
+    private Map<String, AtomicInteger> contagens = new HashMap<>();
 
 
     /**
@@ -467,6 +467,28 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     // ----- STOP WORDS ---------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------------
 
+    @Override
+    public synchronized void receberContagemPalavras(Map<String, AtomicInteger> novasContagens) {
+
+        System.out.println("Recebi " + novasContagens.size() + " contagens");
+        // Consolida as estatísticas
+        for (Map.Entry<String, AtomicInteger> entry : novasContagens.entrySet()) {
+            String palavra = entry.getKey();
+            int valorNovo = entry.getValue().get();
+
+            if (!contagens.containsKey(palavra)) {
+                contagens.put(palavra, new AtomicInteger(0));
+            }
+            contagens.get(palavra).addAndGet(valorNovo);
+        }
+
+        System.out.println("Total palavras contadas: " + contagens.size());
+        // Verifica se precisa atualizar stop words
+        if (contagens.size() % UPDATE_THRESHOLD == 0) {
+            recalculateStopWords();
+        }
+    }
+
     /**
      * Recalcula a lista de stop words para uma determinada linguagem.
      *
@@ -474,9 +496,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      * da linguagem especificada. Após o cálculo, a lista é atualizada localmente e sincronizada com outros barrels.</p>
      */
     private synchronized void recalculateStopWords() {
-        if (wordPageOccurrences.isEmpty()) return;
-
-        List<Map.Entry<String, AtomicInteger>> wordCounts = wordPageOccurrences.entrySet().stream()
+        List<Map.Entry<String, AtomicInteger>> wordCounts = contagens.entrySet().stream()
                 .sorted((e1, e2) -> Integer.compare(e2.getValue().get(), e1.getValue().get()))
                 .collect(Collectors.toList());
 

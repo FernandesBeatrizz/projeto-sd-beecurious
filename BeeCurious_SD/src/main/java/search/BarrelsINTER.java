@@ -89,13 +89,6 @@ public interface BarrelsINTER extends Remote {
      */
     Set<String> getStopWords() throws RemoteException;
 
-
-    /**
-     * Atualiza a lista de stop words para um idioma específico.
-     * @throws RemoteException Se houver um erro de comunicação remota.
-     */
-    void registerWordOccurrence(String word, String url) throws RemoteException;
-
     void carregarDados(Map<String, ArrayList<String[]>> indice, Set<String>stopWords) throws RemoteException;
 
 

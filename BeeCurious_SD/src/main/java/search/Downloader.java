@@ -112,6 +112,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
      */
     public void processarPagina(String url) throws RemoteException {
         BarrelsINTER barrel = gateway.getBarrel();
+        Set<String> palavraJaContada = new HashSet<>();
         if (!barrel.containsURL(url)) {
             try {
                 Document doc = Jsoup.connect(url).get();
@@ -157,14 +158,17 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                 for (String palavra : palavras) {
                     if (!palavra.isEmpty()) {
                         gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
-                        localWordCount.computeIfAbsent(palavra, k -> new AtomicInteger(0)).incrementAndGet();
+                        palavraJaContada.add(palavra);
+                        if (!palavraJaContada.contains(palavra)) {
+                            localWordCount.computeIfAbsent(palavra, k -> new AtomicInteger(0)).incrementAndGet();
+                        }
                     }
                 }
 
-                // Envia estatísticas periodicamente (ex: a cada 10 URLs processadas)
-                if (localWordCount.size() >= 10) {
+                if (localWordCount.size() % 10 == 0) {
                     enviarEstatisticasParaBarrels();
                 }
+
             } catch (IOException e) {
                 System.out.println("Erro ao processar página: " + e.getMessage());
             }
@@ -176,7 +180,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
         barrel.receberContagemPalavras(new HashMap<>(localWordCount));
         localWordCount.clear();
     }
-}
+
     /**
      * Converte um URL relativa em um URL absoluta, com base num URL base.
      *
