@@ -26,7 +26,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     private Set<String> stopWords = new HashSet<>();
     private static final double STOP_WORD_PERCENTAGE = 0.05;
-    private static final int UPDATE_THRESHOLD = 100; // Atualizar a cada 20 páginas
     private final String ficheiroStopWords;
     private Map<String, AtomicInteger> contagens = new HashMap<>();
 
@@ -227,7 +226,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
                 // Log de indexação no barrel principal
                 //System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
-                salvar();
             }
 
             // Agora propaga para os outros barrels
@@ -272,8 +270,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 }
             }
             indiceInvertido.get(word).add(pagina);
-            salvar();
-            System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
+            //System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
         }
     }
 
@@ -518,11 +515,10 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
         System.out.print("contagens processadas");
 
-        if (contagens.size() % UPDATE_THRESHOLD == 0) {
-            System.out.println("vou chamar o método para recalcular");
-            recalculateStopWords();
-            System.out.println("chamei o método para recalcular stop words");
-        }
+        System.out.println("vou chamar o método para recalcular (thread: " + Thread.currentThread().getName() + ")");
+        recalculateStopWords();
+        System.out.println("já chamei o método para recalcular stop words (thread: " + Thread.currentThread().getName() + ")");
+
     }
 
     /**
@@ -536,6 +532,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         System.out.println("a calcular stop words");
         Set<String> newStopWords;
         int stopWordsCount;
+
         synchronized (this) {
             List<Map.Entry<String, AtomicInteger>> wordCounts = contagens.entrySet().stream()
                     .sorted((e1, e2) -> Integer.compare(e2.getValue().get(), e1.getValue().get()))
@@ -550,6 +547,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             stopWords.clear();
             stopWords.addAll(newStopWords);
         }
+
         System.out.printf("[Barrel] Stop words recalculadas: %d palavras removidas do índice.%n", stopWordsCount);
 
         removeStopWordsFromIndex();
@@ -565,6 +563,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      *
      */
     private synchronized void removeStopWordsFromIndex() {
+
         for (String stopWord : stopWords) {
             indiceInvertido.remove(stopWord);
         }
@@ -595,6 +594,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                     barrel.updateStopWords(newStopWords);
                 }
             }
+            System.out.print("sincronizou stop words com os outros");
         } catch (RemoteException e) {
             System.err.println("Erro ao sincronizar stop words: " + e.getMessage());
         }
