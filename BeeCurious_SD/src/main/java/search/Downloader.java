@@ -179,12 +179,27 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
 
     private void enviarEstatisticasParaBarrels(BarrelsINTER barrel) {
         try {
-            System.out.println("a enviar " + localWordCount.size() + " palavras ao Barrel...");
-            barrel.receberContagemPalavras(new HashMap<>(localWordCount));
-            System.out.println("Estatísticas enviadas com sucesso!");
+            System.out.println(" a enviar " + localWordCount.size() + " palavras");
+
+            // Cria cópia temporária para envio
+            Map<String, AtomicInteger> copiaParaEnvio = new HashMap<>();
+            localWordCount.forEach((k,v) -> copiaParaEnvio.put(k, new AtomicInteger(v.get())));
+
+            // Envia de forma assíncrona
+            new Thread(() -> {
+                try {
+                    barrel.receberContagemPalavras(copiaParaEnvio);
+                    System.out.println("Estatísticas enviadas com sucesso!");
+                } catch (RemoteException e) {
+                    System.err.println("Falha ao enviar: " + e.getMessage());
+                }
+            }).start();
+
+            // Limpa apenas após criar a cópia
             localWordCount.clear();
-        } catch (RemoteException e) {
-            System.err.println("Falha ao enviar estatísticas: " + e.getMessage());
+
+        } catch (Exception e) {
+            System.err.println("Erro no envio: " + e.getMessage());
         }
     }
 

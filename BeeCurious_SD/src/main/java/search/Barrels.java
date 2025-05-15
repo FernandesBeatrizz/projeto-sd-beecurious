@@ -439,7 +439,6 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         try {
             try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempSWFile))) {
                 output.writeObject(stopWords);
-                System.out.print("criou o ficheiro temporariio para as stop words: ");
             }
             Files.move(
                     tempSWFile.toPath(),
@@ -475,24 +474,38 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     //---------------------------------------------------------------------------------------------------
 
     @Override
-    public synchronized void receberContagemPalavras(Map<String, AtomicInteger> novasContagens) {
+    public void receberContagemPalavras(Map<String, AtomicInteger> novasContagens) {
+        try {
+            System.out.println("Recebi " + novasContagens.size() + " contagens");
 
-        System.out.println("Recebi " + novasContagens.size() + " contagens");
-        // Consolida as estatísticas
-        for (Map.Entry<String, AtomicInteger> entry : novasContagens.entrySet()) {
-            String palavra = entry.getKey();
-            int valorNovo = entry.getValue().get();
-
-            if (!contagens.containsKey(palavra)) {
-                contagens.put(palavra, new AtomicInteger(0));
+            Map<String, AtomicInteger> copiaTrabalho = new HashMap<>();
+            for (Map.Entry<String, AtomicInteger> entry : novasContagens.entrySet()) {
+                copiaTrabalho.put(entry.getKey(), new AtomicInteger(entry.getValue().get()));
             }
-            contagens.get(palavra).addAndGet(valorNovo);
-        }
 
-        System.out.println("Total palavras contadas: " + contagens.size());
-        // Verifica se precisa atualizar stop words
-        if (contagens.size() % UPDATE_THRESHOLD == 0) {
-            recalculateStopWords();
+            new Thread(() -> processarContagensEmBackground(copiaTrabalho)).start();
+
+        } catch (Exception e) {
+            System.err.println("Erro ao receber contagens: " + e.getMessage());
+        }
+    }
+
+    private void processarContagensEmBackground(Map<String, AtomicInteger> novasContagens) {
+        synchronized(this) {
+            // Processamento original aqui
+            for (Map.Entry<String, AtomicInteger> entry : novasContagens.entrySet()) {
+                String palavra = entry.getKey();
+                int valorNovo = entry.getValue().get();
+
+                if (!contagens.containsKey(palavra)) {
+                    contagens.put(palavra, new AtomicInteger(0));
+                }
+                contagens.get(palavra).addAndGet(valorNovo);
+            }
+
+            if (contagens.size() % UPDATE_THRESHOLD == 0) {
+                recalculateStopWords();
+            }
         }
     }
 
