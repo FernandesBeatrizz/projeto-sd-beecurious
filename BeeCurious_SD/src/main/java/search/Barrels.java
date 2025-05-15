@@ -225,7 +225,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 }
 
                 // Log de indexação no barrel principal
-                //System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
+                System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
             }
 
             // Agora propaga para os outros barrels
@@ -270,7 +270,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 }
             }
             indiceInvertido.get(word).add(pagina);
-            //System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
+            System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
         }
     }
 
@@ -330,31 +330,33 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         List<String[]> resultados = new ArrayList<>();
 
         //vou ver s os termos existem no indiceinvertido
-        for (String palavra : palavras) {
-            if (!indiceInvertido.containsKey(palavra)) {
-                System.out.println("palavra não encontrada");
-                return resultados;
-            }
-        }
-        resultados.addAll(indiceInvertido.get(palavras[0])); //todas as paginas q contêm o primeiro termo
-
-        // Filtra os resultados para páginas que contêm todos os termos
-        for (int i = 1; i < palavras.length; i++) {
-            List<String[]> tempResultados = new ArrayList<>();
-            Set<String> urlsExistentes = new HashSet<>();
-
-            // Armazena URLs atuais
-            for (String[] pagina : resultados) {
-                urlsExistentes.add(pagina[0]);
-            }
-
-            // Adiciona páginas que contenham o termo atual e estejam nas URLs anteriores
-            for (String[] pagina : indiceInvertido.get(palavras[i])) {
-                if (urlsExistentes.contains(pagina[0])) {
-                    tempResultados.add(pagina);
+        synchronized (indiceInvertido) {
+            for (String palavra : palavras) {
+                if (!indiceInvertido.containsKey(palavra)) {
+                    System.out.println("palavra não encontrada");
+                    return resultados;
                 }
             }
-            resultados = tempResultados;
+            resultados.addAll(indiceInvertido.get(palavras[0])); //todas as paginas q contêm o primeiro termo
+
+            // Filtra os resultados para páginas que contêm todos os termos
+            for (int i = 1; i < palavras.length; i++) {
+                List<String[]> tempResultados = new ArrayList<>();
+                Set<String> urlsExistentes = new HashSet<>();
+
+                // Armazena URLs atuais
+                for (String[] pagina : resultados) {
+                    urlsExistentes.add(pagina[0]);
+                }
+
+                // Adiciona páginas que contenham o termo atual e estejam nas URLs anteriores
+                for (String[] pagina : indiceInvertido.get(palavras[i])) {
+                    if (urlsExistentes.contains(pagina[0])) {
+                        tempResultados.add(pagina);
+                    }
+                }
+                resultados = tempResultados;
+            }
         }
 
         resultados.sort(new Comparator<String[]>() {
@@ -457,10 +459,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      * @return true se o URL está contido, false caso contrário
      */
     public boolean containsURL(String url) {
-        for (ArrayList<String[]> paginas : indiceInvertido.values()) {
-            for (String[] pagina : paginas) {
-                if (pagina[0].equals(url)) {
-                    return true;
+        synchronized (indiceInvertido) {
+            for (ArrayList<String[]> paginas : indiceInvertido.values()) {
+                for (String[] pagina : paginas) {
+                    if (pagina[0].equals(url)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -562,10 +566,12 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      * do índice invertido para garantir que palavras irrelevantes não sejam consideradas nas pesquisas.</p>
      *
      */
-    private synchronized void removeStopWordsFromIndex() {
+    private void removeStopWordsFromIndex() {
 
-        for (String stopWord : stopWords) {
-            indiceInvertido.remove(stopWord);
+        synchronized (indiceInvertido) {
+            for (String stopWord : stopWords) {
+                indiceInvertido.remove(stopWord);
+            }
         }
     }
 
@@ -605,9 +611,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      *
      */
     public void updateStopWords(Set<String> newStopWords) throws RemoteException {
-        stopWords.clear();
-        stopWords.addAll(newStopWords);
-        removeStopWordsFromIndex();
+        synchronized (indiceInvertido) {
+            stopWords.clear();
+            stopWords.addAll(newStopWords);
+            removeStopWordsFromIndex();
+        }
     }
 
 
