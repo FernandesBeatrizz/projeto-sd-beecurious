@@ -156,16 +156,17 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                 String[] palavras = textoCompleto.replaceAll("[^a-z0-9áéíóúãõâêôç\\s]", " ")
                         .split("\\s+");
                 for (String palavra : palavras) {
+                    System.out.print("entra no for");
                     if (!palavra.isEmpty()) {
                         gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
-                        System.out.println("Palavra adicionada às já contadas: " + palavra);
                         if (!palavraJaContada.contains(palavra)) {
                             localWordCount.computeIfAbsent(palavra, k -> new AtomicInteger(0)).incrementAndGet();
                             palavraJaContada.add(palavra);
+                            System.out.println("Palavra adicionada às já contadas: " + palavra);
                         }
                         System.out.println("o dicionario da frequencia de palavras ja vai com :"+ localWordCount.size()+" palavras");
-                        if (localWordCount.size() % 10 == 0) {
-                            enviarEstatisticasParaBarrels();
+                        if (localWordCount.size() % 100 == 0) {
+                            enviarEstatisticasParaBarrels(barrel);
                         }
                     }
                 }
@@ -176,10 +177,15 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
         }
     }
 
-    private void enviarEstatisticasParaBarrels() throws RemoteException {
-        BarrelsINTER barrel = gateway.getBarrel();
-        barrel.receberContagemPalavras(new HashMap<>(localWordCount));
-        localWordCount.clear();
+    private void enviarEstatisticasParaBarrels(BarrelsINTER barrel) {
+        try {
+            System.out.println("a enviar " + localWordCount.size() + " palavras ao Barrel...");
+            barrel.receberContagemPalavras(new HashMap<>(localWordCount));
+            System.out.println("Estatísticas enviadas com sucesso!");
+            localWordCount.clear();
+        } catch (RemoteException e) {
+            System.err.println("Falha ao enviar estatísticas: " + e.getMessage());
+        }
     }
 
     /**
