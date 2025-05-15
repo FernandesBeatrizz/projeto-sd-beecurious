@@ -8,7 +8,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -156,15 +155,14 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             if (obj instanceof Set) {
                 stopWords=(Set <String>) obj;
                 System.out.println("[DEBUG] Stop words carregados com " + stopWords.size() + " termos.");
-                reconstruirPonteiros();
             } else {
                 System.err.println("Erro: Formato inválido do ficheiro.");
             }
         } catch (EOFException e) {
-            System.err.println("Erro: Ficheiro corrompido (EOF inesperado). Siga criar outro para as stop words.");
+            System.err.println("Erro: Ficheiro corrompido (EOF inesperado). ");
             sWfile.delete(); // Remove o ficheiro inválido
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Erro ao carregar o índice: " + e.getMessage());
+            System.err.println("Erro ao carregar as stop words: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -228,7 +226,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 }
 
                 // Log de indexação no barrel principal
-                //System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
+                System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
                 salvar();
             }
 
@@ -275,7 +273,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
             }
             indiceInvertido.get(word).add(pagina);
             salvar();
-            //System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
+            System.out.println("[Barrel] Palavra indexada: " + word + " (URL: " + url + ")");
         }
     }
 
@@ -438,8 +436,11 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
 
         File tempSWFile = new File(ficheiroStopWords + ".tmp");
-        try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempSWFile))) {
-            output.writeObject(stopWords);
+        try {
+            try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(tempSWFile))) {
+                output.writeObject(stopWords);
+                System.out.print("criou o ficheiro temporariio para as stop words: ");
+            }
             Files.move(
                     tempSWFile.toPath(),
                     new File(ficheiroStopWords).toPath(),
@@ -514,6 +515,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
         stopWords.clear();
         stopWords.addAll(newStopWords);
+        System.out.println("StopWords até ao momento: " + stopWords.toString());
 
         System.out.printf("[Barrel] Stop words recalculadas: %d palavras removidas do índice.%n", stopWordsCount);
 
@@ -577,26 +579,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      */
     @Override
     public void carregarDados(Map<String, ArrayList<String[]>> indice, Set<String> stopWords) throws RemoteException {
-        synchronized (indiceInvertido) {
-            this.indiceInvertido = new HashMap<>(indice);
-            reconstruirPonteiros();
-            salvar();
             System.out.println("Dados sincronizados com sucesso.");
-        }
-        File swFile = new File(ficheiroStopWords);
-        if (swFile.exists() && swFile.length() > 0) {
-            try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(swFile))) {
-                Object obj = input.readObject();
-                if (obj instanceof Set) {
-                    this.stopWords.clear();
-                    this.stopWords.addAll((Set<String>) obj);
-                    System.out.println("[DEBUG] StopWords carregadas: " + this.stopWords.size());
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                System.err.println("Erro ao carregar as stopWords: " + e.getMessage());
-            }
-        }
-
     }
 
 
