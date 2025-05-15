@@ -31,10 +31,9 @@ public interface BarrelsINTER extends Remote {
      */
     boolean containsURL(String url) throws RemoteException;
 
-
-
     /**
-     * VER OQ METER AQUI!!!!.
+     * Obtém a lista das páginas mais relevantes que contêm todos os termos pesquisados.
+     *
      *
      * @param termos O termo a ser pesquisado.
      * @return Uma lista de arrays de Strings, cada um representando uma página com o termo pesquisado.
@@ -89,6 +88,14 @@ public interface BarrelsINTER extends Remote {
      */
     Set<String> getStopWords() throws RemoteException;
 
+    /**
+     * Carrega os dados do índice invertido e a lista de palavras de paragem (stop words) para o sistema.
+     *
+     *
+     * @param indice Mapa que representa o índice invertido, associando palavras a listas de ocorrências.
+     * @param stopWords Conjunto de palavras de paragem a ser utilizado para filtragem.
+     * @throws RemoteException Caso ocorra um erro na comunicação remota durante o carregamento dos dados.
+     */
     void carregarDados(Map<String, ArrayList<String[]>> indice, Set<String>stopWords) throws RemoteException;
 
 
@@ -100,8 +107,20 @@ public interface BarrelsINTER extends Remote {
      */
     Map<String, ArrayList<String[]>> getIndiceInvertido() throws RemoteException;
 
+    /**
+     * Atualiza a lista de palavras de stop words com o conjunto fornecido.
+     *
+     * @param newStopWords Conjunto de novas stop words a aplicar.
+     * @throws RemoteException Caso ocorra um erro na comunicação remota durante a atualização.
+     */
     void updateStopWords(Set<String> newStopWords) throws RemoteException;
 
+    /**
+     * Recebe um mapa de contagens de palavras para atualizar as estatísticas locais.
+     *
+     * @param contagens Mapa que associa palavras a contadores.
+     * @throws RemoteException Caso ocorra um erro na comunicação remota durante a receção das contagens.
+     */
     void receberContagemPalavras(Map<String, AtomicInteger> contagens) throws RemoteException;
 }
 

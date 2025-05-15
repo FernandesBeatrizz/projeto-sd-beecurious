@@ -77,7 +77,6 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
             while (true) {
                 String url = gateway.getNextURL();
                 System.out.println("URL solicitado: "+url);
-                System.out.println(url);
                 if(url == null){
                     System.out.println("fila vazia");
                     tentativas+=1;
@@ -156,16 +155,15 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
                 String[] palavras = textoCompleto.replaceAll("[^a-z0-9áéíóúãõâêôç\\s]", " ")
                         .split("\\s+");
                 for (String palavra : palavras) {
-                    System.out.print("entra no for");
                     if (!palavra.isEmpty()) {
                         gateway.addToIndex(palavra, url, titulo, citacao, listaLinks);
                         if (!palavraJaContada.contains(palavra)) {
                             localWordCount.computeIfAbsent(palavra, k -> new AtomicInteger(0)).incrementAndGet();
                             palavraJaContada.add(palavra);
-                            System.out.println("Palavra adicionada às já contadas: " + palavra);
+                            //System.out.println("Palavra adicionada às já contadas: " + palavra);
                         }
                         System.out.println("o dicionario da frequencia de palavras ja vai com :"+ localWordCount.size()+" palavras");
-                        if (localWordCount.size() % 100 == 0) {
+                        if (localWordCount.size()>0 && localWordCount.size() % 100 == 0) {
                             enviarEstatisticasParaBarrels(barrel);
                         }
                     }
@@ -177,6 +175,15 @@ public class Downloader extends UnicastRemoteObject implements DownloaderINTER{
         }
     }
 
+    /**
+     * Envia as estatísticas locais de contagem de palavras para o barrel remoto.
+     *
+     * <p>Este método cria uma cópia das contagens locais para garantir segurança,
+     * e envia os dados de forma assíncrona numa nova thread para não bloquear a execução principal.
+     * Após criar a cópia, limpa o contador local para preparar a receção de novas contagens.</p>
+     *
+     * @param barrel Instância remota do barrel para onde as estatísticas serão enviadas.
+     */
     private void enviarEstatisticasParaBarrels(BarrelsINTER barrel) {
         try {
             System.out.println(" a enviar " + localWordCount.size() + " palavras");

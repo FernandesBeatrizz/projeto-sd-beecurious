@@ -26,7 +26,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
 
     private Set<String> stopWords = new HashSet<>();
     private static final double STOP_WORD_PERCENTAGE = 0.05;
-    private static final int UPDATE_THRESHOLD = 20; // Atualizar a cada 1000 páginas
+    private static final int UPDATE_THRESHOLD = 100; // Atualizar a cada 20 páginas
     private final String ficheiroStopWords;
     private Map<String, AtomicInteger> contagens = new HashMap<>();
 
@@ -226,7 +226,7 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
                 }
 
                 // Log de indexação no barrel principal
-                System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
+                //System.out.println("[Barrel] URL indexada à palavra: " + word + " (URL: " + url + ")");
                 salvar();
             }
 
@@ -473,6 +473,13 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
     // ----- STOP WORDS ---------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------------
 
+    /**
+     * recebe um conjunto de contagens de palavras e inicia o seu processamento numa nova thread separada, de forma a não bloquear o fluxo principal do programa.
+     *
+     * <p>As contagens recebidas são copiadas para uma estrutura separada, evitando interferências externas, e são depois processadas em segundo plano.</p>
+     *
+     * @param novasContagens Mapa que contem as palavras como chaves e os respetivos contadores (AtomicInteger) como valores.
+     */
     @Override
     public void receberContagemPalavras(Map<String, AtomicInteger> novasContagens) {
         try {
@@ -490,22 +497,31 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
         }
     }
 
+    /**
+     * Processa as contagens de palavras recebidas, atualizando o mapa principal de contagens.
+     * Este método é executado numa thread separada e utiliza sincronização para assegurar a integridade dos dados em contextos concorrentes
+     *
+     * <p>Se o número total de palavras ultrapassar um determinado limiar (UPDATE_THRESHOLD), recalcula as stop words.</p>
+     *
+     * @param novasContagens Mapa que contem as contagens de palavras a serem somadas ao mapa principal.
+     */
     private void processarContagensEmBackground(Map<String, AtomicInteger> novasContagens) {
-        synchronized(this) {
-            // Processamento original aqui
-            for (Map.Entry<String, AtomicInteger> entry : novasContagens.entrySet()) {
-                String palavra = entry.getKey();
-                int valorNovo = entry.getValue().get();
 
-                if (!contagens.containsKey(palavra)) {
-                    contagens.put(palavra, new AtomicInteger(0));
-                }
-                contagens.get(palavra).addAndGet(valorNovo);
+        System.out.print("vou começar a processar as contagens");
+        for (Map.Entry<String, AtomicInteger> entry : novasContagens.entrySet()) {
+            String palavra = entry.getKey();
+            int valorNovo = entry.getValue().get();
+            if (!contagens.containsKey(palavra)) {
+                contagens.put(palavra, new AtomicInteger(0));
             }
+            contagens.get(palavra).addAndGet(valorNovo);
+        }
+        System.out.print("contagens processadas");
 
-            if (contagens.size() % UPDATE_THRESHOLD == 0) {
-                recalculateStopWords();
-            }
+        if (contagens.size() % UPDATE_THRESHOLD == 0) {
+            System.out.println("vou chamar o método para recalcular");
+            recalculateStopWords();
+            System.out.println("chamei o método para recalcular stop words");
         }
     }
 
@@ -515,27 +531,39 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      * <p>As stop words são definidas como as palavras mais comuns (10% do total) entre as páginas processadas
      * da linguagem especificada. Após o cálculo, a lista é atualizada localmente e sincronizada com outros barrels.</p>
      */
-    private synchronized void recalculateStopWords() {
-        List<Map.Entry<String, AtomicInteger>> wordCounts = contagens.entrySet().stream()
-                .sorted((e1, e2) -> Integer.compare(e2.getValue().get(), e1.getValue().get()))
-                .collect(Collectors.toList());
-
-        int stopWordsCount = (int) (wordCounts.size() * STOP_WORD_PERCENTAGE);
-        Set<String> newStopWords = wordCounts.stream()
-                .limit(stopWordsCount)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-
-        stopWords.clear();
-        stopWords.addAll(newStopWords);
+    private void recalculateStopWords() {
         System.out.println("StopWords até ao momento: " + stopWords.toString());
+        System.out.println("a calcular stop words");
+        Set<String> newStopWords;
+        int stopWordsCount;
+        synchronized (this) {
+            List<Map.Entry<String, AtomicInteger>> wordCounts = contagens.entrySet().stream()
+                    .sorted((e1, e2) -> Integer.compare(e2.getValue().get(), e1.getValue().get()))
+                    .collect(Collectors.toList());
 
+            stopWordsCount = (int) (wordCounts.size() * STOP_WORD_PERCENTAGE);
+            newStopWords = wordCounts.stream()
+                    .limit(stopWordsCount)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+
+            stopWords.clear();
+            stopWords.addAll(newStopWords);
+        }
         System.out.printf("[Barrel] Stop words recalculadas: %d palavras removidas do índice.%n", stopWordsCount);
 
         removeStopWordsFromIndex();
         syncStopWordsWithOtherBarrels(newStopWords);
     }
 
+
+    /**
+     * Remove todas as stop words atualmente definidas do índice invertido.
+     *
+     * <p>Este método percorre a lista de stop words e elimina cada uma delas
+     * do índice invertido para garantir que palavras irrelevantes não sejam consideradas nas pesquisas.</p>
+     *
+     */
     private synchronized void removeStopWordsFromIndex() {
         for (String stopWord : stopWords) {
             indiceInvertido.remove(stopWord);
