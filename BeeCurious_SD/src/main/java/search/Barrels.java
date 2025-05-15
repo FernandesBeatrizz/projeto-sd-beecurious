@@ -592,9 +592,45 @@ public class Barrels extends UnicastRemoteObject implements BarrelsINTER {
      */
     @Override
     public void carregarDados(Map<String, ArrayList<String[]>> indice, Set<String> stopWords) throws RemoteException {
-            System.out.println("Dados sincronizados com sucesso.");
-    }
+        // Sincronizar o índice invertido
+        for (Map.Entry<String, ArrayList<String[]>> entry : indice.entrySet()) {
+            String chave = entry.getKey();
+            ArrayList<String[]> valoresParametro = entry.getValue();
 
+            // Se a chave não existir no atributo da classe
+            if (!this.indiceInvertido.containsKey(chave)) {
+                // Adiciona a chave e todos os valores
+                this.indiceInvertido.put(chave, new ArrayList<>(valoresParametro));
+            } else {
+                // Se a chave existir, verifica cada valor
+                ArrayList<String[]> valoresExistentes = this.indiceInvertido.get(chave);
+
+                for (String[] novoValor : valoresParametro) {
+                    boolean existe = false;
+                    // Verifica se o valor já existe
+                    for (String[] valorExistente : valoresExistentes) {
+                        if (Arrays.equals(novoValor, valorExistente)) {
+                            existe = true;
+                            break;
+                        }
+                    }
+                    // Se não existir, adiciona
+                    if (!existe) {
+                        valoresExistentes.add(novoValor);
+                    }
+                }
+            }
+        }
+
+        // Sincronizar as stop words
+        for (String palavra : stopWords) {
+            if (!this.stopWords.contains(palavra)) {
+                this.stopWords.add(palavra);
+            }
+        }
+
+        System.out.println("Dados sincronizados com sucesso.");
+    }
 
     /**
      * Retorna o índice invertido atual.
