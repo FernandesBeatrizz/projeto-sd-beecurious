@@ -1,6 +1,6 @@
 # BeeCurious_SD - Motor de Pesquisa Distribuído
 
-[cite_start]O **BeeCurious_SD** é um sistema distribuído que replica o funcionamento de um motor de busca, integrando tecnologias como Java RMI, Spring Boot e APIs de IA.
+O **BeeCurious_SD** é um sistema distribuído que replica o funcionamento de um motor de busca, integrando tecnologias como Java RMI, Spring Boot e APIs de IA.
 
 ## Funcionalidades Principais
 * **Indexação:** Processamento de páginas web e extração de metadados (títulos, citações, links).
